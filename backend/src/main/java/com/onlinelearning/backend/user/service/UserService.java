@@ -2,6 +2,8 @@ package com.onlinelearning.backend.user.service;
 
 import com.onlinelearning.backend.user.entity.User;
 import com.onlinelearning.backend.user.repository.UserRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,14 +18,14 @@ public class UserService {
         this.repo = repo;
     }
 
-    // CREATE
+    // ================= REGISTER =================
     public User register(User user) {
 
-        if(repo.existsByEmail(user.getEmail())){
+        if (repo.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Email đã tồn tại");
         }
 
-        if(repo.existsByUsername(user.getUsername())){
+        if (repo.existsByUsername(user.getUsername())) {
             throw new RuntimeException("Username đã tồn tại");
         }
 
@@ -33,19 +35,21 @@ public class UserService {
         return repo.save(user);
     }
 
-
-    // READ ONE
+    // ================= GET BY ID (CACHE) =================
+    @Cacheable(value = "user", key = "#id")
     public User getById(Long id) {
         return repo.findById(id)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
     }
 
-    // READ ALL
+    // ================= GET ALL (CACHE) =================
+    @Cacheable(value = "users")
     public List<User> getAllUsers() {
         return repo.findAll();
     }
 
-    // UPDATE
+    // ================= UPDATE (CLEAR CACHE) =================
+    @CacheEvict(value = {"users", "user"}, allEntries = true)
     public User updateUser(Long id, User newUser) {
 
         User user = repo.findById(id)
@@ -61,7 +65,8 @@ public class UserService {
         return repo.save(user);
     }
 
-    // DELETE
+    // ================= DELETE (CLEAR CACHE) =================
+    @CacheEvict(value = {"users", "user"}, allEntries = true)
     public void deleteUser(Long id) {
 
         User user = repo.findById(id)
