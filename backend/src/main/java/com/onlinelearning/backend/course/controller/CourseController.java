@@ -4,7 +4,7 @@ import com.onlinelearning.backend.course.entity.Course;
 import com.onlinelearning.backend.course.service.CourseService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/courses")
 public class CourseController {
