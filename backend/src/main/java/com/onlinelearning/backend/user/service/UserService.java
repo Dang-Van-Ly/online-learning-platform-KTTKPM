@@ -4,6 +4,9 @@ import com.onlinelearning.backend.user.entity.User;
 import com.onlinelearning.backend.user.repository.UserRepository;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -62,7 +65,12 @@ public class UserService {
         user.setBio(newUser.getBio());
         user.setRole(newUser.getRole());
 
-        return repo.save(user);
+        User saved = repo.save(user);
+
+        // 🔥 gọi retry service sau khi update
+        notifyUserUpdate(saved.getId());
+
+        return saved;
     }
 
     // ================= DELETE (CLEAR CACHE) =================
@@ -73,5 +81,34 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
         repo.delete(user);
+    }
+
+    @Retryable(
+            value = Exception.class,
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 2000)
+    )
+    public String notifyUserUpdate(Long userId) {
+
+        User user = repo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+
+        // giả lập service ngoài (email / notification)
+        System.out.println("Sending notification to user: " + user.getEmail());
+
+        // giả lập lỗi (để demo retry)
+        if (Math.random() < 0.7) {
+            throw new RuntimeException("Notification service failed");
+        }
+
+        return "NOTIFICATION_SENT";
+    }
+
+    @Recover
+    public String fallbackNotify(Exception e, Long userId) {
+
+        System.out.println("Retry failed for userId: " + userId);
+
+        return "NOTIFICATION_FAILED_BUT_SAVED_FOR_LATER";
     }
 }

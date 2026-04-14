@@ -13,7 +13,7 @@ import java.util.List;
 public class Course {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Sử dụng tính năng tự tăng của DB
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
@@ -29,8 +29,9 @@ public class Course {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    // ❗ CHẶN JSON LOOP
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Chapter> chapters;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)

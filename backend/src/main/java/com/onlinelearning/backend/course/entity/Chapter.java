@@ -1,5 +1,6 @@
 package com.onlinelearning.backend.course.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -13,7 +14,7 @@ import java.util.List;
 public class Chapter {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Sử dụng tính năng tự tăng của DB
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String title;
@@ -21,13 +22,15 @@ public class Chapter {
     private String status;
     private LocalDateTime createdAt;
 
+    // ❗ CHẶN LOOP về Course
     @ManyToOne
     @JoinColumn(name = "course_id")
     @com.fasterxml.jackson.annotation.JsonIgnore
     private Course course;
 
+    // ❗ CHẶN LOOP xuống Lesson
     @OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
+    @JsonIgnoreProperties("chapter")
     private List<Lesson> lessons;
 
     @PrePersist
