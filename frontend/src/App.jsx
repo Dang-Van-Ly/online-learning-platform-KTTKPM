@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Home from "./pages/Home"; // Import trang Home vừa tạo
+import "./App.css";
 
 function App() {
   return (

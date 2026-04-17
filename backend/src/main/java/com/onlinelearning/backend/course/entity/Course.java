@@ -1,16 +1,25 @@
 package com.onlinelearning.backend.course.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.onlinelearning.backend.promotion.entity.Promotion_course;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Data
+@Getter 
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "courses")
-public class Course {
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) 
+public class Course implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,22 +30,26 @@ public class Course {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private Double price;
+    private Double price; 
+    
     private String image;
+
+    @Column(name = "instructor_id")
     private String instructorId;
+
     private String type;
+    
     private String status;
+    
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+    
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ❗ CHẶN JSON LOOP
+    @JsonManagedReference(value = "course-promotion")
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    private List<Chapter> chapters;
-
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
-    private List<com.onlinelearning.backend.promotion.entity.Promotion_course> promotionCourses;
+    private List<Promotion_course> promotionCourses;
 
     @PrePersist
     protected void onCreate() {
