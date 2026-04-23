@@ -203,7 +203,7 @@ const KHOKHOAHOCHeader = () => {
 
       <nav style={s.nav}>
         <ul style={s.navList}>
-          <li style={s.navItem} onClick={() => navigate('/')}>Khóa Học Free</li>
+          <li style={s.navItem} onClick={() => navigate('/free-courses')}>Khóa Học Free</li>
           <li style={s.navItem}>
             Nâng Cấp Hội Viên <span style={s.saleBadge}>GIẢM GIÁ</span>
           </li>
