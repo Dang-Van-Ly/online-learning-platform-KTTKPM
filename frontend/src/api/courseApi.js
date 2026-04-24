@@ -11,7 +11,13 @@ export const getAllCourses = async () => {
         return [];
     }
 };
+
 export const getCourseById = async (id) => {
-  const res = await fetch(`http://localhost:8080/api/courses/${id}`);
-  return res.json();
+    try {
+        const response = await axios.get(`${API_URL}/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Error fetching course with id ${id}:`, error);
+        return null;
+    }
 };

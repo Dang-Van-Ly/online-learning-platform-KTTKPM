@@ -1,16 +1,36 @@
-import React, { useContext } from 'react';
-// 1. Import useNavigate từ react-router-dom
-import { useNavigate } from 'react-router-dom'; 
+import React, { useContext, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, UserCircle } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 
 const KHOKHOAHOCHeader = () => {
-  // 2. Khởi tạo hook navigate
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
 
-  const userName = user?.fullName || user?.name || user?.username || user?.email || 'Tài khoản';
+  const { user } = useContext(AuthContext);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const userName =
+    user?.fullName ||
+    user?.name ||
+    user?.username ||
+    user?.email ||
+    'Tài khoản';
+
   const userInitial = userName.trim().charAt(0).toUpperCase();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/search');
+    }
+  };
+
+  const handlePriceNavigation = (priceFilter) => {
+    navigate(`/search?price=${priceFilter}`);
+  };
 
   const s = {
     header: {
@@ -55,15 +75,14 @@ const KHOKHOAHOCHeader = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: '15px 5%', 
+      padding: '15px 5%',
       gap: '25px',
     },
     logoWrapper: {
       display: 'flex',
       alignItems: 'center',
       gap: '8px',
-      textDecoration: 'none',
-      cursor: 'pointer', // Thêm cursor để biết logo click được
+      cursor: 'pointer',
     },
     logoText: {
       fontSize: '24px',
@@ -188,69 +207,110 @@ const KHOKHOAHOCHeader = () => {
 
   return (
     <header style={s.header}>
-      {/* 1. TOP BAR */}
       <div style={s.topBar}>
         <span>💥 <b>DEAL GIÁ HỜI HÔM NAY - GIẢM CỰC SÂU</b></span>
-        <div style={{display: 'flex', alignItems: 'center'}}>
+        <div style={{display:'flex',alignItems:'center'}}>
           Chỉ còn: <span style={s.timerBox}>09:21:04</span>
         </div>
         <button style={s.dealBadge}>👉 NHẬN DEAL NGAY</button>
       </div>
 
-      {/* 2. MAIN HEADER */}
       <div style={s.mainHeader}>
-        {/* Click vào logo để về trang chủ */}
         <div style={s.logoWrapper} onClick={() => navigate('/')}>
-          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5px'}}>
-            <div style={{width: '12px', height: '12px', backgroundColor: '#3b82f6', borderRadius: '1px'}}></div>
-            <div style={{width: '12px', height: '12px', backgroundColor: '#f97316', borderRadius: '1px'}}></div>
-            <div style={{width: '12px', height: '12px', backgroundColor: '#f97316', borderRadius: '1px'}}></div>
-            <div style={{width: '12px', height: '12px', backgroundColor: '#3b82f6', borderRadius: '1px'}}></div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1.5px'}}>
+            <div style={{width:'12px',height:'12px',background:'#3b82f6'}}></div>
+            <div style={{width:'12px',height:'12px',background:'#f97316'}}></div>
+            <div style={{width:'12px',height:'12px',background:'#f97316'}}></div>
+            <div style={{width:'12px',height:'12px',background:'#3b82f6'}}></div>
           </div>
+
           <div>
             <div style={s.logoText}>KHOKHOAHOC</div>
-            <div style={{color: '#f97316', fontWeight: 'bold', fontSize: '14px', marginTop: '-2px'}}>.ORG</div>
+            <div style={{
+              color:'#f97316',
+              fontWeight:'bold',
+              fontSize:'14px'
+            }}>
+              .ORG
+            </div>
           </div>
         </div>
 
-        <div style={s.searchBar}>
-          <input style={s.searchInput} placeholder="Nhập tên khóa học hoặc giảng viên..." />
-          <button style={s.searchBtn}>
-            <Search size={16} />
+        <form style={s.searchBar} onSubmit={handleSearch}>
+          <input
+            style={s.searchInput}
+            placeholder="Nhập tên khóa học hoặc giảng viên..."
+            value={searchQuery}
+            onChange={(e)=>setSearchQuery(e.target.value)}
+          />
+
+          <button style={s.searchBtn} type="submit">
+            <Search size={16}/>
           </button>
-        </div>
+        </form>
 
         <div style={s.actions}>
           {user ? (
             <button
               style={s.profileBtn}
-              onClick={() => navigate('/profile')}
+              onClick={()=>navigate('/profile')}
             >
               <span style={s.profileAvatar}>{userInitial}</span>
               <span>{userName}</span>
             </button>
           ) : (
-            <button style={s.loginBtn} onClick={() => navigate('/login')}>
-              <UserCircle size={16} /> ĐĂNG NHẬP
+            <button
+              style={s.loginBtn}
+              onClick={()=>navigate('/login')}
+            >
+              <UserCircle size={16}/>
+              ĐĂNG NHẬP
             </button>
           )}
 
           <button style={s.cartBtn}>
-            Giỏ hàng <ShoppingCart size={16} />
+            Giỏ hàng <ShoppingCart size={16}/>
           </button>
         </div>
       </div>
 
       <nav style={s.nav}>
         <ul style={s.navList}>
-          <li style={s.navItem} onClick={() => navigate('/')}>Khóa Học Free</li>
-          <li style={s.navItem}>
-            Nâng Cấp Hội Viên <span style={s.saleBadge}>GIẢM GIÁ</span>
+          <li
+            style={s.navItem}
+            onClick={()=>navigate('/free-courses')}
+          >
+            Khóa Học Free
           </li>
+
+          <li style={s.navItem}>
+            Nâng Cấp Hội Viên
+            <span style={s.saleBadge}>GIẢM GIÁ</span>
+          </li>
+
           <li style={s.navItem}>COMBO</li>
-          <li style={s.navItem}>Khóa học dưới 100k <small>▼</small></li>
-          <li style={s.navItem}>Khóa học dưới 150k <small>▼</small></li>
-          <li style={s.navItem}>Khóa học dưới 500k <small>▼</small></li>
+
+          <li
+            style={s.navItem}
+            onClick={()=>handlePriceNavigation('under100k')}
+          >
+            Khóa học dưới 100k
+          </li>
+
+          <li
+            style={s.navItem}
+            onClick={()=>handlePriceNavigation('under150k')}
+          >
+            Khóa học dưới 150k
+          </li>
+
+          <li
+            style={s.navItem}
+            onClick={()=>handlePriceNavigation('under500k')}
+          >
+            Khóa học dưới 500k
+          </li>
+
           <li style={s.navItem}>Hướng dẫn</li>
           <li style={s.navItem}>Blog</li>
         </ul>

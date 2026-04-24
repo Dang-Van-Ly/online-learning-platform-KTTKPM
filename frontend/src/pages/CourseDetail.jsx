@@ -1,168 +1,376 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { getCourseById, getAllCourses } from "../api/courseApi";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { getCourseById, getAllCourses } from "../api/courseApi";
+import {
+  ShoppingCart,
+  PlayCircle,
+  Star,
+  MessageCircle,
+  FileText,
+  CheckCircle,
+  Clock,
+  UserCircle
+} from "lucide-react";
 
 export default function CourseDetail() {
   const { id } = useParams();
-  const [course, setCourse] = useState(null);
-  const [courses, setCourses] = useState([]);
-  const [tab, setTab] = useState("desc");
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const [course,setCourse]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [newCourses,setNewCourses]=useState([]);
+  const [activeTab,setActiveTab]=useState("desc");
+
+  useEffect(()=>{
+    const fetchData = async()=>{
+      setLoading(true);
+
       const data = await getCourseById(id);
       setCourse(data);
 
       const all = await getAllCourses();
-      setCourses(all);
+
+      const sorted = all
+        .sort((a,b)=>(b.id||0)-(a.id||0))
+        .slice(0,3);
+
+      setNewCourses(sorted);
+
+      setLoading(false);
     };
-    fetchData();
-  }, [id]);
 
-  if (!course) return <div className="p-10">Loading...</div>;
+    if(id){
+      fetchData();
+    }
+  },[id]);
 
-  const formatPrice = (price) =>
-    new Intl.NumberFormat("vi-VN").format(price) + "đ";
+  const formatPrice=(price)=>
+    price
+      ? new Intl.NumberFormat("vi-VN").format(price)+"đ"
+      : "0đ";
 
-  return (
-    <div className="bg-gray-100 min-h-screen">
-      <Header />
+  if(loading){
+    return (
+      <>
+        <Header/>
+        <div style={{padding:"80px",textAlign:"center"}}>
+          Đang tải dữ liệu...
+        </div>
+        <Footer/>
+      </>
+    );
+  }
 
-      {/* TOP */}
-      <div className="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+  if(!course){
+    return (
+      <>
+        <Header/>
+        <div style={{padding:"80px",textAlign:"center"}}>
+          <h2>Không tìm thấy khóa học</h2>
+          <button
+            onClick={()=>navigate("/")}
+            style={styles.btn}
+          >
+            Quay về trang chủ
+          </button>
+        </div>
+        <Footer/>
+      </>
+    );
+  }
 
-        {/* LEFT */}
-        <div className="lg:col-span-2 bg-white p-4 rounded shadow">
-          <img
-            src={course.image}
-            className="w-full h-[300px] object-cover rounded mb-4"
-          />
+  const isFree =
+    (course.type||"").toLowerCase()==="free"
+    || course.price===0;
 
-          <h1 className="text-2xl font-bold mb-2">{course.name}</h1>
+  return(
+    <div style={styles.page}>
+      <Header/>
 
-          {/* BUTTONS */}
-          <div className="flex gap-3 mb-4">
-            <button className="bg-orange-500 text-white px-4 py-2 rounded">
-              Trao đổi KH
-            </button>
-            <button className="bg-green-500 text-white px-4 py-2 rounded">
-              Học thử
-            </button>
+      <main style={styles.main}>
+        <div style={styles.hero}>
+          {/* Left */}
+          <div>
+            <img
+              src={course.image || "https://via.placeholder.com/800x450"}
+              alt={course.name}
+              style={styles.image}
+            />
+
+            <div style={styles.rowBtns}>
+              <button style={styles.yellowBtn}>
+                <MessageCircle size={16}/>
+                Trao đổi KH
+              </button>
+
+              <button style={styles.greenBtn}>
+                <PlayCircle size={16}/>
+                Học thử
+              </button>
+            </div>
           </div>
 
-          {/* TAB */}
-          <div className="border-b flex gap-6 mb-4">
-            <button
-              onClick={() => setTab("desc")}
-              className={tab === "desc" ? "font-bold border-b-2 border-blue-500 pb-2" : ""}
-            >
-              Mô tả
-            </button>
+          {/* Center */}
+          <div>
+            <h1>{course.name}</h1>
 
-            <button
-              onClick={() => setTab("content")}
-              className={tab === "content" ? "font-bold border-b-2 border-blue-500 pb-2" : ""}
-            >
-              Nội dung
-            </button>
-          </div>
+            <div style={{margin:"15px 0"}}>
+              <span style={styles.price}>
+                {isFree ? "Miễn phí" : formatPrice(course.price)}
+              </span>
 
-          {/* TAB CONTENT */}
-          {tab === "desc" && (
-            <div>
-              <h2 className="text-xl font-bold mb-3 text-orange-500">
-                Bí quyết dùng người đúng việc
-              </h2>
+              {!isFree && (
+                <span style={styles.oldPrice}>
+                  {formatPrice(course.price*1.5)}
+                </span>
+              )}
+            </div>
 
-              <p className="text-gray-700 leading-relaxed mb-4">
-                {course.description || "Chưa có mô tả"}
-              </p>
+            <p><Clock size={14}/> 59 Bài giảng</p>
+            <p><FileText size={14}/> Online</p>
 
-              <img src={course.image} className="w-full rounded mb-4" />
+            <div style={{marginTop:"25px"}}>
+              <button style={styles.outlineBtn}>
+                <UserCircle size={16}/>
+                Nâng cấp hội viên
+              </button>
 
-              {/* ƯU NHƯỢC */}
-              <div className="grid grid-cols-2 gap-4 border p-4 rounded">
-                <div>
-                  <h3 className="font-bold text-green-600">Ưu điểm</h3>
-                  <ul className="text-sm mt-2">
-                    <li>✔ Video HD</li>
-                    <li>✔ Tài liệu đầy đủ</li>
-                    <li>✔ Giá rẻ</li>
-                  </ul>
-                </div>
+              <button style={styles.grayBtn}>
+                <Star size={16}/>
+                Cộng đồng
+              </button>
 
-                <div>
-                  <h3 className="font-bold text-orange-500">Nhược điểm</h3>
-                  <ul className="text-sm mt-2">
-                    <li>✖ Không hỗ trợ trực tiếp</li>
-                  </ul>
-                </div>
+              <div style={styles.buyRow}>
+                <button style={styles.darkBtn}>
+                  <ShoppingCart size={16}/>
+                  Giỏ hàng
+                </button>
+
+                <button style={styles.blueBtn}>
+                  Thanh toán
+                </button>
               </div>
             </div>
-          )}
+          </div>
 
-          {tab === "content" && (
-            <div>
-              <p>Nội dung khóa học đang cập nhật...</p>
+          {/* Right */}
+          <div>
+            <Feature
+              icon={<FileText size={20}/>}
+              title="Đầy đủ bài giảng"
+              desc="Video và tài liệu đầy đủ"
+            />
+
+            <Feature
+              icon={<PlayCircle size={20}/>}
+              title="Học online tiện lợi"
+              desc="Học trên điện thoại và máy tính"
+            />
+
+            <Feature
+              icon={<CheckCircle size={20}/>}
+              title="Kích hoạt nhanh"
+              desc="Nhận khóa học trong vài giây"
+            />
+          </div>
+        </div>
+
+        <div style={styles.contentWrap}>
+          {/* main */}
+          <div style={styles.contentBox}>
+            <div style={styles.tabs}>
+              <button
+                onClick={()=>setActiveTab("desc")}
+                style={
+                  activeTab==="desc"
+                  ? styles.activeTab
+                  : styles.tab
+                }
+              >
+                Mô tả
+              </button>
+
+              <button
+                onClick={()=>setActiveTab("learn")}
+                style={
+                  activeTab==="learn"
+                  ? styles.activeTab
+                  : styles.tab
+                }
+              >
+                Vào học
+              </button>
             </div>
-          )}
-        </div>
 
-        {/* RIGHT */}
-        <div className="bg-white p-4 rounded shadow h-fit">
-          <h2 className="text-lg font-bold mb-2">{course.name}</h2>
-
-          <div className="text-gray-400 line-through">
-            {formatPrice(course.price * 1.5)}
-          </div>
-
-          <div className="text-blue-600 text-2xl font-bold mb-4">
-            {formatPrice(course.price)}
-          </div>
-
-          <button className="w-full border border-red-400 text-red-500 py-2 rounded mb-2">
-            Nâng cấp gói hội viên
-          </button>
-
-          <button className="w-full bg-blue-500 text-white py-2 rounded mb-2">
-            Thêm vào giỏ
-          </button>
-
-          <button className="w-full bg-green-500 text-white py-2 rounded">
-            Thanh toán ngay
-          </button>
-
-          {/* INFO BOX */}
-          <div className="mt-4 space-y-3 text-sm">
-            <div className="bg-gray-100 p-2 rounded">📚 15 bài giảng</div>
-            <div className="bg-gray-100 p-2 rounded">💻 Học online</div>
-            <div className="bg-gray-100 p-2 rounded">⚡ Kích hoạt nhanh</div>
-          </div>
-        </div>
-      </div>
-
-      {/* SIDEBAR COURSE */}
-      <div className="max-w-7xl mx-auto p-6">
-        <h2 className="text-xl font-bold mb-4 text-green-600">
-          Khóa học mới
-        </h2>
-
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {courses.slice(0, 5).map((c) => (
-            <div key={c.id} className="bg-white p-2 rounded shadow">
-              <img src={c.image} className="h-24 w-full object-cover rounded" />
-              <p className="text-sm mt-2 line-clamp-2">{c.name}</p>
-              <p className="text-blue-500 font-bold text-sm">
-                {formatPrice(c.price)}
-              </p>
+            <div style={{padding:25}}>
+              {activeTab==="desc" ? (
+                course.description
+                ? <div dangerouslySetInnerHTML={{__html:course.description}}/>
+                : <p>Chưa có mô tả khóa học.</p>
+              ) : (
+                <div style={{textAlign:"center"}}>
+                  Nội dung đang cập nhật...
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      <Footer />
+          {/* sidebar */}
+          <div>
+            <h3>Khóa học mới</h3>
+
+            {newCourses.map(c=>(
+              <div
+                key={c.id}
+                onClick={()=>navigate(`/course/${c.id}`)}
+                style={styles.sideItem}
+              >
+                <img
+                  src={c.image}
+                  alt={c.name}
+                  style={styles.sideImg}
+                />
+
+                <div>
+                  <div>{c.name}</div>
+                  <b>{formatPrice(c.price)}</b>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </main>
+
+      <Footer/>
     </div>
   );
 }
+
+function Feature({icon,title,desc}){
+  return(
+    <div style={styles.feature}>
+      {icon}
+      <div>
+        <b>{title}</b>
+        <p style={{margin:0,fontSize:12}}>
+          {desc}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+const styles={
+ page:{
+  minHeight:"100vh",
+  background:"#f8fafc"
+ },
+ main:{
+  maxWidth:1200,
+  margin:"auto",
+  padding:20
+ },
+ hero:{
+  display:"grid",
+  gridTemplateColumns:"1.2fr 1fr .8fr",
+  gap:20,
+  background:"#fff",
+  padding:20,
+  borderRadius:12
+ },
+ image:{
+  width:"100%",
+  borderRadius:8
+ },
+ rowBtns:{
+  display:"grid",
+  gridTemplateColumns:"1fr 1fr",
+  gap:10,
+  marginTop:12
+ },
+ yellowBtn:{
+  padding:10
+ },
+ greenBtn:{
+  padding:10
+ },
+ price:{
+  fontSize:28,
+  fontWeight:800,
+  color:"#2563eb",
+  marginRight:10
+ },
+ oldPrice:{
+  textDecoration:"line-through"
+ },
+ outlineBtn:{
+  width:"100%",
+  padding:12,
+  marginBottom:10
+ },
+ grayBtn:{
+  width:"100%",
+  padding:12,
+  marginBottom:10
+ },
+ buyRow:{
+  display:"grid",
+  gridTemplateColumns:"1fr 1fr",
+  gap:10
+ },
+ darkBtn:{padding:12},
+ blueBtn:{padding:12},
+ feature:{
+  display:"flex",
+  gap:12,
+  background:"#fff",
+  padding:14,
+  borderRadius:8,
+  marginBottom:12
+ },
+ contentWrap:{
+  display:"grid",
+  gridTemplateColumns:"1fr 300px",
+  gap:30,
+  marginTop:30
+ },
+ contentBox:{
+  background:"#fff",
+  borderRadius:12
+ },
+ tabs:{
+  display:"flex",
+  borderBottom:"1px solid #ddd"
+ },
+ tab:{
+  padding:15,
+  border:"none",
+  background:"white"
+ },
+ activeTab:{
+  padding:15,
+  border:"none",
+  borderBottom:"2px solid blue",
+  background:"white"
+ },
+ sideItem:{
+  display:"flex",
+  gap:10,
+  padding:10,
+  background:"#fff",
+  marginBottom:10,
+  cursor:"pointer",
+  borderRadius:8
+ },
+ sideImg:{
+  width:80,
+  height:60,
+  objectFit:"cover"
+ },
+ btn:{
+  padding:"10px 20px"
+ }
+};

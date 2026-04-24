@@ -1,8 +1,8 @@
 package com.onlinelearning.backend.course.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.onlinelearning.backend.promotion.entity.Promotion_course;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,12 +12,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Getter 
+@Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "courses")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) 
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Course implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -31,27 +31,32 @@ public class Course implements Serializable {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private Double price; 
-    
+    private Double price;
+
     private String image;
 
     @Column(name = "instructor_id")
     private String instructorId;
 
     private String type;
-    
+
     private String status;
-    
+
     @Column(name = "created_at", updatable = false)
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
-    
+
     @Column(name = "updated_at")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
 
-    @JsonManagedReference(value = "course-promotion")
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "course",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.EAGER
+    )
     private List<Promotion_course> promotionCourses;
 
     @PrePersist
