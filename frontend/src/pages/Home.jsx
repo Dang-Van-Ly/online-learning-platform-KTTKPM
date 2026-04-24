@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 // Layout
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-
+import { useNavigate } from "react-router-dom";
 // API
 import { getAllCourses } from "../api/courseApi";
 
@@ -27,12 +27,16 @@ const SECTION_CONFIGS = [
 // --- COMPONENTS NHỎ ---
 
 const CourseCard = ({ course }) => {
+  const navigate = useNavigate(); // 👈 thêm dòng này
+
   const formatPrice = (price) => {
     return price ? new Intl.NumberFormat('vi-VN').format(price) + 'đ' : '0đ';
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 flex flex-col hover:shadow-md transition-shadow group cursor-pointer h-full">
+    
+    <div       onClick={() => navigate(`/course/${course.id}`)} // 👈 thêm dòng này
+      className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 flex flex-col hover:shadow-md transition-shadow group cursor-pointer h-full">
       <div className="relative overflow-hidden bg-gray-100">
         <img 
           src={course.image} 

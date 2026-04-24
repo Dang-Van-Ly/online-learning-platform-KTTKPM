@@ -1,5 +1,6 @@
 package com.onlinelearning.backend.user.entity;
 
+import java.io.Serializable;
 import com.onlinelearning.backend.membership.entity.User_membership;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,7 +13,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users")
-public class User {
+public class User implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,7 +26,6 @@ public class User {
     private String phone;
     private String email;
 
-    // ✅ FIX: dùng enum thay vì String
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
 
@@ -33,7 +35,9 @@ public class User {
     private LocalDateTime createdAt = LocalDateTime.now();
     private Boolean status = true;
 
+    // ❌ KHÔNG cho Redis serialize cái này
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @ToString.Exclude
+    @Transient
     private List<User_membership> memberships;
 }

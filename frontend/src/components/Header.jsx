@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { useContext } from 'react';
 // 1. Import useNavigate từ react-router-dom
 import { useNavigate } from 'react-router-dom'; 
 import { Search, ShoppingCart, UserCircle } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
 
 const KHOKHOAHOCHeader = () => {
   // 2. Khởi tạo hook navigate
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+
+  const userName = user?.fullName || user?.name || user?.username || user?.email || 'Tài khoản';
+  const userInitial = userName.trim().charAt(0).toUpperCase();
 
   const s = {
     header: {
@@ -94,6 +99,7 @@ const KHOKHOAHOCHeader = () => {
     actions: {
       display: 'flex',
       gap: '10px',
+      alignItems: 'center'
     },
     loginBtn: {
       backgroundColor: '#3b82f6',
@@ -108,6 +114,31 @@ const KHOKHOAHOCHeader = () => {
       alignItems: 'center',
       gap: '6px',
       cursor: 'pointer',
+    },
+    profileBtn: {
+      backgroundColor: '#fff',
+      color: '#333',
+      border: '1px solid #ddd',
+      padding: '0 12px',
+      height: '34px',
+      borderRadius: '22px',
+      fontSize: '12px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      cursor: 'pointer',
+      boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
+    },
+    profileAvatar: {
+      width: '28px',
+      height: '28px',
+      borderRadius: '50%',
+      backgroundColor: '#3b82f6',
+      color: 'white',
+      display: 'grid',
+      placeItems: 'center',
+      fontSize: '13px',
+      fontWeight: '700',
     },
     cartBtn: {
       backgroundColor: 'white',
@@ -190,11 +221,20 @@ const KHOKHOAHOCHeader = () => {
         </div>
 
         <div style={s.actions}>
-          {/* 3. THÊM SỰ KIỆN onClick để chuyển sang /login */}
-          <button style={s.loginBtn} onClick={() => navigate('/login')}>
-            <UserCircle size={16} /> ĐĂNG NHẬP
-          </button>
-          
+          {user ? (
+            <button
+              style={s.profileBtn}
+              onClick={() => navigate('/profile')}
+            >
+              <span style={s.profileAvatar}>{userInitial}</span>
+              <span>{userName}</span>
+            </button>
+          ) : (
+            <button style={s.loginBtn} onClick={() => navigate('/login')}>
+              <UserCircle size={16} /> ĐĂNG NHẬP
+            </button>
+          )}
+
           <button style={s.cartBtn}>
             Giỏ hàng <ShoppingCart size={16} />
           </button>

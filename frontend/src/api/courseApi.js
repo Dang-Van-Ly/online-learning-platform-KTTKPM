@@ -11,3 +11,7 @@ export const getAllCourses = async () => {
         return [];
     }
 };
+export const getCourseById = async (id) => {
+  const res = await fetch(`http://localhost:8080/api/courses/${id}`);
+  return res.json();
+};

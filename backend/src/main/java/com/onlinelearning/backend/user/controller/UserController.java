@@ -1,11 +1,13 @@
 package com.onlinelearning.backend.user.controller;
 
+import com.onlinelearning.backend.user.dto.UserDTO;
 import com.onlinelearning.backend.user.entity.User;
 import com.onlinelearning.backend.user.service.UserService;
 
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/users")
@@ -17,32 +19,32 @@ public class UserController {
         this.service = service;
     }
 
-    // CREATE
+    // ================= CREATE =================
     @PostMapping("/register")
     public User register(@RequestBody User user) {
         return service.register(user);
     }
 
-    // READ ONE
+    // ================= READ ONE =================
     @GetMapping("/{id}")
-    public User getUser(@PathVariable Long id) {
+    public UserDTO getUser(@PathVariable Long id) {
         return service.getById(id);
     }
 
-    // READ ALL
+    // ================= READ ALL =================
     @GetMapping
-    public List<User> getAllUsers() {
+    public List<UserDTO> getAllUsers() {
         return service.getAllUsers();
     }
 
-    // UPDATE
+    // ================= UPDATE =================
     @PutMapping("/{id}")
     public User updateUser(@PathVariable Long id,
                            @RequestBody User user) {
         return service.updateUser(id, user);
     }
 
-    // DELETE
+    // ================= DELETE =================
     @DeleteMapping("/{id}")
     public String deleteUser(@PathVariable Long id) {
         service.deleteUser(id);

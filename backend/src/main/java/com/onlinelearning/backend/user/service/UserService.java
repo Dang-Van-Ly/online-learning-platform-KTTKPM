@@ -1,5 +1,6 @@
 package com.onlinelearning.backend.user.service;
 
+import com.onlinelearning.backend.user.dto.UserDTO;
 import com.onlinelearning.backend.user.entity.User;
 import com.onlinelearning.backend.user.repository.UserRepository;
 import org.springframework.cache.annotation.CacheEvict;
@@ -38,20 +39,25 @@ public class UserService {
         return repo.save(user);
     }
 
-    // ================= GET BY ID (CACHE) =================
+    // ================= GET BY ID (CACHE DTO) =================
     @Cacheable(value = "user", key = "#id")
-    public User getById(Long id) {
-        return repo.findById(id)
+    public UserDTO getById(Long id) {
+        User user = repo.findById(id)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+
+        return mapToDTO(user);
     }
 
-    // ================= GET ALL (CACHE) =================
+    // ================= GET ALL (CACHE DTO) =================
     @Cacheable(value = "users")
-    public List<User> getAllUsers() {
-        return repo.findAll();
+    public List<UserDTO> getAllUsers() {
+        return repo.findAll()
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
-    // ================= UPDATE (CLEAR CACHE) =================
+    // ================= UPDATE =================
     @CacheEvict(value = {"users", "user"}, allEntries = true)
     public User updateUser(Long id, User newUser) {
 
@@ -67,13 +73,12 @@ public class UserService {
 
         User saved = repo.save(user);
 
-        // 🔥 gọi retry service sau khi update
         notifyUserUpdate(saved.getId());
 
         return saved;
     }
 
-    // ================= DELETE (CLEAR CACHE) =================
+    // ================= DELETE =================
     @CacheEvict(value = {"users", "user"}, allEntries = true)
     public void deleteUser(Long id) {
 
@@ -83,6 +88,7 @@ public class UserService {
         repo.delete(user);
     }
 
+    // ================= RETRY =================
     @Retryable(
             value = Exception.class,
             maxAttempts = 3,
@@ -93,10 +99,8 @@ public class UserService {
         User user = repo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
-        // giả lập service ngoài (email / notification)
         System.out.println("Sending notification to user: " + user.getEmail());
 
-        // giả lập lỗi (để demo retry)
         if (Math.random() < 0.7) {
             throw new RuntimeException("Notification service failed");
         }
@@ -110,5 +114,14 @@ public class UserService {
         System.out.println("Retry failed for userId: " + userId);
 
         return "NOTIFICATION_FAILED_BUT_SAVED_FOR_LATER";
+    }
+
+    // ================= MAPPER =================
+    private UserDTO mapToDTO(User user) {
+        return new UserDTO(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail()
+        );
     }
 }

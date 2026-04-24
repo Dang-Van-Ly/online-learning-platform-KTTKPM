@@ -26,8 +26,16 @@ export default function Login() {
                 password: password.trim()
             });
             
+            const userData = {
+                username: res.data.username,
+                email: res.data.email || res.data.username,
+                fullName: res.data.fullName || res.data.name || res.data.username,
+                role: res.data.role || res.data.roles || 'Người dùng',
+                token: res.data.token,
+            };
+
             // Lưu thông tin user vào context
-            loginUser(res.data);
+            loginUser(userData);
             
             // 3. Chuyển hướng về trang home sau khi thành công
             alert("Đăng nhập thành công!");

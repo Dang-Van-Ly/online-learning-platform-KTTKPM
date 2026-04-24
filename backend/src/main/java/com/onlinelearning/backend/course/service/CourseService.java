@@ -27,14 +27,14 @@ public class CourseService {
         }, "CREATE COURSE");
     }
 
-    // ================= GET ALL (CACHE) =================
-    @Cacheable(value = "courses")
+    // ================= GET ALL (CACHE DISABLED TEMPORARILY) =================
+    // @Cacheable(value = "courses")
     public List<Course> getAll() {
         return executeWithRetry(() -> repo.findAll(), "GET ALL COURSES");
     }
 
-    // ================= GET BY ID (CACHE + RETRY) =================
-    @Cacheable(value = "course", key = "#id")
+    // ================= GET BY ID (CACHE DISABLED TEMPORARILY + RETRY) =================
+    // @Cacheable(value = "course", key = "#id")
     public Course getById(Long id) {
         return executeWithRetry(() ->
                         repo.findById(id)
@@ -42,8 +42,8 @@ public class CourseService {
                 , "GET COURSE BY ID");
     }
 
-    // ================= UPDATE (CACHE CLEAR + RETRY) =================
-    @CacheEvict(value = "courses", allEntries = true)
+    // ================= UPDATE (CACHE CLEAR DISABLED TEMPORARILY + RETRY) =================
+    // @CacheEvict(value = "courses", allEntries = true)
     public Course update(Long id, Course newData) {
         return executeWithRetry(() -> {
 
