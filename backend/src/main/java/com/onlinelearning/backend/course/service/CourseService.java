@@ -33,6 +33,11 @@ public class CourseService {
         return executeWithRetry(() -> repo.findAll(), "GET ALL COURSES");
     }
 
+    // ================= GET BY CATEGORY =================
+    public List<Course> getByCategory(String category) {
+        return executeWithRetry(() -> repo.findByCategoryIgnoreCase(category), "GET COURSES BY CATEGORY");
+    }
+
     // ================= GET BY ID (CACHE DISABLED TEMPORARILY + RETRY) =================
     // @Cacheable(value = "course", key = "#id")
     public Course getById(Long id) {
@@ -54,6 +59,9 @@ public class CourseService {
             course.setDescription(newData.getDescription());
             course.setPrice(newData.getPrice());
             course.setImage(newData.getImage());
+            if (newData.getCategory() != null) {
+                course.setCategory(newData.getCategory());
+            }
             course.setStatus(newData.getStatus());
             course.setUpdatedAt(LocalDateTime.now());
 

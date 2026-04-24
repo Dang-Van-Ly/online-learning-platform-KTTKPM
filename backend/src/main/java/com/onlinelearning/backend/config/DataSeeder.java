@@ -9,8 +9,33 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class DataSeeder implements CommandLineRunner {
+
+    private static final String[] DEFAULT_CATEGORIES = {
+            "Ads",
+            "Lập trình - Web",
+            "SEO",
+            "Copywriting",
+            "AI - ChatGPT",
+            "Data Analysis",
+            "Tiktok",
+            "Bất động sản",
+            "Shopee",
+            "Kiếm tiền online",
+            "Tiếng Anh",
+            "Tin học văn phòng",
+            "Tài Chính - Kế Toán",
+            "Crypto - Forex - Chứng khoán",
+            "Phòng the",
+            "Đồ họa - Thiết kế",
+            "Edit Video",
+            "Kinh doanh - Marketing",
+            "Phong Thủy",
+            "Tiếng Trung - Nhật - Hàn"
+    };
 
     private final CourseRepository courseRepository;
     private final ChapterRepository chapterRepository;
@@ -71,7 +96,20 @@ public class DataSeeder implements CommandLineRunner {
 
         // ================= COURSE =================
         if (courseRepository.count() > 0) {
-            System.out.println("⚠️ Data already exists, skip course seeding");
+            System.out.println("⚠️ Data already exists, checking course categories...");
+            List<Course> existingCourses = courseRepository.findAll();
+            boolean updated = false;
+            for (int i = 0; i < existingCourses.size(); i++) {
+                Course course = existingCourses.get(i);
+                if (course.getCategory() == null || course.getCategory().isBlank()) {
+                    course.setCategory(DEFAULT_CATEGORIES[i % DEFAULT_CATEGORIES.length]);
+                    courseRepository.save(course);
+                    updated = true;
+                }
+            }
+            System.out.println(updated
+                    ? "✅ Existing courses updated with category values"
+                    : "✅ Existing courses already have category values");
             return;
         }
 
@@ -84,6 +122,7 @@ public class DataSeeder implements CommandLineRunner {
             course.setDescription("This is course number " + i);
             course.setPrice(100000.0 + (i * 10000));
             course.setImage("https://picsum.photos/400/300?random=" + i);
+            course.setCategory(DEFAULT_CATEGORIES[(i - 1) % DEFAULT_CATEGORIES.length]);
             course.setInstructorId("instructor-" + i);
             course.setType(i % 2 == 0 ? "FREE" : "PAID");
             course.setStatus("ACTIVE");

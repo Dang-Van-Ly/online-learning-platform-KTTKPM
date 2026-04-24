@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +15,8 @@ const CATEGORIES = [
   ["Phong Thủy", "Tiếng Trung - Nhật - Hàn"],
   ["Khóa học khác", "Ôn Thi THPT"],
 ];
+
+const FLAT_CATEGORIES = CATEGORIES.flat();
 
 const SECTION_CONFIGS = [
   { title: "Làm Chủ", highlight: "THU NHẬP THỤ ĐỘNG", color: "text-purple-600", sub: "Các bí kíp MMO, Affiliate..." },
@@ -52,6 +54,11 @@ const CourseCard = ({ course }) => {
 
       <div className="p-4 flex flex-col flex-grow">
         <h3 className="text-sm font-bold line-clamp-2">{course.name}</h3>
+        {course.category && (
+          <div className="text-xs text-gray-500 mt-2 line-clamp-1">
+            {course.category}
+          </div>
+        )}
 
         <div className="mt-auto">
           <div className="text-gray-400 line-through text-xs">
@@ -80,19 +87,25 @@ const SectionHeader = ({ title, highlight, highlightColor, subtitle }) => (
 export default function Home() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState("");
 
   useEffect(() => {
     const fetch = async () => {
-      const data = await getAllCourses();
+      setLoading(true);
+      const data = await getAllCourses(selectedCategory);
       setCourses(data || []);
       setLoading(false);
     };
     fetch();
-  }, []);
+  }, [selectedCategory]);
+
+  const filteredCourses = useMemo(() => {
+    return courses;
+  }, [courses]);
 
   const getSectionData = (index) => {
     const start = index * 4;
-    return courses.slice(start, start + 4);
+    return filteredCourses.slice(start, start + 4);
   };
 
   return (
@@ -102,13 +115,34 @@ export default function Home() {
       <main className="max-w-7xl mx-auto w-full px-4 py-6">
 
         {/* CATEGORY */}
-        <div className="grid grid-cols-2 gap-1 mb-10 bg-blue-500 text-white">
-          {CATEGORIES.map((pair, i) => (
-            <React.Fragment key={i}>
-              <div className="p-2 text-sm">{pair[0]}</div>
-              <div className="p-2 text-sm">{pair[1]}</div>
-            </React.Fragment>
-          ))}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold mb-3">Danh mục khóa học</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {FLAT_CATEGORIES.map((category, index) => (
+              <button
+                key={index}
+                onClick={() => setSelectedCategory(category === selectedCategory ? "" : category)}
+                className={`rounded-lg border px-3 py-2 text-xs text-left transition-all duration-150 ${
+                  category === selectedCategory
+                    ? "border-blue-600 bg-blue-600 text-white"
+                    : "border-gray-200 bg-white text-gray-700 hover:bg-blue-50"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+          {selectedCategory && (
+            <div className="mt-3 text-sm text-gray-600">
+              Lọc theo: <span className="font-semibold">{selectedCategory}</span>{" "}
+              <button
+                onClick={() => setSelectedCategory("")}
+                className="underline text-blue-600 hover:text-blue-800"
+              >
+                Bỏ lọc
+              </button>
+            </div>
+          )}
         </div>
 
         {/* TOP COURSES */}

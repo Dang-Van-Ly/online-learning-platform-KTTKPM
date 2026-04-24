@@ -15,6 +15,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     // Tìm kiếm các khóa học theo trạng thái (ví dụ: ACTIVE)
     List<Course> findByStatus(String status);
 
+    // Tìm kiếm khóa học theo danh mục
+    List<Course> findByCategoryIgnoreCase(String category);
+
     // Kiểm tra xem ID khóa học đã tồn tại chưa
     boolean existsById(Long id);
 }

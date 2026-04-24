@@ -21,9 +21,13 @@ public class CourseController {
 
     // Lấy danh sách khóa học (API mà bạn đang bị lỗi 500)
     @GetMapping
-    public ResponseEntity<List<Course>> getAll() {
+    public ResponseEntity<List<Course>> getAll(
+            @RequestParam(required = false) String category
+    ) {
         try {
-            List<Course> courses = service.getAll();
+            List<Course> courses = (category == null || category.isBlank())
+                    ? service.getAll()
+                    : service.getByCategory(category);
             return ResponseEntity.ok(courses);
         } catch (Exception e) {
             e.printStackTrace(); // In lỗi ra console để debug

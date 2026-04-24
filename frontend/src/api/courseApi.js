@@ -2,9 +2,10 @@ import axios from 'axios';
 
 const API_URL = "http://localhost:8080/api/courses";
 
-export const getAllCourses = async () => {
+export const getAllCourses = async (category) => {
     try {
-        const response = await axios.get(API_URL);
+        const url = category ? `${API_URL}?category=${encodeURIComponent(category)}` : API_URL;
+        const response = await axios.get(url);
         return response.data;
     } catch (error) {
         console.error("Error fetching courses:", error);

@@ -35,6 +35,8 @@ public class Course implements Serializable {
 
     private String image;
 
+    private String category;
+
     @Column(name = "instructor_id")
     private String instructorId;
 
