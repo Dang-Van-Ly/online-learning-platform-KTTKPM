@@ -26,17 +26,24 @@ const SECTION_CONFIGS = [
 
 // --- COMPONENTS NHỎ ---
 
+import { useNavigate } from "react-router-dom";
+
 const CourseCard = ({ course }) => {
+  const navigate = useNavigate();
+
   const formatPrice = (price) => {
     return price ? new Intl.NumberFormat('vi-VN').format(price) + 'đ' : '0đ';
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 flex flex-col hover:shadow-md transition-shadow group cursor-pointer h-full">
+    <div 
+      onClick={() => navigate(`/course/${course.id}`)}
+      className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 flex flex-col hover:shadow-md transition-shadow group cursor-pointer h-full"
+    >
       <div className="relative overflow-hidden bg-gray-100">
-        <img 
-          src={course.image} 
-          alt={course.name} 
+        <img
+          src={course.image}
+          alt={course.name}
           className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => { e.target.src = "https://via.placeholder.com/400x300?text=No+Image"; }}
         />
@@ -103,7 +110,7 @@ export default function Home() {
       <Header />
 
       <main className="flex-grow w-full max-w-7xl mx-auto px-4 py-8 md:px-6">
-        
+
         {/* SECTION 1: SIDEBAR & TOP COURSES */}
         <div className="flex flex-col lg:flex-row gap-8 mb-16">
           <aside className="lg:w-1/3">
@@ -148,7 +155,7 @@ export default function Home() {
         {/* BANNER QUẢNG CÁO */}
         <div className="mb-16 border-[3px] border-blue-400 rounded-sm p-8 text-center bg-white relative shadow-sm">
           <h2 className="text-blue-700 font-black text-2xl md:text-4xl mb-3 tracking-tighter uppercase">
-             ĐANG KẾT NỐI VỚI DỮ LIỆU THỰC ({courses.length} Khóa học)
+            ĐANG KẾT NỐI VỚI DỮ LIỆU THỰC ({courses.length} Khóa học)
           </h2>
           <p className="text-gray-500 max-w-4xl mx-auto text-base md:text-lg font-medium leading-relaxed">
             Dữ liệu được lấy trực tiếp từ Docker MariaDB thông qua API Spring Boot.
@@ -164,9 +171,9 @@ export default function Home() {
 
           return (
             <div key={idx} className="mb-16">
-              <SectionHeader 
-                title={config.title} 
-                highlight={config.highlight} 
+              <SectionHeader
+                title={config.title}
+                highlight={config.highlight}
                 highlightColor={config.color}
                 subtitle={config.sub}
               />
