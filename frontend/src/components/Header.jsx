@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 // 1. Import useNavigate từ react-router-dom
 import { useNavigate } from 'react-router-dom'; 
 import { Search, ShoppingCart, UserCircle } from 'lucide-react';
@@ -6,6 +6,20 @@ import { Search, ShoppingCart, UserCircle } from 'lucide-react';
 const KHOKHOAHOCHeader = () => {
   // 2. Khởi tạo hook navigate
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/search');
+    }
+  };
+
+  const handlePriceNavigation = (priceFilter) => {
+    navigate(`/search?price=${priceFilter}`);
+  };
 
   const s = {
     header: {
@@ -182,12 +196,17 @@ const KHOKHOAHOCHeader = () => {
           </div>
         </div>
 
-        <div style={s.searchBar}>
-          <input style={s.searchInput} placeholder="Nhập tên khóa học hoặc giảng viên..." />
-          <button style={s.searchBtn}>
+        <form style={s.searchBar} onSubmit={handleSearch}>
+          <input 
+            style={s.searchInput} 
+            placeholder="Nhập tên khóa học hoặc giảng viên..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button style={s.searchBtn} type="submit">
             <Search size={16} />
           </button>
-        </div>
+        </form>
 
         <div style={s.actions}>
           {/* 3. THÊM SỰ KIỆN onClick để chuyển sang /login */}
@@ -208,9 +227,9 @@ const KHOKHOAHOCHeader = () => {
             Nâng Cấp Hội Viên <span style={s.saleBadge}>GIẢM GIÁ</span>
           </li>
           <li style={s.navItem}>COMBO</li>
-          <li style={s.navItem}>Khóa học dưới 100k <small>▼</small></li>
-          <li style={s.navItem}>Khóa học dưới 150k <small>▼</small></li>
-          <li style={s.navItem}>Khóa học dưới 500k <small>▼</small></li>
+          <li style={s.navItem} onClick={() => handlePriceNavigation('under100k')}>Khóa học dưới 100k <small>▼</small></li>
+          <li style={s.navItem} onClick={() => handlePriceNavigation('under150k')}>Khóa học dưới 150k <small>▼</small></li>
+          <li style={s.navItem} onClick={() => handlePriceNavigation('under500k')}>Khóa học dưới 500k <small>▼</small></li>
           <li style={s.navItem}>Hướng dẫn</li>
           <li style={s.navItem}>Blog</li>
         </ul>

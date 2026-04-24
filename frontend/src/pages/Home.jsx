@@ -26,13 +26,20 @@ const SECTION_CONFIGS = [
 
 // --- COMPONENTS NHỎ ---
 
+import { useNavigate } from "react-router-dom";
+
 const CourseCard = ({ course }) => {
+  const navigate = useNavigate();
+
   const formatPrice = (price) => {
     return price ? new Intl.NumberFormat('vi-VN').format(price) + 'đ' : '0đ';
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 flex flex-col hover:shadow-md transition-shadow group cursor-pointer h-full">
+    <div 
+      onClick={() => navigate(`/course/${course.id}`)}
+      className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 flex flex-col hover:shadow-md transition-shadow group cursor-pointer h-full"
+    >
       <div className="relative overflow-hidden bg-gray-100">
         <img
           src={course.image}

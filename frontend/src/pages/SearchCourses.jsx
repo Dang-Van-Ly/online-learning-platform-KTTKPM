@@ -3,10 +3,11 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { getAllCourses } from "../api/courseApi";
 import { ChevronDown } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 // --- CẤU HÌNH BỘ LỌC GIÁ ---
 const PRICE_FILTERS = [
-  { id: "free", label: "Khóa Học Miễn Phí", check: (course) => (course.type || "").toLowerCase() === "free" },
+  { id: "free", label: "Khóa Học Miễn Phí", check: (course) => (course.type || "").toLowerCase() === "free" || course.price === 0 },
   { id: "under100k", label: "Khóa học dưới 100k", check: (course) => (course.price || 0) > 0 && (course.price || 0) < 100000 },
   { id: "under150k", label: "Khóa học dưới 150k", check: (course) => (course.price || 0) > 0 && (course.price || 0) < 150000 },
   { id: "under500k", label: "Khóa học dưới 500k", check: (course) => (course.price || 0) > 0 && (course.price || 0) < 500000 },
@@ -40,10 +41,8 @@ const SORT_OPTIONS = [
   { value: "price_desc", label: "Sắp xếp theo giá: cao đến thấp" },
 ];
 
-import { useNavigate } from "react-router-dom";
-
-// --- COURSE CARD DÙNG CHO TRANG FREE ---
-const FreeCourseCard = ({ course }) => {
+// --- COURSE CARD ---
+const SearchCourseCard = ({ course }) => {
   const navigate = useNavigate();
   
   const formatPrice = (price) => {
@@ -61,7 +60,7 @@ const FreeCourseCard = ({ course }) => {
             e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
           }}
         />
-        {(!course.price || course.price === 0) && (
+        {(!course.price || course.price === 0 || (course.type || "").toLowerCase() === "free") && (
           <span style={styles.freeBadge}>KHÓA HỌC</span>
         )}
       </div>
@@ -79,15 +78,30 @@ const FreeCourseCard = ({ course }) => {
 };
 
 // ============================
-// TRANG KHÓA HỌC MIỄN PHÍ
+// TRANG TÌM KIẾM & LỌC KHÓA HỌC
 // ============================
-export default function FreeCourses() {
+export default function SearchCourses() {
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get("q") || "";
+  const initialPriceFilter = searchParams.get("price");
+
   const [allCourses, setAllCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Filter state
-  const [selectedPriceFilters, setSelectedPriceFilters] = useState(["free"]);
+  const [selectedPriceFilters, setSelectedPriceFilters] = useState(
+    initialPriceFilter ? [initialPriceFilter] : []
+  );
   const [selectedCategories, setSelectedCategories] = useState([]);
+
+  // Cập nhật bộ lọc giá khi URL thay đổi (nhấn từ Header sang)
+  useEffect(() => {
+    if (initialPriceFilter) {
+      setSelectedPriceFilters([initialPriceFilter]);
+    } else {
+      setSelectedPriceFilters([]);
+    }
+  }, [initialPriceFilter]);
 
   // Sort state
   const [sortBy, setSortBy] = useState("newest");
@@ -97,16 +111,12 @@ export default function FreeCourses() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 9;
 
-  // Fetch data - chỉ lấy khóa học có type === "free"
+  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       const data = await getAllCourses();
-      // Lọc chỉ lấy khóa học miễn phí (type === "free")
-      const freeCourses = data.filter(
-        (course) => (course.type || "").toLowerCase() === "free"
-      );
-      setAllCourses(freeCourses);
+      setAllCourses(data || []);
       setLoading(false);
     };
     fetchData();
@@ -144,6 +154,16 @@ export default function FreeCourses() {
   // --- LỌC + SẮP XẾP ---
   const filteredAndSorted = useMemo(() => {
     let result = [...allCourses];
+
+    // Lọc theo từ khóa tìm kiếm (q)
+    if (query) {
+      const qLower = query.toLowerCase();
+      result = result.filter(
+        (course) =>
+          (course.name || "").toLowerCase().includes(qLower) ||
+          (course.teacher || "").toLowerCase().includes(qLower)
+      );
+    }
 
     // Lọc theo giá
     if (selectedPriceFilters.length > 0) {
@@ -186,7 +206,7 @@ export default function FreeCourses() {
     }
 
     return result;
-  }, [allCourses, selectedPriceFilters, selectedCategories, sortBy]);
+  }, [allCourses, query, selectedPriceFilters, selectedCategories, sortBy]);
 
   // --- PHÂN TRANG ---
   const totalPages = Math.ceil(filteredAndSorted.length / ITEMS_PER_PAGE);
@@ -198,18 +218,29 @@ export default function FreeCourses() {
   const currentSortLabel =
     SORT_OPTIONS.find((o) => o.value === sortBy)?.label || "Sắp xếp";
 
+  // Xác định tiêu đề trang
+  let pageTitle = "Tất Cả Khóa Học";
+  if (query) {
+    pageTitle = `Kết quả tìm kiếm: “${query}”`;
+  } else if (initialPriceFilter) {
+    const filterObj = PRICE_FILTERS.find((f) => f.id === initialPriceFilter);
+    if (filterObj) {
+      pageTitle = filterObj.label;
+    }
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#f8fafc" }}>
       <Header />
 
       <main style={styles.main}>
         {/* TIÊU ĐỀ */}
-        <div style={styles.pageHeader}>
-          <h1 style={styles.pageTitle}>Khóa Học Miễn Phí</h1>
+        <div style={{...styles.pageHeader, ...(query ? { backgroundColor: '#374151', padding: '20px 30px', margin: '-24px -20px 24px -20px', color: '#fff' } : {})}}>
+          <h1 style={{...styles.pageTitle, ...(query ? { color: '#fff' } : {})}}>{pageTitle}</h1>
           {/* SẮP XẾP */}
           <div style={styles.sortContainer}>
             <button
-              style={styles.sortButton}
+              style={{...styles.sortButton, ...(query ? { backgroundColor: '#4b5563', border: '1px solid #6b7280' } : {})}}
               onClick={() => setShowSortDropdown(!showSortDropdown)}
             >
               <span>{currentSortLabel}</span>
@@ -320,7 +351,7 @@ export default function FreeCourses() {
               <>
                 <div style={styles.grid}>
                   {paginatedCourses.map((course) => (
-                    <FreeCourseCard key={course.id} course={course} />
+                    <SearchCourseCard key={course.id} course={course} />
                   ))}
                 </div>
 
@@ -577,7 +608,7 @@ const styles = {
     backgroundColor: "#fff",
     borderRadius: "10px",
     overflow: "hidden",
-    border: "2px solid #fca5a5",
+    border: "1px solid #e2e8f0",
     display: "flex",
     flexDirection: "column",
     transition: "transform 0.2s, box-shadow 0.2s",
