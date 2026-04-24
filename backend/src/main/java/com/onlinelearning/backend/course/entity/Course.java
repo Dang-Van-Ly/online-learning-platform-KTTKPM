@@ -1,6 +1,6 @@
 package com.onlinelearning.backend.course.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.onlinelearning.backend.promotion.entity.Promotion_course;
 import jakarta.persistence.*;
@@ -47,8 +47,8 @@ public class Course implements Serializable {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @JsonManagedReference(value = "course-promotion")
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Promotion_course> promotionCourses;
 
     @PrePersist
