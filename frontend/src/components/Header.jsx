@@ -278,7 +278,7 @@ const KHOKHOAHOCHeader = () => {
         <ul style={s.navList}>
           <li
             style={s.navItem}
-            onClick={()=>navigate('/free-courses')}
+            onClick={()=>navigate('/filtered-courses')}
           >
             Khóa Học Free
           </li>
