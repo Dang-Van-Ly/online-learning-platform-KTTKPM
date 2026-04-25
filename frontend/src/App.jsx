@@ -1,8 +1,8 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
-import FreeCourses from "./pages/FreeCourses";
+import FilteredCourses from "./pages/FilteredCourses";
 import SearchCourses from "./pages/SearchCourses";
 import CourseDetail from "./pages/CourseDetail";
 import "./App.css";
@@ -18,9 +18,13 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
 
-        <Route path="/free-courses" element={<FreeCourses />} />
+        <Route path="/filtered-courses" element={<FilteredCourses />} />
 
         <Route path="/search" element={<SearchCourses />} />
+        
+        {/* Redirect /home or any unknown path to / */}
+        <Route path="/home" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
