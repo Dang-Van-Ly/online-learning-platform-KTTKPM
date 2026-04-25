@@ -7,6 +7,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.security.crypto.password.PasswordEncoder; // Thêm import này
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,12 +17,15 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository repo;
+    private final PasswordEncoder passwordEncoder; // Thêm final để đảm bảo bảo mật
 
-    public UserService(UserRepository repo) {
+    // ✅ Sửa Constructor để Inject cả Repo và PasswordEncoder
+    public UserService(UserRepository repo, PasswordEncoder passwordEncoder) {
         this.repo = repo;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    // ================= REGISTER =================
+    // ================= REGISTER (ĐÃ GỘP VÀO LÀM MỘT) =================
     public User register(User user) {
 
         if (repo.existsByEmail(user.getEmail())) {
@@ -31,6 +35,9 @@ public class UserService {
         if (repo.existsByUsername(user.getUsername())) {
             throw new RuntimeException("Username đã tồn tại");
         }
+
+        // ✅ Mã hóa mật khẩu trước khi lưu (Giúp đăng nhập được)
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         user.setCreatedAt(LocalDateTime.now());
         user.setStatus(true);
@@ -65,9 +72,9 @@ public class UserService {
         user.setBio(newUser.getBio());
         user.setRole(newUser.getRole());
 
+        // Nếu có cập nhật mật khẩu ở đây cũng nên mã hóa, nhưng tạm thời giữ nguyên theo nhóm
         User saved = repo.save(user);
 
-        // 🔥 gọi retry service sau khi update
         notifyUserUpdate(saved.getId());
 
         return saved;
@@ -93,10 +100,8 @@ public class UserService {
         User user = repo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
-        // giả lập service ngoài (email / notification)
         System.out.println("Sending notification to user: " + user.getEmail());
 
-        // giả lập lỗi (để demo retry)
         if (Math.random() < 0.7) {
             throw new RuntimeException("Notification service failed");
         }
@@ -106,9 +111,7 @@ public class UserService {
 
     @Recover
     public String fallbackNotify(Exception e, Long userId) {
-
         System.out.println("Retry failed for userId: " + userId);
-
         return "NOTIFICATION_FAILED_BUT_SAVED_FOR_LATER";
     }
 }
