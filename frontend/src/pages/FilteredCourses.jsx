@@ -12,24 +12,16 @@ const PRICE_FILTERS = [
   { id: "under500k", label: "Khóa học dưới 500k", check: (course) => (course.price || 0) > 0 && (course.price || 0) < 500000 },
 ];
 
-// --- DANH MỤC KHÓA HỌC ---
+// --- DANH MỤC KHÓA HỌC (Giống Home.jsx) ---
 const CATEGORY_LIST = [
-  "Kiếm Tiền Online - MMO",
-  "AI - ChatGPT",
-  "Crypto - Forex - Chứng Khoán",
-  "Kinh Doanh - Marketing",
-  "Data Analysis",
-  "Copywriting",
-  "Ads - Quảng Cáo",
-  "SEO",
-  "Tài Chính - Kế Toán",
-  "Bất Động Sản",
-  "Lập trình - Web",
-  "Đồ họa - Thiết kế",
-  "Edit Video",
-  "Tiktok",
-  "Tiếng Anh",
-  "Tin học văn phòng",
+  "Ads", "Lập trình - Web", "SEO", "Copywriting",
+  "AI - ChatGPT", "Data Analysis", "Tiktok", "Bất động sản",
+  "Shopee", "Kiếm tiền online", "Tiếng Anh", "Tin học văn phòng",
+  "Tài Chính - Kế Toán", "Crypto - Forex - Chứng khoán",
+  "Phòng the", "Đồ họa - Thiết kế",
+  "Edit Video", "Kinh doanh - Marketing",
+  "Phong Thủy", "Tiếng Trung - Nhật - Hàn",
+  "Khóa học khác", "Ôn Thi THPT",
 ];
 
 // --- SẮP XẾP ---
@@ -40,12 +32,12 @@ const SORT_OPTIONS = [
   { value: "price_desc", label: "Sắp xếp theo giá: cao đến thấp" },
 ];
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 // --- COURSE CARD DÙNG CHO TRANG FREE ---
 const FreeCourseCard = ({ course }) => {
   const navigate = useNavigate();
-  
+
   const formatPrice = (price) => {
     return price ? new Intl.NumberFormat("vi-VN").format(price) + "đ" : "0đ";
   };
@@ -79,15 +71,35 @@ const FreeCourseCard = ({ course }) => {
 };
 
 // ============================
-// TRANG KHÓA HỌC MIỄN PHÍ
+// TRANG KHÓA HỌC KHUYẾN MÃI
 // ============================
-export default function FreeCourses() {
+export default function FilteredCourses() {
   const [allCourses, setAllCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Filter state
-  const [selectedPriceFilters, setSelectedPriceFilters] = useState(["free"]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const location = useLocation();
+  
+  // Khởi tạo danh mục từ tham số URL nếu có
+  const searchParams = new URLSearchParams(location.search);
+  const initialCategory = searchParams.get("category");
+
+  const [selectedPriceFilters, setSelectedPriceFilters] = useState(
+    initialCategory ? [] : ["free"]
+  );
+  const [selectedCategories, setSelectedCategories] = useState(
+    initialCategory ? [initialCategory] : []
+  );
+
+  // Theo dõi sự thay đổi của tham số URL (khi click từ header hoặc trang khác)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const category = params.get("category");
+    if (category) {
+      setSelectedCategories([category]);
+      setCurrentPage(1);
+    }
+  }, [location.search]);
 
   // Sort state
   const [sortBy, setSortBy] = useState("newest");
@@ -102,11 +114,7 @@ export default function FreeCourses() {
     const fetchData = async () => {
       setLoading(true);
       const data = await getAllCourses();
-      // Lọc chỉ lấy khóa học miễn phí (type === "free")
-      const freeCourses = data.filter(
-        (course) => (course.type || "").toLowerCase() === "free"
-      );
-      setAllCourses(freeCourses);
+      setAllCourses(data);
       setLoading(false);
     };
     fetchData();
@@ -155,14 +163,14 @@ export default function FreeCourses() {
       );
     }
 
-    // Lọc theo danh mục (dựa trên course.type hoặc tên)
+    // Lọc theo danh mục (dựa trên course.category hoặc tên)
     if (selectedCategories.length > 0) {
       result = result.filter((course) => {
         const courseName = (course.name || "").toLowerCase();
-        const courseType = (course.type || "").toLowerCase();
+        const courseCategory = (course.category || "").toLowerCase();
         return selectedCategories.some((cat) => {
           const catLower = cat.toLowerCase();
-          return courseName.includes(catLower) || courseType.includes(catLower);
+          return courseCategory.includes(catLower) || courseName.includes(catLower);
         });
       });
     }
@@ -205,7 +213,7 @@ export default function FreeCourses() {
       <main style={styles.main}>
         {/* TIÊU ĐỀ */}
         <div style={styles.pageHeader}>
-          <h1 style={styles.pageTitle}>Khóa Học Miễn Phí</h1>
+          <h1 style={styles.pageTitle}>Khóa Học Khuyến Mãi</h1>
           {/* SẮP XẾP */}
           <div style={styles.sortContainer}>
             <button

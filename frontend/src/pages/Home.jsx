@@ -87,17 +87,19 @@ const SectionHeader = ({ title, highlight, highlightColor, subtitle }) => (
 export default function Home() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
-      const data = await getAllCourses(selectedCategory);
-      setCourses(data || []);
+      const data = await getAllCourses("");
+      // Sắp xếp khóa học mới nhất dựa trên id (giả định id cao hơn là mới hơn)
+      const sortedData = [...data].sort((a, b) => (b.id || 0) - (a.id || 0));
+      setCourses(sortedData);
       setLoading(false);
     };
     fetch();
-  }, [selectedCategory]);
+  }, []);
 
   const filteredCourses = useMemo(() => {
     return courses;
@@ -114,48 +116,83 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto w-full px-4 py-6">
 
-        {/* CATEGORY */}
-        <div className="mb-6">
-          <h2 className="text-xl font-bold mb-3">Danh mục khóa học</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {FLAT_CATEGORIES.map((category, index) => (
-              <button
-                key={index}
-                onClick={() => setSelectedCategory(category === selectedCategory ? "" : category)}
-                className={`rounded-lg border px-3 py-2 text-xs text-left transition-all duration-150 ${
-                  category === selectedCategory
-                    ? "border-blue-600 bg-blue-600 text-white"
-                    : "border-gray-200 bg-white text-gray-700 hover:bg-blue-50"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-          {selectedCategory && (
-            <div className="mt-3 text-sm text-gray-600">
-              Lọc theo: <span className="font-semibold">{selectedCategory}</span>{" "}
-              <button
-                onClick={() => setSelectedCategory("")}
-                className="underline text-blue-600 hover:text-blue-800"
-              >
-                Bỏ lọc
-              </button>
+        {/* TOP SECTION (Categories & Latest Courses) */}
+        <div className="bg-white rounded-xl shadow-sm border p-6 mb-8 flex flex-col lg:flex-row gap-8">
+          {/* CATEGORY */}
+          <div className="lg:w-[35%]">
+            <h2 className="text-lg font-black text-blue-800 text-center uppercase mb-5 tracking-wide">Danh mục khóa học</h2>
+            <div className="grid grid-cols-2 gap-2">
+              {FLAT_CATEGORIES.map((category, index) => (
+                <button
+                  key={index}
+                  onClick={() => navigate(`/filtered-courses?category=${encodeURIComponent(category)}`)}
+                  className="rounded border border-blue-500 px-3 py-2 text-[13px] font-semibold text-center transition-all duration-150 bg-blue-500 text-white hover:bg-blue-600 hover:shadow"
+                >
+                  {category}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
+
+          {/* TOP COURSES */}
+          <div className="lg:w-[65%]">
+            <h2 className="text-lg font-black text-blue-800 text-center uppercase mb-5 tracking-wide">Top khóa học mới nhất</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {loading
+                ? [1, 2, 3].map((i) => (
+                    <div key={i} className="h-64 bg-gray-100 rounded-lg animate-pulse border border-gray-200" />
+                  ))
+                : courses.slice(0, 3).map((c) => (
+                    <CourseCard key={c.id} course={c} />
+                  ))}
+            </div>
+            
+            {/* Pagination Dots Indicator Placeholder */}
+            {!loading && courses.length > 0 && (
+               <div className="flex justify-center gap-2 mt-6 mb-8">
+                 <div className="w-6 h-2 bg-blue-500 rounded-full"></div>
+                 <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                 <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                 <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                 <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+               </div>
+            )}
+
+            {/* INFO BANNER inside Right Column */}
+            <div className="bg-blue-50 border-l-4 border-blue-500 shadow-sm py-6 px-4 text-center mt-auto">
+              <h2 className="text-xl font-black text-blue-800 mb-2 uppercase tracking-wide">KHO KHÓA HỌC – SHARE HƠN 5000 KHÓA HỌC ONLINE</h2>
+              <p className="text-gray-600 text-[14px] max-w-2xl mx-auto leading-relaxed">
+                Tổng kho khóa học online lớn nhất hiện nay, uy tín, chất lượng và nhanh chóng.<br/>
+                Chúng tôi liên tục cập nhật các khóa học mới đáp ứng nhu cầu của các bạn.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* TOP COURSES */}
-        <h2 className="font-bold mb-4">Top khóa học</h2>
+        {/* LARGE IMAGE BANNER */}
+        <div className="mb-12 w-full rounded-xl overflow-hidden shadow-md">
+          <div className="w-full h-[250px] md:h-[300px] flex items-center justify-center text-white relative bg-[#0b1f42]">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0f2856] via-[#1a4085] to-[#0f2856] opacity-90"></div>
+            
+            {/* Decorative background elements */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20 pointer-events-none">
+                <div className="absolute top-10 left-10 w-32 h-32 rounded-full border-4 border-white"></div>
+                <div className="absolute bottom-10 right-20 w-48 h-48 rounded-full border-4 border-white"></div>
+            </div>
 
-        <div className="grid md:grid-cols-3 gap-4 mb-10">
-          {loading
-            ? [1, 2, 3].map((i) => (
-                <div key={i} className="h-40 bg-gray-200 animate-pulse" />
-              ))
-            : courses.slice(0, 3).map((c) => (
-                <CourseCard key={c.id} course={c} />
-              ))}
+            <div className="relative z-10 text-center flex flex-col items-center justify-center w-full px-4">
+               <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-2 text-white drop-shadow-lg tracking-tight">HỌC GÌ CŨNG CÓ</h2>
+               <div className="text-xl md:text-2xl mb-6 font-medium text-blue-200">KHO KHÓA HỌC KHỔNG LỒ</div>
+               
+               <div className="bg-[#cc0000] border-2 border-yellow-400 rounded-full px-6 py-2 mb-6 shadow-[0_0_15px_rgba(255,215,0,0.5)] transform -rotate-2">
+                 <div className="text-yellow-400 font-black text-2xl md:text-3xl">CHỈ TỪ 1.100đ / KHÓA</div>
+               </div>
+               
+               <button className="bg-gradient-to-b from-yellow-300 to-yellow-500 text-red-800 font-black px-10 py-3 rounded-full text-lg shadow-[0_4px_14px_rgba(0,0,0,0.39)] hover:from-yellow-400 hover:to-yellow-600 transform transition hover:scale-105 border border-yellow-200">
+                 NHẬN ƯU ĐÃI NGAY! ❯
+               </button>
+            </div>
+          </div>
         </div>
 
         {/* SECTIONS */}
