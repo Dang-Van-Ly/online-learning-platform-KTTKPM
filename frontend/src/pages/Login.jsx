@@ -207,7 +207,7 @@ export default function Login() {
                     <button 
                         style={styles.registerBtn}
                         type="button"
-                        onClick={() => alert("Chuyển sang trang đăng ký")}
+                        onClick={() => navigate("/register")}
                     >
                         Đăng ký tài khoản
                     </button>

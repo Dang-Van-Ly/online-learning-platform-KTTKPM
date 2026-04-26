@@ -31,45 +31,36 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // ❌ disable CSRF cho REST API
                 .csrf(csrf -> csrf.disable())
-
-                // ✅ CORS chuẩn
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // ❌ tắt login mặc định
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
-
-                // ❌ REST API stateless
                 .sessionManagement(sm ->
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
                 .authorizeHttpRequests(auth -> auth
 
-                        // ✅ PUBLIC API (ai cũng gọi được)
+                        // PUBLIC API
                         .requestMatchers(
                                 "/",
                                 "/auth/**",
+                                "/api/users/register",
                                 "/api/public/**",
                                 "/api/courses/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        // 🔐 PRIVATE API (cần JWT)
+                        // PRIVATE API
                         .requestMatchers(
                                 "/api/cart/**",
                                 "/api/order/**",
                                 "/api/admin/**"
                         ).authenticated()
 
-                        // ⚠️ còn lại cho phép (DEV MODE tránh 403)
+                        // còn lại
                         .anyRequest().permitAll()
                 )
-
-                // JWT filter
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -80,15 +71,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
+        // Cho phép cả Vite + React CRA
         config.setAllowedOrigins(List.of(
-                "http://localhost:5173", // Thêm cổng này vào
-                "http://localhost:3000"
+                "http://localhost:3000",
+                "http://localhost:5173"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
         config.setAllowedHeaders(List.of("*"));
-
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -97,11 +87,13 @@ public class SecurityConfig {
         return source;
     }
 
+    // Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // Authentication manager
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config) throws Exception {

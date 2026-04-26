@@ -4,7 +4,7 @@ import java.io.Serializable;
 import com.onlinelearning.backend.membership.entity.User_membership;
 import jakarta.persistence.*;
 import lombok.*;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -38,6 +38,7 @@ public class User implements Serializable {
     // ❌ KHÔNG cho Redis serialize cái này
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @ToString.Exclude
-    @Transient
+
+    @JsonIgnore
     private List<User_membership> memberships;
 }
