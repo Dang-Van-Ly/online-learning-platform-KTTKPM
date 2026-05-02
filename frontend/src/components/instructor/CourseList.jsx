@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Button, Typography, Chip, Box, IconButton, CircularProgress
+  Paper, Button, Typography, Chip, Box, IconButton, CircularProgress, Tooltip
 } from "@mui/material";
-import { Edit, Delete, Visibility } from "@mui/icons-material";
+import { Edit, Delete, Visibility, People } from "@mui/icons-material";
 
 export default function CourseList() {
   const [courses, setCourses] = useState([]);
@@ -86,6 +86,7 @@ export default function CourseList() {
               <TableRow>
                 <TableCell sx={{ fontWeight: 600 }}>Course</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Price</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Students</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: 600 }} align="center">Actions</TableCell>
@@ -110,6 +111,14 @@ export default function CourseList() {
                     </TableCell>
                     <TableCell>
                       {course.price === 0 || course.type === 'FREE' ? "Free" : `${course.price?.toLocaleString()} VND`}
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <People fontSize="small" color="action" />
+                        <Typography variant="body2" fontWeight={500}>
+                          {Math.floor(Math.random() * 200) + 10} {/* Mock students */}
+                        </Typography>
+                      </Box>
                     </TableCell>
                     <TableCell>
                       <Chip 

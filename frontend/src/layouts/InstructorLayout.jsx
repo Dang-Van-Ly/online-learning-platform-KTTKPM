@@ -6,8 +6,9 @@ import {
   ListItem, ListItemButton, ListItemIcon, ListItemText, Avatar, Menu, MenuItem
 } from '@mui/material';
 import {
-  Menu as MenuIcon, Dashboard, LibraryBooks, AddCircle, Logout, Person
+  Menu as MenuIcon, Dashboard, LibraryBooks, AddCircle, Logout, Person, AttachMoney
 } from '@mui/icons-material';
+import Logo from '../components/Logo';
 
 const drawerWidth = 260;
 
@@ -50,14 +51,13 @@ export default function InstructorLayout() {
     { text: 'Dashboard', icon: <Dashboard />, path: '/instructor' },
     { text: 'My Courses', icon: <LibraryBooks />, path: '/instructor/courses' },
     { text: 'Create Course', icon: <AddCircle />, path: '/instructor/create' },
+    { text: 'Earnings', icon: <AttachMoney />, path: '/instructor/earnings' },
   ];
 
   const drawer = (
     <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold', color: '#1976d2', cursor: 'pointer' }} onClick={() => navigate('/')}>
-          KHOKHOAHOC
-        </Typography>
+      <Toolbar sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+        <Logo />
       </Toolbar>
       <Divider />
       <List sx={{ pt: 2 }}>
@@ -88,7 +88,7 @@ export default function InstructorLayout() {
   if (!user) return null;
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f4f6f8' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f4f6f8', textAlign: 'left' }}>
       <AppBar
         position="fixed"
         sx={{
@@ -154,7 +154,7 @@ export default function InstructorLayout() {
           {drawer}
         </Drawer>
       </Box>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` }, mt: 8 }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 3, width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` }, overflowX: 'hidden', mt: 8 }}>
         <Outlet />
       </Box>
     </Box>

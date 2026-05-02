@@ -13,6 +13,7 @@ import InstructorLayout from "./layouts/InstructorLayout";
 import InstructorDashboard from "./pages/instructor/InstructorDashboard";
 import CourseList from "./components/instructor/CourseList";
 import CourseForm from "./components/instructor/CourseForm";
+import EarningsPage from "./pages/instructor/EarningsPage";
 
 import "./App.css";
 
@@ -34,6 +35,7 @@ function App() {
           <Route path="courses" element={<CourseList />} />
           <Route path="create" element={<CourseForm />} />
           <Route path="edit/:id" element={<CourseForm />} />
+          <Route path="earnings" element={<EarningsPage />} />
         </Route>
 
         <Route path="/filtered-courses" element={<FilteredCourses />} />

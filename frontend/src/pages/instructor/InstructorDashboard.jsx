@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Grid, Card, CardContent, Typography, Box } from '@mui/material';
 import { People, LibraryBooks, AttachMoney, TrendingUp } from '@mui/icons-material';
 import axios from 'axios';
+import ChartSection from '../../components/instructor/ChartSection';
+import ActivityList from '../../components/instructor/ActivityList';
 
 export default function InstructorDashboard() {
   const [stats, setStats] = useState({
@@ -70,12 +72,14 @@ export default function InstructorDashboard() {
         ))}
       </Grid>
       
-      <Box sx={{ mt: 5, p: 3, bgcolor: '#fff', borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-        <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>Recent Activity</Typography>
-        <Typography variant="body2" color="text.secondary">
-          No recent activity to show.
-        </Typography>
-      </Box>
+      <Grid container spacing={3} sx={{ mt: 2 }}>
+        <Grid item xs={12} md={8}>
+          <ChartSection />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <ActivityList />
+        </Grid>
+      </Grid>
     </Box>
   );
 }
