@@ -250,6 +250,15 @@ const KHOKHOAHOCHeader = () => {
         </form>
 
         <div style={s.actions}>
+          {user && user.role === 'INSTRUCTOR' && (
+            <button
+              style={{...s.profileBtn, backgroundColor: '#f97316', color: 'white', border: 'none'}}
+              onClick={()=>navigate('/instructor')}
+            >
+              Quản lý khóa học
+            </button>
+          )}
+
           {user ? (
             <button
               style={s.profileBtn}

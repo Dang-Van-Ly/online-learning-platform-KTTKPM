@@ -8,6 +8,12 @@ import SearchCourses from "./pages/SearchCourses";
 import CourseDetail from "./pages/CourseDetail";
 import Register from "./pages/Register";
 
+// Instructor routes
+import InstructorLayout from "./layouts/InstructorLayout";
+import InstructorDashboard from "./pages/instructor/InstructorDashboard";
+import CourseList from "./components/instructor/CourseList";
+import CourseForm from "./components/instructor/CourseForm";
+
 import "./App.css";
 
 function App() {
@@ -22,6 +28,13 @@ function App() {
         <Route path="/register" element={<Register />} />
 
         <Route path="/profile" element={<Profile />} />
+        
+        <Route path="/instructor" element={<InstructorLayout />}>
+          <Route index element={<InstructorDashboard />} />
+          <Route path="courses" element={<CourseList />} />
+          <Route path="create" element={<CourseForm />} />
+          <Route path="edit/:id" element={<CourseForm />} />
+        </Route>
 
         <Route path="/filtered-courses" element={<FilteredCourses />} />
 
