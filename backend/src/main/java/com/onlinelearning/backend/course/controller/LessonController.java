@@ -4,6 +4,8 @@ import com.onlinelearning.backend.course.entity.Lesson;
 import com.onlinelearning.backend.course.service.LessonService;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -18,6 +20,7 @@ public class LessonController {
     }
 
     // CREATE
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @PostMapping
     public Lesson addLesson(@RequestBody Lesson lesson) {
         return service.create(lesson);
@@ -36,12 +39,14 @@ public class LessonController {
     }
 
     // UPDATE
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @PutMapping("/{id}")
     public Lesson updateLesson(@PathVariable Long id, @RequestBody Lesson lesson) {
         return service.update(id, lesson);
     }
 
     // DELETE
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @DeleteMapping("/{id}")
     public String deleteLesson(@PathVariable Long id) {
         service.delete(id);

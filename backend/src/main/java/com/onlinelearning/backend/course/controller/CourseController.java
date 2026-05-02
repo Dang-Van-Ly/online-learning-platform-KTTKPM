@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173") // Chỉ định rõ origin của frontend
@@ -36,6 +38,7 @@ public class CourseController {
     }
 
     // Thêm khóa học mới - Trả về 201 Created
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @PostMapping
     public ResponseEntity<Course> addCourse(@RequestBody Course course) {
         Course savedCourse = service.create(course);
@@ -53,6 +56,7 @@ public class CourseController {
     }
 
     // Cập nhật khóa học
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @PutMapping("/{id}")
     public ResponseEntity<Course> update(@PathVariable Long id, @RequestBody Course course) {
         Course updatedCourse = service.update(id, course);
@@ -60,6 +64,7 @@ public class CourseController {
     }
 
     // Xóa khóa học
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         service.delete(id);

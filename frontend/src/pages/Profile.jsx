@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
@@ -15,122 +15,16 @@ export default function Profile() {
 
     const userName = user?.fullName || user?.name || user?.username || user?.email || 'Tài khoản';
 
-    const styles = {
-        container: {
-            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-            minHeight: "100vh",
-            backgroundColor: "#f5f7fb",
-            color: "#222",
-        },
-        wrapper: {
-            maxWidth: "1200px",
-            margin: "40px auto 80px",
-            display: "grid",
-            gridTemplateColumns: "250px 1fr",
-            gap: "30px",
-            padding: "0 24px",
-        },
-        sidebar: {
-            display: "flex",
-            flexDirection: "column",
-            gap: "0",
-        },
-        sidebarItem: {
-            padding: "16px 20px",
-            borderRadius: "8px",
-            border: "1px solid #e5e7eb",
-            backgroundColor: "white",
-            cursor: "pointer",
-            fontSize: "14px",
-            fontWeight: "500",
-            color: "#4b5563",
-            marginBottom: "12px",
-            transition: "all 0.3s ease",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-        },
-        sidebarItemHover: {
-            backgroundColor: "#f3f4f6",
-            borderColor: "#3b82f6",
-            color: "#3b82f6",
-        },
-        mainContent: {
-            display: "flex",
-            flexDirection: "column",
-            gap: "30px",
-        },
-        greeting: {
-            backgroundColor: "white",
-            padding: "40px 30px",
-            borderRadius: "12px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-        },
-        greetingTitle: {
-            fontSize: "24px",
-            fontWeight: "700",
-            marginBottom: "8px",
-        },
-        greetingSubtitle: {
-            color: "#4b5563",
-            fontSize: "14px",
-            marginBottom: "20px",
-        },
-        greetingText: {
-            fontSize: "14px",
-            color: "#4b5563",
-            lineHeight: "1.6",
-        },
-        greetingHighlight: {
-            color: "#ff8c42",
-            fontWeight: "600",
-        },
-        menuGrid: {
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: "24px",
-        },
-        menuCard: {
-            backgroundColor: "white",
-            padding: "40px 30px",
-            borderRadius: "12px",
-            border: "1px solid #e5e7eb",
-            textAlign: "center",
-            cursor: "pointer",
-            transition: "all 0.3s ease",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-        },
-        menuCardHover: {
-            boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
-            borderColor: "#ff8c42",
-            transform: "translateY(-4px)",
-        },
-        menuCardTitle: {
-            fontSize: "18px",
-            fontWeight: "600",
-            color: "#ff8c42",
-        },
-    };
-
     if (!user) {
         return (
-            <div style={styles.container}>
+            <div className="font-sans min-h-screen bg-[#f5f7fb] text-[#222]">
                 <Header />
-                <div style={{padding: "80px 24px", textAlign: "center", color: "#4b5563"}}>
-                    <h1>Bạn chưa đăng nhập</h1>
+                <div className="py-20 px-6 text-center text-gray-600">
+                    <h1 className="text-3xl font-bold mb-4">Bạn chưa đăng nhập</h1>
                     <p>Vui lòng đăng nhập để xem trang cá nhân.</p>
                     <button 
                         onClick={() => navigate('/login')}
-                        style={{
-                            marginTop: "24px",
-                            padding: "12px 24px",
-                            borderRadius: "8px",
-                            border: "none",
-                            backgroundColor: "#3b82f6",
-                            color: "white",
-                            cursor: "pointer",
-                            fontWeight: "600",
-                        }}
+                        className="mt-6 px-6 py-3 rounded-lg border-none bg-blue-500 text-white cursor-pointer font-semibold hover:bg-blue-600 transition-colors"
                     >
                         Đăng nhập ngay
                     </button>
@@ -158,24 +52,16 @@ export default function Profile() {
         { id: 6, title: "Wishlist" },
     ];
 
-    const [hoveredSidebar, setHoveredSidebar] = useState(null);
-    const [hoveredCard, setHoveredCard] = useState(null);
-
     return (
-        <div style={styles.container}>
+        <div className="font-sans min-h-screen bg-[#f5f7fb] text-[#222]">
             <Header />
-            <div style={styles.wrapper}>
+            <div className="max-w-[1200px] mx-auto mt-10 mb-20 grid grid-cols-[250px_1fr] gap-[30px] px-6">
                 {/* Sidebar */}
-                <div style={styles.sidebar}>
+                <div className="flex flex-col gap-0">
                     {menuItems.map((item) => (
                         <div
                             key={item.id}
-                            style={{
-                                ...styles.sidebarItem,
-                                ...(hoveredSidebar === item.id ? styles.sidebarItemHover : {}),
-                            }}
-                            onMouseEnter={() => setHoveredSidebar(item.id)}
-                            onMouseLeave={() => setHoveredSidebar(null)}
+                            className="py-4 px-5 rounded-lg border border-gray-200 bg-white cursor-pointer text-sm font-medium text-gray-600 mb-3 transition-all duration-300 flex items-center gap-3 hover:bg-gray-100 hover:border-blue-500 hover:text-blue-500"
                         >
                             <span>{item.icon}</span>
                             <span>{item.title}</span>
@@ -183,56 +69,32 @@ export default function Profile() {
                     ))}
                     <button 
                         onClick={handleLogout}
-                        style={{
-                            padding: "16px 20px",
-                            borderRadius: "8px",
-                            border: "1px solid #e5e7eb",
-                            backgroundColor: "white",
-                            cursor: "pointer",
-                            fontSize: "14px",
-                            fontWeight: "500",
-                            color: "#dc2626",
-                            marginTop: "12px",
-                            transition: "all 0.3s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = "#fee2e2";
-                            e.target.style.borderColor = "#dc2626";
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = "white";
-                            e.target.style.borderColor = "#e5e7eb";
-                        }}
+                        className="py-4 px-5 rounded-lg border border-gray-200 bg-white cursor-pointer text-sm font-medium text-red-600 mt-3 transition-all duration-300 hover:bg-red-100 hover:border-red-600 text-left"
                     >
                         Đăng xuất
                     </button>
                 </div>
 
                 {/* Main Content */}
-                <div style={styles.mainContent}>
+                <div className="flex flex-col gap-[30px]">
                     {/* Greeting Section */}
-                    <div style={styles.greeting}>
-                        <div style={styles.greetingTitle}>
-                            Xin chào <span style={styles.greetingHighlight}>{userName}</span> (không phải {userName}? <span style={{color: "#3b82f6", cursor: "pointer"}}>Đăng xuất</span>)
+                    <div className="bg-white py-10 px-[30px] rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
+                        <div className="text-2xl font-bold mb-2">
+                            Xin chào <span className="text-[#ff8c42] font-semibold">{userName}</span> (không phải {userName}? <span className="text-blue-500 cursor-pointer" onClick={handleLogout}>Đăng xuất</span>)
                         </div>
-                        <p style={styles.greetingSubtitle}>
-                            Từ bảng điều khiển tài khoản của bạn, bạn có thể xem các <span style={styles.greetingHighlight}>đơn hàng gần đây</span>, quản lý địa chỉ giao hàng và thanh toán của mình, và <span style={styles.greetingHighlight}>chỉnh sửa mật khẩu và chi tiết tài khoản</span>.
+                        <p className="text-gray-600 text-sm mb-5">
+                            Từ bảng điều khiển tài khoản của bạn, bạn có thể xem các <span className="text-[#ff8c42] font-semibold">đơn hàng gần đây</span>, quản lý địa chỉ giao hàng và thanh toán của mình, và <span className="text-[#ff8c42] font-semibold">chỉnh sửa mật khẩu và chi tiết tài khoản</span>.
                         </p>
                     </div>
 
                     {/* Dashboard Grid */}
-                    <div style={styles.menuGrid}>
+                    <div className="grid grid-cols-3 gap-6">
                         {dashboardItems.map((item) => (
                             <div
                                 key={item.id}
-                                style={{
-                                    ...styles.menuCard,
-                                    ...(hoveredCard === item.id ? styles.menuCardHover : {}),
-                                }}
-                                onMouseEnter={() => setHoveredCard(item.id)}
-                                onMouseLeave={() => setHoveredCard(null)}
+                                className="bg-white py-10 px-[30px] rounded-xl border border-gray-200 text-center cursor-pointer transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:shadow-lg hover:border-[#ff8c42] hover:-translate-y-1"
                             >
-                                <div style={styles.menuCardTitle}>{item.title}</div>
+                                <div className="text-lg font-semibold text-[#ff8c42]">{item.title}</div>
                             </div>
                         ))}
                     </div>

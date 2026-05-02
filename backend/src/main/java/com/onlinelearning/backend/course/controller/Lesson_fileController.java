@@ -4,6 +4,8 @@ import com.onlinelearning.backend.course.entity.Lesson_file;
 import com.onlinelearning.backend.course.service.Lesson_fileService;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -18,6 +20,7 @@ public class Lesson_fileController  {
     }
 
     // CREATE
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @PostMapping
     public Lesson_file addFile(@RequestBody Lesson_file file) {
         return service.create(file);
@@ -30,6 +33,7 @@ public class Lesson_fileController  {
     }
 
     // DELETE
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @DeleteMapping("/{id}")
     public String deleteFile(@PathVariable Long id) {
         service.delete(id);

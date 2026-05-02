@@ -1,7 +1,8 @@
 import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, UserCircle } from 'lucide-react';
+import { Search, ShoppingCart, UserCircle, LayoutDashboard } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
+import Logo from './Logo';
 
 const KHOKHOAHOCHeader = () => {
   const navigate = useNavigate();
@@ -32,287 +33,109 @@ const KHOKHOAHOCHeader = () => {
     navigate(`/search?price=${priceFilter}`);
   };
 
-  const s = {
-    header: {
-      width: '100%',
-      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-      boxShadow: '0 1px 5px rgba(0,0,0,0.1)',
-      backgroundColor: '#fff',
-    },
-    topBar: {
-      backgroundColor: '#b31c1c',
-      color: '#fff',
-      padding: '6px 20px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '12px',
-      fontSize: '12px',
-    },
-    timerBox: {
-      backgroundColor: 'rgba(0,0,0,0.3)',
-      padding: '2px 8px',
-      borderRadius: '4px',
-      fontFamily: 'monospace',
-      fontSize: '13px',
-      fontWeight: 'bold',
-      margin: '0 5px',
-    },
-    dealBadge: {
-      backgroundColor: '#ffd700',
-      color: '#b31c1c',
-      padding: '3px 12px',
-      borderRadius: '20px',
-      fontWeight: 'bold',
-      border: 'none',
-      fontSize: '11px',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '4px',
-    },
-    mainHeader: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '15px 5%',
-      gap: '25px',
-    },
-    logoWrapper: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      cursor: 'pointer',
-    },
-    logoText: {
-      fontSize: '24px',
-      fontWeight: '900',
-      color: '#003c71',
-      lineHeight: '0.8',
-    },
-    searchBar: {
-      flex: '0 1 450px',
-      display: 'flex',
-      height: '34px',
-      border: '1px solid #3b82f6',
-      borderRadius: '4px',
-      overflow: 'hidden',
-    },
-    searchInput: {
-      flex: 1,
-      border: 'none',
-      padding: '0 12px',
-      outline: 'none',
-      fontSize: '13px',
-    },
-    searchBtn: {
-      backgroundColor: '#3b82f6',
-      border: 'none',
-      color: 'white',
-      width: '45px',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    actions: {
-      display: 'flex',
-      gap: '10px',
-      alignItems: 'center'
-    },
-    loginBtn: {
-      backgroundColor: '#3b82f6',
-      color: 'white',
-      border: 'none',
-      padding: '0 15px',
-      height: '34px',
-      borderRadius: '4px',
-      fontWeight: '600',
-      fontSize: '12px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '6px',
-      cursor: 'pointer',
-    },
-    profileBtn: {
-      backgroundColor: '#fff',
-      color: '#333',
-      border: '1px solid #ddd',
-      padding: '0 12px',
-      height: '34px',
-      borderRadius: '22px',
-      fontSize: '12px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-      cursor: 'pointer',
-      boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
-    },
-    profileAvatar: {
-      width: '28px',
-      height: '28px',
-      borderRadius: '50%',
-      backgroundColor: '#3b82f6',
-      color: 'white',
-      display: 'grid',
-      placeItems: 'center',
-      fontSize: '13px',
-      fontWeight: '700',
-    },
-    cartBtn: {
-      backgroundColor: 'white',
-      border: '1px solid #ddd',
-      padding: '0 12px',
-      height: '34px',
-      borderRadius: '4px',
-      fontSize: '12px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '6px',
-      cursor: 'pointer',
-      color: '#333',
-    },
-    nav: {
-      backgroundColor: '#3b82f6',
-      padding: '10px 5%',
-    },
-    navList: {
-      listStyle: 'none',
-      margin: 0,
-      padding: 0,
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '20px',
-      flexWrap: 'wrap',
-    },
-    navItem: {
-      color: 'white',
-      fontSize: '13px',
-      fontWeight: '500',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '4px',
-      whiteSpace: 'nowrap',
-    },
-    saleBadge: {
-      backgroundColor: '#b31c1c',
-      fontSize: '9px',
-      padding: '1px 5px',
-      borderRadius: '2px',
-      fontWeight: 'bold',
-      marginLeft: '2px',
-    }
-  };
-
   return (
-    <header style={s.header}>
-      <div style={s.topBar}>
+    <header className="w-full font-sans bg-white shadow-[0_1px_5px_rgba(0,0,0,0.1)]">
+      <div className="bg-[#b31c1c] text-white py-1.5 px-5 flex items-center justify-center gap-3 text-xs">
         <span>💥 <b>DEAL GIÁ HỜI HÔM NAY - GIẢM CỰC SÂU</b></span>
-        <div style={{display:'flex',alignItems:'center'}}>
-          Chỉ còn: <span style={s.timerBox}>09:21:04</span>
+        <div className="flex items-center">
+          Chỉ còn: <span className="bg-black/30 py-0.5 px-2 rounded-md font-mono text-[13px] font-bold mx-1.5">09:21:04</span>
         </div>
-        <button style={s.dealBadge}>👉 NHẬN DEAL NGAY</button>
+        <button className="bg-[#ffd700] text-[#b31c1c] py-[3px] px-3 rounded-full font-bold border-none text-[11px] cursor-pointer flex items-center gap-1">👉 NHẬN DEAL NGAY</button>
       </div>
 
-      <div style={s.mainHeader}>
-        <div style={s.logoWrapper} onClick={() => navigate('/')}>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1.5px'}}>
-            <div style={{width:'12px',height:'12px',background:'#3b82f6'}}></div>
-            <div style={{width:'12px',height:'12px',background:'#f97316'}}></div>
-            <div style={{width:'12px',height:'12px',background:'#f97316'}}></div>
-            <div style={{width:'12px',height:'12px',background:'#3b82f6'}}></div>
-          </div>
-
-          <div>
-            <div style={s.logoText}>KHOKHOAHOC</div>
-            <div style={{
-              color:'#f97316',
-              fontWeight:'bold',
-              fontSize:'14px'
-            }}>
-              .ORG
-            </div>
-          </div>
+      <div className="flex items-center justify-between py-[15px] px-5 gap-4 max-w-[1280px] mx-auto">
+        <div className="flex-1 flex justify-start">
+          <Logo />
         </div>
 
-        <form style={s.searchBar} onSubmit={handleSearch}>
+        <form className="w-full max-w-[450px] mx-4 shrink flex h-[36px] border-[1.5px] border-blue-500 rounded-lg overflow-hidden" onSubmit={handleSearch}>
           <input
-            style={s.searchInput}
+            className="flex-1 border-none px-3 outline-none text-[13px]"
             placeholder="Nhập tên khóa học hoặc giảng viên..."
             value={searchQuery}
             onChange={(e)=>setSearchQuery(e.target.value)}
           />
 
-          <button style={s.searchBtn} type="submit">
+          <button className="bg-blue-500 border-none text-white w-[45px] cursor-pointer flex items-center justify-center" type="submit">
             <Search size={16}/>
           </button>
         </form>
 
-        <div style={s.actions}>
+        <div className="flex-1 flex justify-end gap-2.5 items-center">
+          {user && user.role === 'INSTRUCTOR' && (
+            <button
+              className="bg-orange-500 hover:bg-orange-600 text-white border-none px-4 h-[36px] rounded-lg font-bold text-[13px] flex items-center gap-2 cursor-pointer whitespace-nowrap shadow-md transition-all duration-200 hover:-translate-y-[1px]"
+              onClick={()=>navigate('/instructor')}
+            >
+              <LayoutDashboard size={16} />
+              Quản lý khóa học
+            </button>
+          )}
+
           {user ? (
             <button
-              style={s.profileBtn}
+              className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 h-[36px] rounded-full text-[13px] font-medium flex items-center gap-2.5 cursor-pointer shadow-sm whitespace-nowrap transition-all duration-200"
               onClick={()=>navigate('/profile')}
             >
-              <span style={s.profileAvatar}>{userInitial}</span>
+              <span className="w-[26px] h-[26px] rounded-full bg-blue-500 text-white grid place-items-center text-xs font-bold">{userInitial}</span>
               <span>{userName}</span>
             </button>
           ) : (
             <button
-              style={s.loginBtn}
+              className="bg-blue-500 hover:bg-blue-600 text-white border-none px-4 h-[36px] rounded-lg font-semibold text-[13px] flex items-center gap-2 cursor-pointer whitespace-nowrap shadow-sm transition-colors duration-200"
               onClick={()=>navigate('/login')}
             >
-              <UserCircle size={16}/>
+              <UserCircle size={18}/>
               ĐĂNG NHẬP
             </button>
           )}
 
-          <button style={s.cartBtn}>
-            Giỏ hàng <ShoppingCart size={16}/>
+          <button className="bg-white hover:bg-gray-50 hover:text-blue-600 hover:border-blue-400 border border-gray-300 px-4 h-[36px] rounded-lg text-[13px] font-semibold flex items-center gap-2 cursor-pointer text-gray-700 whitespace-nowrap shadow-sm transition-all duration-200">
+            <ShoppingCart size={18}/>
+            Giỏ hàng 
           </button>
         </div>
       </div>
 
-      <nav style={s.nav}>
-        <ul style={s.navList}>
+      <nav className="bg-blue-500 py-2.5 px-[5%]">
+        <ul className="list-none m-0 p-0 flex justify-center gap-5 flex-wrap">
           <li
-            style={s.navItem}
+            className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap"
             onClick={()=>navigate('/filtered-courses')}
           >
             Khóa Học Free
           </li>
 
-          <li style={s.navItem}>
+          <li className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap">
             Nâng Cấp Hội Viên
-            <span style={s.saleBadge}>GIẢM GIÁ</span>
+            <span className="bg-[#b31c1c] text-[9px] py-[1px] px-[5px] rounded-sm font-bold ml-0.5">GIẢM GIÁ</span>
           </li>
 
-          <li style={s.navItem}>COMBO</li>
+          <li className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap">COMBO</li>
 
           <li
-            style={s.navItem}
+            className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap"
             onClick={()=>handlePriceNavigation('under100k')}
           >
             Khóa học dưới 100k
           </li>
 
           <li
-            style={s.navItem}
+            className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap"
             onClick={()=>handlePriceNavigation('under150k')}
           >
             Khóa học dưới 150k
           </li>
 
           <li
-            style={s.navItem}
+            className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap"
             onClick={()=>handlePriceNavigation('under500k')}
           >
             Khóa học dưới 500k
           </li>
 
-          <li style={s.navItem}>Hướng dẫn</li>
-          <li style={s.navItem}>Blog</li>
+          <li className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap">Hướng dẫn</li>
+          <li className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap">Blog</li>
         </ul>
       </nav>
     </header>
