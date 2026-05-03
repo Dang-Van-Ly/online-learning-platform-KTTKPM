@@ -37,9 +37,13 @@ export default function Login() {
             // Lưu thông tin user vào context
             loginUser(userData);
             
-            // 3. Chuyển hướng về trang home sau khi thành công
+            // 3. Chuyển hướng về trang tương ứng sau khi thành công
             alert("Đăng nhập thành công!");
-            navigate("/"); 
+            if (userData.role === "INSTRUCTOR" || userData.role === "INSTRUCTOR_ROLE") {
+                navigate("/instructor");
+            } else {
+                navigate("/"); 
+            }
             
         } catch (err) {
             console.error(err);

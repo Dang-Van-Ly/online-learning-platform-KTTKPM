@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "courses")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Course implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -53,12 +53,7 @@ public class Course implements Serializable {
     private LocalDateTime updatedAt;
 
     @JsonIgnore
-    @OneToMany(
-            mappedBy = "course",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.EAGER
-    )
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Promotion_course> promotionCourses;
 
     @PrePersist

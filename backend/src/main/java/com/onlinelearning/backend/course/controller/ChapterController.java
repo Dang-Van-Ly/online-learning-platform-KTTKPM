@@ -4,6 +4,8 @@ import com.onlinelearning.backend.course.entity.Chapter;
 import com.onlinelearning.backend.course.service.ChapterService;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -18,6 +20,7 @@ public class ChapterController {
     }
 
     // CREATE - Thêm chương mới
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @PostMapping
     public Chapter addChapter(@RequestBody Chapter chapter) {
         return service.create(chapter);
@@ -37,12 +40,14 @@ public class ChapterController {
     }
 
     // UPDATE - Cập nhật thông tin chương
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @PutMapping("/{id}")
     public Chapter updateChapter(@PathVariable Long id, @RequestBody Chapter chapter) {
         return service.update(id, chapter);
     }
 
     // DELETE - Xóa chương
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @DeleteMapping("/{id}")
     public String deleteChapter(@PathVariable Long id) {
         service.delete(id);
