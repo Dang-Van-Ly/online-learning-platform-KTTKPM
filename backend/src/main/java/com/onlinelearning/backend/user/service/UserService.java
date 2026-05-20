@@ -12,6 +12,8 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +30,7 @@ public class UserService {
     }
 
     // ================= REGISTER =================
+    @CacheEvict(value = {"users", "user", "admin_page_users"}, allEntries = true)
     @Transactional
     public User register(User user) {
         if (repo.existsByEmail(user.getEmail())) {
@@ -45,25 +48,28 @@ public class UserService {
     }
 
     // ================= ADMIN: GET BY ROLE =================
-    @Cacheable(value = "users", key = "#role.name()")
-    public List<UserDTO> getUsersByRole(Role role) {
-        return repo.findByRole(role)
-                .stream()
-                .map(this::mapToDTO)
-                .toList();
+    @Cacheable(value = "admin_page_users", key = "#role.name() + '_' + #page")
+    public Page<UserDTO> getUsersByRole(Role role, int page, Pageable pageable) {
+        return repo.findByRole(role, pageable)
+                .map(this::mapToDTO);
     }
 
     // ================= ADMIN: TOGGLE STATUS =================
-    @CacheEvict(value = {"users", "user"}, allEntries = true)
+    @CacheEvict(value = {"users", "user", "admin_page_users"}, allEntries = true)
     @Transactional
     public void toggleUserStatus(Long id) {
         User user = repo.findById(id)
-                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + id));
 
-        // CHỖ SỬA: Đổi isStatus() thành getStatus()
-        user.setStatus(!user.getStatus());
+        if (user.getStatus() == null) {
+            user.setStatus(false);
+        } else {
+            user.setStatus(!user.getStatus());
+        }
 
         repo.save(user);
+
+        System.out.println("[INFO] User status updated successfully - Username: " + user.getUsername() + " | Status: " + user.getStatus());
     }
 
     // ================= GET ALL (CACHE DTO) =================
@@ -84,7 +90,7 @@ public class UserService {
     }
 
     // ================= UPDATE =================
-    @CacheEvict(value = {"users", "user"}, allEntries = true)
+    @CacheEvict(value = {"users", "user", "admin_page_users"}, allEntries = true)
     @Transactional
     public User updateUser(Long id, User newUser) {
         User user = repo.findById(id)
@@ -103,7 +109,7 @@ public class UserService {
     }
 
     // ================= DELETE =================
-    @CacheEvict(value = {"users", "user"}, allEntries = true)
+    @CacheEvict(value = {"users", "user", "admin_page_users"}, allEntries = true)
     @Transactional
     public void deleteUser(Long id) {
         User user = repo.findById(id)
@@ -141,9 +147,7 @@ public class UserService {
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
-                // Lấy Role từ Entity, nếu null thì mặc định là USER
                 user.getRole() != null ? user.getRole().name() : "USER",
-                // Chuyển Boolean status thành String để Frontend hiển thị cho đẹp
                 (user.getStatus() != null && user.getStatus()) ? "Active" : "Locked"
         );
     }

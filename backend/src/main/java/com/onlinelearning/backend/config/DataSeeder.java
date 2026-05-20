@@ -40,7 +40,6 @@ public class DataSeeder implements CommandLineRunner {
     private final CourseRepository courseRepository;
     private final ChapterRepository chapterRepository;
     private final LessonRepository lessonRepository;
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -60,38 +59,70 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) {
 
         // ================= USER =================
-        if (userRepository.count() == 0) {
-
-            System.out.println("👤 Seeding users...");
-
-            // ADMIN
+        if (userRepository.findByUsername("admin").isEmpty()) {
+            System.out.println("👤 Seeding admin account...");
             User admin = new User();
             admin.setUsername("admin");
             admin.setPassword(passwordEncoder.encode("123456"));
             admin.setRole(Role.ADMIN);
             admin.setEmail("admin@gmail.com");
-
+            admin.setStatus(true);
             userRepository.save(admin);
+            System.out.println("✅ ADMIN SEEDED!");
+        }
 
-            // USER 1
+        if (userRepository.count() <= 1) {
+            System.out.println("👤 Seeding test users and instructors...");
+
             User user1 = new User();
             user1.setUsername("user1");
             user1.setPassword(passwordEncoder.encode("123456"));
             user1.setRole(Role.USER);
             user1.setEmail("user1@gmail.com");
-
+            user1.setStatus(true);
             userRepository.save(user1);
 
-            // USER 2
             User user2 = new User();
             user2.setUsername("user2");
             user2.setPassword(passwordEncoder.encode("123456"));
             user2.setRole(Role.USER);
             user2.setEmail("user2@gmail.com");
-
+            user2.setStatus(true);
             userRepository.save(user2);
 
-            System.out.println("✅ USER SEEDED!");
+            User user3 = new User();
+            user3.setUsername("hocvien_nga");
+            user3.setPassword(passwordEncoder.encode("123456"));
+            user3.setRole(Role.USER);
+            user3.setEmail("nga_student@gmail.com");
+            user3.setStatus(true);
+            userRepository.save(user3);
+
+            User ins1 = new User();
+            ins1.setUsername("giangvien_a");
+            ins1.setPassword(passwordEncoder.encode("123456"));
+            ins1.setRole(Role.INSTRUCTOR);
+            ins1.setEmail("instructor_a@gmail.com");
+            ins1.setStatus(true);
+            userRepository.save(ins1);
+
+            User ins2 = new User();
+            ins2.setUsername("giangvien_b");
+            ins2.setPassword(passwordEncoder.encode("123456"));
+            ins2.setRole(Role.INSTRUCTOR);
+            ins2.setEmail("instructor_b@gmail.com");
+            ins2.setStatus(true);
+            userRepository.save(ins2);
+
+            User ins3 = new User();
+            ins3.setUsername("giangvien_c");
+            ins3.setPassword(passwordEncoder.encode("123456"));
+            ins3.setRole(Role.INSTRUCTOR);
+            ins3.setEmail("instructor_c@gmail.com");
+            ins3.setStatus(true);
+            userRepository.save(ins3);
+
+            System.out.println("✅ TEST USERS AND INSTRUCTORS SEEDED!");
         }
 
         // ================= COURSE =================
@@ -116,7 +147,6 @@ public class DataSeeder implements CommandLineRunner {
         System.out.println("🔥 Start seeding courses...");
 
         for (int i = 1; i <= 10; i++) {
-
             Course course = new Course();
             course.setName("Course " + i);
             course.setDescription("This is course number " + i);
@@ -129,9 +159,7 @@ public class DataSeeder implements CommandLineRunner {
 
             course = courseRepository.save(course);
 
-            // ================= CHAPTER =================
             for (int j = 1; j <= 3; j++) {
-
                 Chapter chapter = new Chapter();
                 chapter.setTitle("Chapter " + j + " of Course " + i);
                 chapter.setOrderNumber(j);
@@ -140,9 +168,7 @@ public class DataSeeder implements CommandLineRunner {
 
                 chapter = chapterRepository.save(chapter);
 
-                // ================= LESSON =================
                 for (int k = 1; k <= 4; k++) {
-
                     Lesson lesson = new Lesson();
                     lesson.setTitle("Lesson " + k + " of Chapter " + j);
                     lesson.setOrderNumber(k);
