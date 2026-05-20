@@ -25,24 +25,28 @@ export default function Login() {
                 username: username.trim(),
                 password: password.trim()
             });
-            
+            localStorage.setItem("token", res.data.token);
+
             const userData = {
                 username: res.data.username,
                 email: res.data.email || res.data.username,
                 fullName: res.data.fullName || res.data.name || res.data.username,
-                role: res.data.role || res.data.roles || 'Người dùng',
+                // Chuẩn hóa role về chữ hoa để so sánh không bị sai
+                role: (res.data.role || res.data.roles || 'USER').toString().toUpperCase(),
                 token: res.data.token,
             };
 
             // Lưu thông tin user vào context
             loginUser(userData);
-            
-            // 3. Chuyển hướng về trang tương ứng sau khi thành công
+
             alert("Đăng nhập thành công!");
-            if (userData.role === "INSTRUCTOR" || userData.role === "INSTRUCTOR_ROLE") {
+
+            if (userData.role === "ADMIN" || userData.role === "ROLE_ADMIN") {
+                navigate("/admin"); // Thêm dòng này để Admin vào đúng trang quản trị
+            } else if (userData.role === "INSTRUCTOR" || userData.role === "ROLE_INSTRUCTOR") {
                 navigate("/instructor");
             } else {
-                navigate("/"); 
+                navigate("/");
             }
             
         } catch (err) {

@@ -3,12 +3,9 @@ package com.onlinelearning.backend.user.controller;
 import com.onlinelearning.backend.user.dto.UserDTO;
 import com.onlinelearning.backend.user.entity.User;
 import com.onlinelearning.backend.user.service.UserService;
-
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:3000") // Cấp quyền cho React truy cập
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -19,35 +16,19 @@ public class UserController {
         this.service = service;
     }
 
-    // ================= CREATE =================
+    // ================= DÀNH CHO USER / GUEST =================
     @PostMapping("/register")
     public User register(@RequestBody User user) {
         return service.register(user);
     }
 
-    // ================= READ ONE =================
     @GetMapping("/{id}")
     public UserDTO getUser(@PathVariable Long id) {
         return service.getById(id);
     }
 
-    // ================= READ ALL =================
-    @GetMapping
-    public List<UserDTO> getAllUsers() {
-        return service.getAllUsers();
-    }
-
-    // ================= UPDATE =================
     @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id,
-                           @RequestBody User user) {
+    public User updateUser(@PathVariable Long id, @RequestBody User user) {
         return service.updateUser(id, user);
-    }
-
-    // ================= DELETE =================
-    @DeleteMapping("/{id}")
-    public String deleteUser(@PathVariable Long id) {
-        service.deleteUser(id);
-        return "User đã bị xóa";
     }
 }

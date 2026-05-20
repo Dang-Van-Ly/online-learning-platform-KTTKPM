@@ -20,4 +20,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     // Kiểm tra xem ID khóa học đã tồn tại chưa
     boolean existsById(Long id);
+
+    long countByStatus(String status);
 }

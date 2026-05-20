@@ -5,6 +5,7 @@ import com.onlinelearning.backend.membership.entity.Membership;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "order_items")
@@ -20,6 +21,7 @@ public class Order_item {
     // 1 order_item thuộc về 1 order
     @ManyToOne
     @JoinColumn(name = "order_id")
+    @JsonIgnore
     private Order order;
 
     // 1 order_item có thể là 1 course

@@ -1,22 +1,22 @@
 import { createContext, useState, useEffect } from "react";
 
+// DÒNG QUAN TRỌNG NHẤT: Phải có "export" ở đây
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-
-    // Load user from localStorage on mount
-    useEffect(() => {
+    // Khởi tạo state đồng bộ từ localStorage để tránh bị "đá" ra trang chủ
+    const [user, setUser] = useState(() => {
         const savedUser = localStorage.getItem('user');
         if (savedUser) {
             try {
-                setUser(JSON.parse(savedUser));
+                return JSON.parse(savedUser);
             } catch (error) {
                 console.error('Error parsing saved user:', error);
-                localStorage.removeItem('user');
+                return null;
             }
         }
-    }, []);
+        return null;
+    });
 
     const loginUser = (data) => {
         setUser(data);

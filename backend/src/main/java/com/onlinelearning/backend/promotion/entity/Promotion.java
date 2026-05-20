@@ -1,7 +1,7 @@
 package com.onlinelearning.backend.promotion.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.io.Serializable;
@@ -15,7 +15,6 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-// Tránh lỗi Proxy của Hibernate khi serialize dữ liệu sang JSON hoặc Redis
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Promotion implements Serializable {
 
@@ -29,19 +28,19 @@ public class Promotion implements Serializable {
     private String code;
 
     private String discountType; // "PERCENTAGE" hoặc "FIXED"
-    
+
     private BigDecimal discountValue;
-    
+
     private LocalDateTime startDate;
-    
+
     private LocalDateTime endDate;
-    
+
     private Integer usageLimit;
-    
+
     private String status;
 
     @JsonManagedReference(value = "promotion-course")
     @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude // Tránh lỗi vòng lặp khi log object bằng Lombok
+    @ToString.Exclude
     private List<Promotion_course> promotionCourses;
 }

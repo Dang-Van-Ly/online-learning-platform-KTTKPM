@@ -3,8 +3,8 @@ package com.onlinelearning.backend.course.service;
 import com.onlinelearning.backend.course.entity.Course;
 import com.onlinelearning.backend.course.repository.CourseRepository;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,60 +18,76 @@ public class CourseService {
         this.repo = repo;
     }
 
-    // ================= CREATE =================
-    public Course create(Course course) {
-        return executeWithRetry(() -> {
-            course.setCreatedAt(LocalDateTime.now());
+    private static final String PENDING = "PENDING";
+    private static final String APPROVED = "ACTIVE";
+    private static final String REJECTED = "REJECTED";
+
+    // ================= ADMIN LOGIC =================
+
+    public List<Course> getPendingCourses() {
+        return executeWithRetry(() -> repo.findByStatus(PENDING), "GET PENDING");
+    }
+
+    @CacheEvict(value = "courses", allEntries = true)
+    @Transactional
+    public void approveCourse(Long id) {
+        executeWithRetry(() -> {
+            Course course = repo.findById(id).orElseThrow(() -> new RuntimeException("Course not found"));
+            course.setStatus(APPROVED);
             course.setUpdatedAt(LocalDateTime.now());
             return repo.save(course);
-        }, "CREATE COURSE");
+        }, "APPROVE COURSE");
     }
 
-    // ================= GET ALL (CACHE DISABLED TEMPORARILY) =================
-    // @Cacheable(value = "courses")
+    @CacheEvict(value = "courses", allEntries = true)
+    @Transactional
+    public void rejectCourse(Long id) {
+        executeWithRetry(() -> {
+            Course course = repo.findById(id).orElseThrow(() -> new RuntimeException("Course not found"));
+            course.setStatus(REJECTED);
+            course.setUpdatedAt(LocalDateTime.now());
+            return repo.save(course);
+        }, "REJECT COURSE");
+    }
+
+    // ================= PUBLIC CRUD LOGIC (Cần thiết cho CourseController) =================
+
     public List<Course> getAll() {
-        return executeWithRetry(() -> repo.findAll(), "GET ALL COURSES");
+        return executeWithRetry(() -> repo.findAll(), "GET ALL");
     }
 
-    // ================= GET BY CATEGORY =================
     public List<Course> getByCategory(String category) {
-        return executeWithRetry(() -> repo.findByCategoryIgnoreCase(category), "GET COURSES BY CATEGORY");
+        return executeWithRetry(() -> repo.findByCategoryIgnoreCase(category), "GET BY CATEGORY");
     }
 
-    // ================= GET BY ID (CACHE DISABLED TEMPORARILY + RETRY) =================
-    // @Cacheable(value = "course", key = "#id")
     public Course getById(Long id) {
-        return executeWithRetry(() ->
-                        repo.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Course không tồn tại"))
-                , "GET COURSE BY ID");
+        return executeWithRetry(() -> repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Course not found")), "GET BY ID");
     }
 
-    // ================= UPDATE (CACHE CLEAR DISABLED TEMPORARILY + RETRY) =================
-    // @CacheEvict(value = "courses", allEntries = true)
+    @Transactional
     public Course update(Long id, Course newData) {
         return executeWithRetry(() -> {
-
-            Course course = repo.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Course không tồn tại"));
-
+            Course course = repo.findById(id).orElseThrow(() -> new RuntimeException("Course not found"));
             course.setName(newData.getName());
             course.setDescription(newData.getDescription());
             course.setPrice(newData.getPrice());
             course.setImage(newData.getImage());
-            if (newData.getCategory() != null) {
-                course.setCategory(newData.getCategory());
-            }
-            course.setStatus(newData.getStatus());
+            course.setCategory(newData.getCategory());
             course.setUpdatedAt(LocalDateTime.now());
-
             return repo.save(course);
-
         }, "UPDATE COURSE");
     }
 
-    // ================= DELETE (CACHE CLEAR + RETRY) =================
-    @CacheEvict(value = "courses", allEntries = true)
+    public Course create(Course course) {
+        return executeWithRetry(() -> {
+            course.setCreatedAt(LocalDateTime.now());
+            course.setUpdatedAt(LocalDateTime.now());
+            if (course.getStatus() == null) course.setStatus(PENDING);
+            return repo.save(course);
+        }, "CREATE COURSE");
+    }
+
     public void delete(Long id) {
         executeWithRetry(() -> {
             repo.deleteById(id);
@@ -79,41 +95,22 @@ public class CourseService {
         }, "DELETE COURSE");
     }
 
-    // ================= RETRY CORE LOGIC =================
-    private <T> T executeWithRetry(RetrySupplier<T> action, String actionName) {
+    // ================= RETRY HELPER =================
 
+    private <T> T executeWithRetry(RetrySupplier<T> action, String actionName) {
         int maxRetry = 3;
         int attempt = 0;
-
         while (true) {
             try {
                 attempt++;
-
-                System.out.println("[" + actionName + "] Attempt " + attempt);
-
                 return action.get();
-
             } catch (Exception e) {
-
-                System.out.println("[" + actionName + "] Failed attempt " + attempt + ": " + e.getMessage());
-
-                if (attempt >= maxRetry) {
-                    throw new RuntimeException(actionName + " failed after " + maxRetry + " retries");
-                }
-
-                try {
-                    Thread.sleep(3000); // ⬅️ delay 3 giây
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException("Retry interrupted");
-                }
+                if (attempt >= maxRetry) throw new RuntimeException(actionName + " failed after " + maxRetry + " attempts");
+                try { Thread.sleep(2000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
             }
         }
     }
 
-    // functional interface
     @FunctionalInterface
-    private interface RetrySupplier<T> {
-        T get();
-    }
+    private interface RetrySupplier<T> { T get(); }
 }

@@ -71,7 +71,16 @@ const KHOKHOAHOCHeader = () => {
               Quản lý khóa học
             </button>
           )}
-
+            {/* --- NÚT DÀNH RIÊNG CHO ADMIN --- */}
+            {user && (user.role === 'ADMIN' || user.role === 'ROLE_ADMIN') && (
+                <button
+                    className="bg-red-600 hover:bg-red-700 text-white border-none px-4 h-[36px] rounded-lg font-bold text-[13px] flex items-center gap-2 cursor-pointer whitespace-nowrap shadow-md transition-all duration-200 hover:-translate-y-[1px]"
+                    onClick={() => navigate('/admin')}
+                >
+                    <LayoutDashboard size={16} />
+                    Quản trị hệ thống
+                </button>
+            )}
           {user ? (
             <button
               className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 h-[36px] rounded-full text-[13px] font-medium flex items-center gap-2.5 cursor-pointer shadow-sm whitespace-nowrap transition-all duration-200"

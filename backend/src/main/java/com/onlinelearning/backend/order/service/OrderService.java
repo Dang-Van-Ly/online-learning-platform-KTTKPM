@@ -4,6 +4,7 @@ import com.onlinelearning.backend.order.entity.Order;
 import com.onlinelearning.backend.order.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,5 +38,19 @@ public class OrderService {
     // Xóa đơn hàng
     public void deleteOrder(Long id) {
         orderRepository.deleteById(id);
+    }
+
+    // Lấy tất cả đơn hàng cho Admin sắp xếp mới nhất lên đầu
+    public List<Order> getAllOrdersForAdmin() {
+        return orderRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    // Duyệt trạng thái đơn hàng bảo mật bằng Transaction
+    @Transactional
+    public void updateOrderStatus(Long id, String status) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với ID: " + id));
+        order.setStatus(status.toUpperCase());
+        orderRepository.save(order);
     }
 }
