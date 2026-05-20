@@ -39,6 +39,12 @@ public class Promotion implements Serializable {
 
     private String status;
 
+    @Column(name = "min_order_value")
+    private BigDecimal minOrderValue; // Giá trị đơn hàng tối thiểu để được áp dụng mã
+
+    @Column(name = "max_discount_amount")
+    private BigDecimal maxDiscountAmount; // Số tiền giảm giá tối đa (chỉ áp dụng khi giảm theo %)
+
     @JsonManagedReference(value = "promotion-course")
     @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
