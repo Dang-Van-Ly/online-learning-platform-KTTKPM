@@ -1,7 +1,9 @@
 package com.onlinelearning.backend.enrollment.controller;
 
+import com.onlinelearning.backend.enrollment.dto.EnrollRequest;
 import com.onlinelearning.backend.enrollment.entity.Enrollment;
 import com.onlinelearning.backend.enrollment.service.EnrollmentService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -15,13 +17,22 @@ public class EnrollmentController {
     }
 
     @PostMapping
-    public Enrollment createEnrollment(@RequestBody Enrollment enrollment) {
-        return enrollmentService.save(enrollment);
+    public ResponseEntity<?> createEnrollment(@RequestBody EnrollRequest request) {
+        try {
+            Enrollment enrollment = enrollmentService.enrollUser(request);
+            return ResponseEntity.ok(enrollment);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
-    // Trong EnrollmentController.java
     @GetMapping("/user/{userId}")
-    public List<Enrollment> getByUser(@PathVariable Long userId) { // Sửa thành Long
-        return enrollmentService.getEnrollmentsByUser(userId);
+    public ResponseEntity<List<Enrollment>> getByUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(enrollmentService.getEnrollmentsByUser(userId));
+    }
+
+    @GetMapping("/instructor/{instructorId}")
+    public ResponseEntity<List<Enrollment>> getByInstructor(@PathVariable String instructorId) {
+        return ResponseEntity.ok(enrollmentService.getEnrollmentsByInstructor(instructorId));
     }
 }

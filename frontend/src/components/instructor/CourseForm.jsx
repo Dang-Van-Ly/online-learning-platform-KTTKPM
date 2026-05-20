@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { Save, X, Image as ImageIcon, LayoutDashboard, Tag, DollarSign, Loader2, Info } from "lucide-react";
+import { Save, X, Image as ImageIcon, LayoutDashboard, Tag, DollarSign, Loader2, Info, Upload, Trash2 } from "lucide-react";
 
 export default function CourseForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
+  const fileInputRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -18,6 +20,8 @@ export default function CourseForm() {
     category: "technology"
   });
   
+  const [imageFile, setImageFile] = useState(null);     // File object
+  const [imagePreview, setImagePreview] = useState(""); // preview URL
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditMode);
   const [error, setError] = useState("");
@@ -37,6 +41,9 @@ export default function CourseForm() {
             image: c.image || "",
             category: c.category || "technology"
           });
+          // Nếu có imageUrl từ S3, set preview
+          const existingImg = c.imageUrl || c.image || "";
+          if (existingImg) setImagePreview(existingImg);
         } catch (err) {
           console.error("Failed to load course", err);
           setError("Không thể tải thông tin khóa học.");
@@ -56,6 +63,38 @@ export default function CourseForm() {
     }));
   };
 
+  // -------- Drag & Drop / File pick handlers --------
+  const applyFile = useCallback((file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Chỉ chấp nhận file ảnh (JPG, PNG, WEBP...).");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Ảnh không được vượt quá 10MB.");
+      return;
+    }
+    setError("");
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }, []);
+
+  const handleFileInput = (e) => applyFile(e.target.files[0]);
+
+  const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = () => setIsDragging(false);
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    applyFile(e.dataTransfer.files[0]);
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -63,25 +102,47 @@ export default function CourseForm() {
     try {
       const userStr = localStorage.getItem('user');
       if (!userStr) throw new Error("Not logged in");
-      
       const user = JSON.parse(userStr);
       const headers = { Authorization: `Bearer ${user.token}` };
-      
-      const payload = {
-        ...formData,
-        price: formData.type === "FREE" ? 0 : formData.price,
-        instructorId: user.username 
-      };
 
       if (isEditMode) {
+        // PUT vẫn dùng JSON
+        const payload = {
+          ...formData,
+          price: formData.type === "FREE" ? 0 : formData.price,
+          instructorId: user.username
+        };
         await axios.put(`http://localhost:8080/api/courses/${id}`, payload, { headers });
+      } else if (imageFile) {
+        // POST với file ảnh → multipart/form-data → /with-image
+        const fd = new FormData();
+        fd.append("name", formData.name);
+        fd.append("description", formData.description || "");
+        fd.append("price", formData.type === "FREE" ? 0 : (formData.price || 0));
+        fd.append("category", formData.category || "");
+        fd.append("type", formData.type || "FREE");
+        fd.append("status", formData.status || "DRAFT");
+        fd.append("instructorId", user.username || "");
+        fd.append("image", imageFile);
+        await axios.post("http://localhost:8080/api/courses/with-image", fd, {
+          headers: { ...headers }
+        });
       } else {
+        // POST không có file → JSON
+        const payload = {
+          ...formData,
+          price: formData.type === "FREE" ? 0 : formData.price,
+          instructorId: user.username
+        };
         await axios.post("http://localhost:8080/api/courses", payload, { headers });
       }
-      
+
       navigate('/instructor/courses');
     } catch (err) {
       console.error("Failed to save course", err);
+      if (err.response && err.response.data) {
+        console.error("Server response:", err.response.data);
+      }
       setError("Không thể lưu khóa học! Vui lòng thử lại.");
     } finally {
       setLoading(false);
@@ -245,40 +306,71 @@ export default function CourseForm() {
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h2 className="text-lg font-bold text-gray-800 mb-5 border-b border-gray-100 pb-3">Hình ảnh đại diện</h2>
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">URL Hình ảnh</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <ImageIcon size={18} className="text-gray-400" />
-                  </div>
-                  <input 
-                    name="image" 
-                    value={formData.image} 
-                    onChange={handleChange} 
-                    placeholder="https://..." 
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm" 
-                  />
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileInput}
+              id="thumbnailFileInput"
+            />
+
+            {imagePreview ? (
+              // Preview mode
+              <div className="relative group">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full h-48 object-cover rounded-xl border border-gray-200"
+                  onError={(e) => { 
+                    e.target.onerror = null;
+                    e.target.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjODg4IiBkeT0iLjNlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+SW52YWxpZCBJbWFnZTwvdGV4dD48L3N2Zz4="; 
+                  }}
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3 py-2 bg-white text-gray-800 rounded-lg text-sm font-semibold flex items-center gap-1 hover:bg-gray-100 transition-colors"
+                  >
+                    <Upload size={14} /> Thay ảnh
+                  </button>
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="px-3 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold flex items-center gap-1 hover:bg-red-600 transition-colors"
+                  >
+                    <Trash2 size={14} /> Xóa
+                  </button>
                 </div>
-              </div>
-              
-              {/* Preview */}
-              <div className="w-full h-44 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden transition-all group">
-                {formData.image ? (
-                  <img 
-                    src={formData.image} 
-                    alt="Preview" 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    onError={(e) => { e.target.src = 'https://via.placeholder.com/400x225?text=Invalid+Image+URL' }} 
-                  />
-                ) : (
-                  <div className="text-center text-gray-400">
-                    <ImageIcon size={32} className="mx-auto mb-2 opacity-50" />
-                    <span className="text-sm font-medium">Chưa có ảnh</span>
-                  </div>
+                {imageFile && (
+                  <p className="mt-2 text-xs text-gray-500 truncate">{imageFile.name} ({(imageFile.size / 1024).toFixed(0)} KB)</p>
                 )}
               </div>
-            </div>
+            ) : (
+              // Drop zone
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`w-full h-48 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all select-none ${
+                  isDragging
+                    ? "border-blue-500 bg-blue-50 scale-[1.01]"
+                    : "border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/50"
+                }`}
+              >
+                <div className={`p-3 rounded-full mb-3 transition-colors ${isDragging ? "bg-blue-100" : "bg-gray-100"}`}>
+                  <Upload size={24} className={isDragging ? "text-blue-500" : "text-gray-400"} />
+                </div>
+                <p className={`font-semibold text-sm ${isDragging ? "text-blue-600" : "text-gray-600"}`}>
+                  {isDragging ? "Thả ảnh vào đây" : "Kéo & thả ảnh vào đây"}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">hoặc <span className="text-blue-500 font-semibold">nhấp để chọn file</span></p>
+                <p className="text-xs text-gray-400 mt-2">PNG, JPG, WEBP · Tối đa 10MB</p>
+              </div>
+            )}
           </div>
 
           {/* Submit Button */}

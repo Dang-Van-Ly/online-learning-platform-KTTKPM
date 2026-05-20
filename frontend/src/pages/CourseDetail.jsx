@@ -96,7 +96,7 @@ export default function CourseDetail() {
           <div className="lg:w-[35%] flex flex-col gap-4">
             <div className="relative rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
               <img
-                src={course.image || "https://via.placeholder.com/800x450"}
+                src={course.imageUrl || course.image || "https://via.placeholder.com/800x450"}
                 alt={course.name}
                 className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
               />
@@ -241,7 +241,7 @@ export default function CourseDetail() {
                 >
                   <div className="w-[70px] h-[70px] flex-shrink-0">
                     <img
-                      src={c.image}
+                      src={c.imageUrl || c.image}
                       alt={c.name}
                       className="w-full h-full object-cover rounded-full border border-gray-200 group-hover:border-blue-400 transition-colors shadow-sm"
                     />

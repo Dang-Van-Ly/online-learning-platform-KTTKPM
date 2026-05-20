@@ -22,3 +22,33 @@ export const getCourseById = async (id) => {
         return null;
     }
 };
+
+export const getTopCourses = async (limit = 6) => {
+    try {
+        const response = await axios.get(`${API_URL}/top?limit=${limit}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching top courses:", error);
+        return [];
+    }
+};
+
+export const getNewestCourses = async (limit = 6) => {
+    try {
+        const response = await axios.get(`${API_URL}/newest?limit=${limit}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching newest courses:", error);
+        return [];
+    }
+};
+
+export const getHomepageData = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/homepage`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching homepage data:", error);
+        return null;
+    }
+};

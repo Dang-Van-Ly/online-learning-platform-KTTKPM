@@ -3,13 +3,7 @@ import { Box, Typography, Paper } from '@mui/material';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const data = [
-  { name: 'Jan', students: 400, revenue: 2400000 },
-  { name: 'Feb', students: 300, revenue: 1398000 },
-  { name: 'Mar', students: 200, revenue: 9800000 },
-  { name: 'Apr', students: 278, revenue: 3908000 },
-  { name: 'May', students: 189, revenue: 4800000 },
-  { name: 'Jun', students: 239, revenue: 3800000 },
-  { name: 'Jul', students: 349, revenue: 4300000 },
+  // Real data will be populated from API later
 ];
 
 export default function ChartSection() {

@@ -45,14 +45,21 @@ const FreeCourseCard = ({ course }) => {
   return (
     <div style={styles.card} onClick={() => navigate(`/course/${course.id}`)}>
       <div style={styles.cardImageWrap}>
-        <img
-          src={course.image}
-          alt={course.name}
-          style={styles.cardImage}
-          onError={(e) => {
-            e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
-          }}
-        />
+        {(course.imageUrl || course.image) ? (
+          <img
+            src={course.imageUrl || course.image}
+            alt={course.name}
+            style={styles.cardImage}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjODg4IiBkeT0iLjNlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+";
+            }}
+          />
+        ) : (
+          <div style={{...styles.cardImage, backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontWeight: '500'}}>
+            No Image
+          </div>
+        )}
         {(!course.price || course.price === 0) && (
           <span style={styles.freeBadge}>KHÓA HỌC</span>
         )}
@@ -79,7 +86,7 @@ export default function FilteredCourses() {
 
   // Filter state
   const location = useLocation();
-  
+
   // Khởi tạo danh mục từ tham số URL nếu có
   const searchParams = new URLSearchParams(location.search);
   const initialCategory = searchParams.get("category");
