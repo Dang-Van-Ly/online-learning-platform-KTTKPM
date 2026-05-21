@@ -29,6 +29,8 @@ export default function CourseList() {
       const allCourses = Array.isArray(res.data) ? res.data : (res.data.data || []);
       // Filter only courses created by this instructor
       const myCourses = allCourses.filter(c => c.instructorId === user.username);
+      // THÊM DÒNG NÀY VÀO ĐÂY:
+      console.log("QUÉT DỮ LIỆU S3:", myCourses);
       setCourses(myCourses);
       setError("");
     } catch (err) {
@@ -99,11 +101,13 @@ export default function CourseList() {
                   <TableRow key={id} hover>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Box
-                          component="img"
-                          src={course.image || 'https://via.placeholder.com/60x40?text=No+Image'}
-                          sx={{ width: 60, height: 40, borderRadius: 1, objectFit: 'cover', mr: 2, bgcolor: '#eee' }}
-                        />
+                        {course.image && (
+                          <Box
+                            component="img"
+                            src={course.image}
+                            sx={{ width: 60, height: 40, borderRadius: 1, objectFit: 'cover', mr: 2, bgcolor: '#eee' }}
+                          />
+                        )}
                         <Typography variant="body2" fontWeight={600}>
                           {course.name || course.title}
                         </Typography>
@@ -116,27 +120,27 @@ export default function CourseList() {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <People fontSize="small" color="action" />
                         <Typography variant="body2" fontWeight={500}>
-                          {Math.floor(Math.random() * 200) + 10} {/* Mock students */}
+                          {course.studentsCount || 0}
                         </Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Chip 
-                        label={course.type || "UNKNOWN"} 
-                        size="small" 
-                        color={course.type === "FREE" ? "success" : "warning"} 
-                        variant="outlined" 
+                      <Chip
+                        label={course.type || "UNKNOWN"}
+                        size="small"
+                        color={course.type === "FREE" ? "success" : "warning"}
+                        variant="outlined"
                       />
                     </TableCell>
                     <TableCell>
-                      <Chip 
-                        label={course.status || "PUBLISHED"} 
-                        size="small" 
-                        sx={{ 
-                          bgcolor: course.status === "DRAFT" ? '#e2e8f0' : '#dbeafe', 
+                      <Chip
+                        label={course.status || "PUBLISHED"}
+                        size="small"
+                        sx={{
+                          bgcolor: course.status === "DRAFT" ? '#e2e8f0' : '#dbeafe',
                           color: course.status === "DRAFT" ? '#64748b' : '#1e40af',
                           fontWeight: 600
-                        }} 
+                        }}
                       />
                     </TableCell>
                     <TableCell align="center">

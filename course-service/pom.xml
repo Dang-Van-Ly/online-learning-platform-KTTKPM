@@ -111,13 +111,13 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- SECURITY -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
+        <!-- AWS S3 -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.25.26</version>
+        </dependency>
 
-		<!-- JACKSON JSR310 (Java 8 Date/Time support) -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>

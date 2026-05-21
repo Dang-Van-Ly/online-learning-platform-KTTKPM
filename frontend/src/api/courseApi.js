@@ -86,6 +86,16 @@ export const getChaptersByCourse = async (courseId) => {
     }
 };
 
+export const getTopCourses = async (limit = 6) => {
+    try {
+        const response = await axios.get(`${API_URL}/top?limit=${limit}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching top courses:", error);
+        return [];
+    }
+};
+
 const fallbackFiles = (lessonId) => ([
     {
         id: `sample-${lessonId}`,
@@ -105,3 +115,24 @@ export const getFilesByLesson = async (lessonId) => {
         return fallbackFiles(lessonId);
     }
 };
+
+export const getNewestCourses = async (limit = 6) => {
+    try {
+        const response = await axios.get(`${API_URL}/newest?limit=${limit}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching newest courses:", error);
+        return [];
+    }
+};
+
+export const getHomepageData = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/homepage`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching homepage data:", error);
+        return null;
+    }
+};
+

@@ -3,10 +3,7 @@ import { Box, Typography, Paper, List, ListItem, ListItemAvatar, Avatar, ListIte
 import { PersonAdd, Star, Edit, MonetizationOn } from '@mui/icons-material';
 
 const mockActivities = [
-  { id: 1, type: 'enrollment', text: 'Nguyen Van A enrolled in "React Native Basics"', time: '2 hours ago', icon: <PersonAdd />, color: '#1976d2', bgcolor: '#e3f2fd' },
-  { id: 2, type: 'review', text: 'Tran Thi B gave 5 stars to "Advanced Spring Boot"', time: '5 hours ago', icon: <Star />, color: '#ed6c02', bgcolor: '#fff3e0' },
-  { id: 3, type: 'update', text: 'You updated the syllabus for "Python for Data Science"', time: '1 day ago', icon: <Edit />, color: '#9c27b0', bgcolor: '#f3e5f5' },
-  { id: 4, type: 'purchase', text: 'Le Van C purchased "Fullstack Web Dev Combo"', time: '2 days ago', icon: <MonetizationOn />, color: '#2e7d32', bgcolor: '#e8f5e9' },
+  // Real activities will be populated from API later
 ];
 
 export default function ActivityList() {

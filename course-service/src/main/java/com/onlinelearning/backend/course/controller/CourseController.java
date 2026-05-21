@@ -1,13 +1,16 @@
 package com.onlinelearning.backend.course.controller;
 
+import com.onlinelearning.backend.course.dto.CourseRequest;
 import com.onlinelearning.backend.course.entity.Course;
 import com.onlinelearning.backend.course.service.CourseService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -36,12 +39,69 @@ public class CourseController {
         }
     }
 
-    // Thêm khóa học mới - Trả về 201 Created
+    // ---------------------------------------------------------------
+    // POST /api/courses  — JSON body (dùng cho giao diện hiện tại nhập URL ảnh)
+    // ---------------------------------------------------------------
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @PostMapping
     public ResponseEntity<Course> addCourse(@RequestBody Course course) {
         Course savedCourse = service.create(course);
         return new ResponseEntity<>(savedCourse, HttpStatus.CREATED);
+    }
+
+    // ---------------------------------------------------------------
+    // POST /api/courses/with-image  — multipart/form-data (upload file ảnh lên S3)
+    // ---------------------------------------------------------------
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PostMapping(value = "/with-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> addCourseWithImage(
+            @RequestParam("name") String name,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "price", required = false) Double price,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "type", required = false, defaultValue = "PAID") String type,
+            @RequestParam(value = "status", required = false, defaultValue = "DRAFT") String status,
+            @RequestParam(value = "instructorId", required = false) String instructorId,
+            @RequestParam(value = "image", required = false) org.springframework.web.multipart.MultipartFile image
+    ) {
+        try {
+            com.onlinelearning.backend.course.dto.CourseRequest request = new com.onlinelearning.backend.course.dto.CourseRequest();
+            request.setName(name);
+            request.setDescription(description);
+            request.setPrice(price);
+            request.setCategory(category);
+            request.setType(type);
+            request.setStatus(status);
+            request.setInstructorId(instructorId);
+            request.setImage(image);
+
+            Course savedCourse = service.createWithImage(request);
+            return new ResponseEntity<>(savedCourse, HttpStatus.CREATED);
+        } catch (java.io.IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Upload ảnh thất bại: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Tạo khóa học thất bại: " + e.getMessage());
+        }
+    }
+
+    // Lấy thông tin trang chủ tổng hợp (gồm top, newest, và grouped categories)
+    @GetMapping("/homepage")
+    public ResponseEntity<java.util.Map<String, Object>> getHomepageData() {
+        return ResponseEntity.ok(service.getHomepageData());
+    }
+
+    // Lấy top khóa học nổi bật
+    @GetMapping("/top")
+    public ResponseEntity<List<Course>> getTopCourses(@RequestParam(defaultValue = "6") int limit) {
+        return ResponseEntity.ok(service.getTopCourses(limit));
+    }
+
+    // Lấy khóa học mới nhất
+    @GetMapping("/newest")
+    public ResponseEntity<List<Course>> getNewestCourses(@RequestParam(defaultValue = "6") int limit) {
+        return ResponseEntity.ok(service.getNewestCourses(limit));
     }
 
     // Lấy chi tiết 1 khóa học

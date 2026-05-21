@@ -177,7 +177,7 @@ export default function CourseDetail() {
           <div className="lg:w-[38%]">
             <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
               <img
-                src={course.image || "https://via.placeholder.com/800x450"}
+                src={course.imageUrl || course.image || "https://via.placeholder.com/800x450"}
                 alt={course.name}
                 className="w-full h-auto object-cover"
               />
@@ -268,7 +268,7 @@ export default function CourseDetail() {
               highlight
             />
             <FeatureCard
-              icon="��"
+              icon="📱"
               iconBg="bg-blue-100"
               title="Học Online Tiện Lợi"
               desc="Học online trên Website bằng điện thoại hoặc máy tính"
@@ -327,9 +327,26 @@ export default function CourseDetail() {
                 ))}
               </div>
             </div>
+          </div>
 
-            {/* Trust badges */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
+          <div className="lg:w-[30%] space-y-6">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm divide-y divide-gray-100">
+              <div className="p-4">
+                <h3 className="text-base font-bold text-green-600 mb-3">Khóa học mới</h3>
+              </div>
+              {newCourses.map(c => (
+                <div key={c.id} onClick={() => navigate(`/course/${c.id}`)} className="flex gap-3 p-3 cursor-pointer hover:bg-gray-50 transition-colors group">
+                  <img src={c.imageUrl || c.image} alt={c.name} className="w-16 h-16 rounded-full object-cover border border-gray-200 flex-shrink-0 group-hover:border-blue-400 transition-colors" />
+                  <div className="flex flex-col justify-center min-w-0">
+                    <p className="text-xs font-medium text-gray-700 group-hover:text-blue-600 line-clamp-2 leading-snug mb-1">{c.name}</p>
+                    <p className="text-xs text-blue-400 line-through">{originalPrice(c.price)}</p>
+                    <p className="text-sm font-bold text-gray-800">{c.price === 0 ? "Miễn phí" : formatPrice(c.price)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
                 { icon: "🏆", title: "Uy tín chất lượng", desc: "Hoàn tiền nếu khóa học không như mô tả" },
                 { icon: "⚡", title: "Kích hoạt nhanh", desc: "Kích hoạt khóa học tự động" },
@@ -341,23 +358,6 @@ export default function CourseDetail() {
                   <div>
                     <p className="font-bold text-sm text-gray-800">{b.title}</p>
                     <p className="text-xs text-gray-500 mt-0.5">{b.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* SIDEBAR */}
-          <div className="lg:w-[30%]">
-            <h3 className="text-base font-bold text-green-600 mb-3">Khóa học mới</h3>
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm divide-y divide-gray-100">
-              {newCourses.map(c => (
-                <div key={c.id} onClick={() => navigate(`/course/${c.id}`)} className="flex gap-3 p-3 cursor-pointer hover:bg-gray-50 transition-colors group">
-                  <img src={c.image} alt={c.name} className="w-16 h-16 rounded-full object-cover border border-gray-200 flex-shrink-0 group-hover:border-blue-400 transition-colors" />
-                  <div className="flex flex-col justify-center min-w-0">
-                    <p className="text-xs font-medium text-gray-700 group-hover:text-blue-600 line-clamp-2 leading-snug mb-1">{c.name}</p>
-                    <p className="text-xs text-blue-400 line-through">{originalPrice(c.price)}</p>
-                    <p className="text-sm font-bold text-gray-800">{c.price === 0 ? "Miễn phí" : formatPrice(c.price)}</p>
                   </div>
                 </div>
               ))}
