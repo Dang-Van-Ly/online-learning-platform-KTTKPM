@@ -3,8 +3,10 @@ import { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import api from "../api/axios";
 
+// DÒNG QUAN TRỌNG NHẤT: Phải có "export" ở đây
 export const AuthContext = createContext();
 
+<<<<<<< HEAD
 const STORAGE_USER_KEY = "user";
 const STORAGE_PURCHASED_KEY = "purchasedCourseIds";
 const STORAGE_CART_KEY = "cartItems";
@@ -152,6 +154,22 @@ export const AuthProvider = ({ children }) => {
             return normalizeMembershipInfo(next);
         });
     };
+=======
+export const AuthProvider = ({ children }) => {
+    // Khởi tạo state đồng bộ từ localStorage để tránh bị "đá" ra trang chủ
+    const [user, setUser] = useState(() => {
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+            try {
+                return JSON.parse(savedUser);
+            } catch (error) {
+                console.error('Error parsing saved user:', error);
+                return null;
+            }
+        }
+        return null;
+    });
+>>>>>>> origin/nga
 
     const loginUser = (data) => {
         setUser(data);

@@ -1,6 +1,7 @@
 package com.onlinelearning.backend.user.service;
 
 import com.onlinelearning.backend.user.dto.UserDTO;
+import com.onlinelearning.backend.user.entity.Role;
 import com.onlinelearning.backend.user.entity.User;
 import com.onlinelearning.backend.user.repository.UserRepository;
 import org.springframework.cache.annotation.CacheEvict;
@@ -8,8 +9,11 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
-import org.springframework.security.crypto.password.PasswordEncoder; // Thêm import này
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,41 +22,54 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository repo;
-    private final PasswordEncoder passwordEncoder; // Thêm final để đảm bảo bảo mật
+    private final PasswordEncoder passwordEncoder;
 
-    // ✅ Sửa Constructor để Inject cả Repo và PasswordEncoder
     public UserService(UserRepository repo, PasswordEncoder passwordEncoder) {
         this.repo = repo;
         this.passwordEncoder = passwordEncoder;
     }
 
-    // ================= REGISTER (ĐÃ GỘP VÀO LÀM MỘT) =================
+    // ================= REGISTER =================
+    @CacheEvict(value = {"users", "user", "admin_page_users"}, allEntries = true)
+    @Transactional
     public User register(User user) {
-
         if (repo.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Email đã tồn tại");
         }
-
         if (repo.existsByUsername(user.getUsername())) {
             throw new RuntimeException("Username đã tồn tại");
         }
 
-        // ✅ Mã hóa mật khẩu trước khi lưu (Giúp đăng nhập được)
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
         user.setCreatedAt(LocalDateTime.now());
         user.setStatus(true);
 
         return repo.save(user);
     }
 
-    // ================= GET BY ID (CACHE DTO) =================
-    @Cacheable(value = "user", key = "#id")
-    public UserDTO getById(Long id) {
-        User user = repo.findById(id)
-                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+    // ================= ADMIN: GET BY ROLE =================
+    @Cacheable(value = "admin_page_users", key = "#role.name() + '_' + #page")
+    public Page<UserDTO> getUsersByRole(Role role, int page, Pageable pageable) {
+        return repo.findByRole(role, pageable)
+                .map(this::mapToDTO);
+    }
 
-        return mapToDTO(user);
+    // ================= ADMIN: TOGGLE STATUS =================
+    @CacheEvict(value = {"users", "user", "admin_page_users"}, allEntries = true)
+    @Transactional
+    public void toggleUserStatus(Long id) {
+        User user = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + id));
+
+        if (user.getStatus() == null) {
+            user.setStatus(false);
+        } else {
+            user.setStatus(!user.getStatus());
+        }
+
+        repo.save(user);
+
+        System.out.println("[INFO] User status updated successfully - Username: " + user.getUsername() + " | Status: " + user.getStatus());
     }
 
     // ================= GET ALL (CACHE DTO) =================
@@ -64,10 +81,18 @@ public class UserService {
                 .toList();
     }
 
-    // ================= UPDATE =================
-    @CacheEvict(value = {"users", "user"}, allEntries = true)
-    public User updateUser(Long id, User newUser) {
+    // ================= GET BY ID =================
+    @Cacheable(value = "user", key = "#id")
+    public UserDTO getById(Long id) {
+        User user = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+        return mapToDTO(user);
+    }
 
+    // ================= UPDATE =================
+    @CacheEvict(value = {"users", "user", "admin_page_users"}, allEntries = true)
+    @Transactional
+    public User updateUser(Long id, User newUser) {
         User user = repo.findById(id)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
@@ -78,32 +103,27 @@ public class UserService {
         user.setBio(newUser.getBio());
         user.setRole(newUser.getRole());
 
-        // Nếu có cập nhật mật khẩu ở đây cũng nên mã hóa, nhưng tạm thời giữ nguyên theo nhóm
         User saved = repo.save(user);
-
         notifyUserUpdate(saved.getId());
-
         return saved;
     }
 
     // ================= DELETE =================
-    @CacheEvict(value = {"users", "user"}, allEntries = true)
+    @CacheEvict(value = {"users", "user", "admin_page_users"}, allEntries = true)
+    @Transactional
     public void deleteUser(Long id) {
-
         User user = repo.findById(id)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
-
         repo.delete(user);
     }
 
-    // ================= RETRY =================
+    // ================= RETRY LOGIC =================
     @Retryable(
             value = Exception.class,
             maxAttempts = 3,
             backoff = @Backoff(delay = 2000)
     )
     public String notifyUserUpdate(Long userId) {
-
         User user = repo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
@@ -112,7 +132,6 @@ public class UserService {
         if (Math.random() < 0.7) {
             throw new RuntimeException("Notification service failed");
         }
-
         return "NOTIFICATION_SENT";
     }
 
@@ -122,12 +141,14 @@ public class UserService {
         return "NOTIFICATION_FAILED_BUT_SAVED_FOR_LATER";
     }
 
-    // ================= MAPPER =================
+    // ================= MAPPING DATA =================
     private UserDTO mapToDTO(User user) {
         return new UserDTO(
                 user.getId(),
                 user.getUsername(),
-                user.getEmail()
+                user.getEmail(),
+                user.getRole() != null ? user.getRole().name() : "USER",
+                (user.getStatus() != null && user.getStatus()) ? "Active" : "Locked"
         );
     }
 }

@@ -5,6 +5,7 @@ import com.onlinelearning.backend.membership.entity.Membership;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "order_items")
@@ -19,7 +20,11 @@ public class Order_item {
 
     @ManyToOne
     @JoinColumn(name = "order_id")
+<<<<<<< HEAD:order-service/src/main/java/com/onlinelearning/backend/order/entity/Order_item.java
     @JsonBackReference
+=======
+    @JsonIgnore
+>>>>>>> origin/nga:backend/src/main/java/com/onlinelearning/backend/order/entity/Order_item.java
     private Order order;
 
     // Dùng courseId thay vì @ManyToOne Course (Course ở course-service)

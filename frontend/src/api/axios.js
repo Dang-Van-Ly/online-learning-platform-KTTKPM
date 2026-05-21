@@ -7,6 +7,7 @@ const api = axios.create({
     },
 });
 
+<<<<<<< HEAD
 // Add JWT token to requests
 api.interceptors.request.use((config) => {
     const user = localStorage.getItem("user");
@@ -26,3 +27,23 @@ api.interceptors.request.use((config) => {
 });
 
 export default api;
+=======
+// Thêm Interceptor để tự động gắn Token vào Header trước khi gửi request
+api.interceptors.request.use(
+    (config) => {
+        // Lấy token từ localStorage (hoặc sessionStorage tùy dự án nhóm đang dùng)
+        const token = localStorage.getItem("token");
+
+        if (token) {
+            // Gắn token vào header Authorization theo chuẩn Bearer
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+export default api;
+>>>>>>> origin/nga
