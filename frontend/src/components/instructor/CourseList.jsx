@@ -23,7 +23,7 @@ export default function CourseList() {
         return;
       }
       const user = JSON.parse(userStr);
-      const res = await axios.get("http://localhost:8080/api/courses", {
+      const res = await axios.get("/api/courses", {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       const allCourses = Array.isArray(res.data) ? res.data : (res.data.data || []);
@@ -47,7 +47,7 @@ export default function CourseList() {
     if (window.confirm("Are you sure you want to delete this course?")) {
       try {
         const user = JSON.parse(localStorage.getItem('user'));
-        await axios.delete(`http://localhost:8080/api/courses/${id}`, {
+        await axios.delete(`/api/courses/${id}`, {
           headers: { Authorization: `Bearer ${user?.token}` }
         });
         alert("Deleted successfully");

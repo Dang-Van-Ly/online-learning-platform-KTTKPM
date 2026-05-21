@@ -1,18 +1,20 @@
 import { useState, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
-// 1. Import useNavigate
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate, useLocation } from "react-router-dom"; 
 import Header from "../components/Header"; 
 import Footer from "../components/Footer"; 
 
 export default function Login() {
-    const { loginUser } = useContext(AuthContext);
+    const { loginUser, loadUserData } = useContext(AuthContext);
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     
-    // 2. Khởi tạo navigate
+    // 2. Khởi tạo navigate và location
     const navigate = useNavigate(); 
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const redirectPath = searchParams.get("redirect") || "/";
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -21,7 +23,7 @@ export default function Login() {
             return;
         }
         try {
-            const res = await axios.post("http://localhost:8080/auth/login", {
+            const res = await axios.post("/auth/login", {
                 username: username.trim(),
                 password: password.trim()
             });
@@ -32,17 +34,23 @@ export default function Login() {
                 fullName: res.data.fullName || res.data.name || res.data.username,
                 role: res.data.role || res.data.roles || 'Người dùng',
                 token: res.data.token,
+                userId: res.data.userId,
             };
 
             // Lưu thông tin user vào context
             loginUser(userData);
             
+            // Load purchased courses and membership data
+            await loadUserData(userData.userId);
+            
             // 3. Chuyển hướng về trang tương ứng sau khi thành công
             alert("Đăng nhập thành công!");
-            if (userData.role === "INSTRUCTOR" || userData.role === "INSTRUCTOR_ROLE") {
+            if (redirectPath && redirectPath !== "/") {
+                navigate(redirectPath, { replace: true });
+            } else if (userData.role === "INSTRUCTOR" || userData.role === "INSTRUCTOR_ROLE") {
                 navigate("/instructor");
             } else {
-                navigate("/"); 
+                navigate("/");
             }
             
         } catch (err) {
@@ -200,7 +208,7 @@ export default function Login() {
                         <button type="submit" style={styles.loginBtn}>Đăng nhập</button>
                     </form>
 
-                    <a href="#" style={styles.forgotPass}>Quên mật khẩu?</a>
+                    <a href="#" style={styles.forgotPass} onClick={(e) => { e.preventDefault(); navigate("/forgot-password"); }}>Quên mật khẩu?</a>
 
                     <div style={styles.divider}>
                         <div style={styles.line}></div>

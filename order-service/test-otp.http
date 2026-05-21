@@ -1,0 +1,21 @@
+### Bước 1: Đăng ký để nhận OTP
+POST http://localhost:8080/auth/register
+Content-Type: application/json
+
+{
+  "username": "nga_tester",
+  "password": "password123",
+  "email": "dthn2004@gmail.com",
+  "phone": "0912345678"
+}
+
+### Bước 2: Sau khi lấy mã trong Mail, hãy dán vào đây để xác thực
+# Thay đổi otp=...và email=... trên URL cho đúng nhé
+POST http://localhost:8080/auth/verify-otp?email=dthn2004@gmail.com&otp=198586
+Content-Type: application/json
+
+{
+  "username": "nga_tester",
+  "password": "password123",
+  "email": "dthn2004@gmail.com"
+}

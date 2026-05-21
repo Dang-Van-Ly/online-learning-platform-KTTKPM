@@ -7,7 +7,7 @@ import Logo from './Logo';
 const KHOKHOAHOCHeader = () => {
   const navigate = useNavigate();
 
-  const { user } = useContext(AuthContext);
+  const { user, cartItems } = useContext(AuthContext);
   const [searchQuery, setSearchQuery] = useState('');
 
   const userName =
@@ -90,9 +90,17 @@ const KHOKHOAHOCHeader = () => {
             </button>
           )}
 
-          <button className="bg-white hover:bg-gray-50 hover:text-blue-600 hover:border-blue-400 border border-gray-300 px-4 h-[36px] rounded-lg text-[13px] font-semibold flex items-center gap-2 cursor-pointer text-gray-700 whitespace-nowrap shadow-sm transition-all duration-200">
+          <button
+            className="relative bg-white hover:bg-gray-50 hover:text-blue-600 hover:border-blue-400 border border-gray-300 px-4 h-[36px] rounded-lg text-[13px] font-semibold flex items-center gap-2 cursor-pointer text-gray-700 whitespace-nowrap shadow-sm transition-all duration-200"
+            onClick={() => navigate('/gio-hang')}
+          >
             <ShoppingCart size={18}/>
-            Giỏ hàng 
+            Giỏ hàng
+            {cartItems?.length > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+                {cartItems.length}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -106,7 +114,7 @@ const KHOKHOAHOCHeader = () => {
             Khóa Học Free
           </li>
 
-          <li className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap">
+          <li className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap" onClick={()=>navigate('/membership')}>
             Nâng Cấp Hội Viên
             <span className="bg-[#b31c1c] text-[9px] py-[1px] px-[5px] rounded-sm font-bold ml-0.5">GIẢM GIÁ</span>
           </li>

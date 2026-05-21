@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sample Lesson</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 24px; background: #f8fafc; color: #0f172a; }
+    .container { max-width: 860px; margin: 0 auto; background: #ffffff; border-radius: 20px; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08); padding: 32px; }
+    h1 { font-size: 2rem; margin-bottom: 16px; color: #0f172a; }
+    p { line-height: 1.8; margin-bottom: 16px; color: #334155; }
+    ul { margin-left: 20px; color: #334155; }
+    .note { margin-top: 24px; padding: 16px; border-left: 4px solid #3b82f6; background: #eff6ff; color: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Học thử: Nội dung bài học mẫu</h1>
+    <p>Đây là nội dung học thử được mở trực tiếp trong modal. Bạn có thể tích hợp tài liệu PDF, video hoặc mô tả bài giảng tương tự.</p>
+    <p>Nội dung mẫu bao gồm:</p>
+    <ul>
+      <li>Giới thiệu bài học</li>
+      <li>Hướng dẫn chi tiết từng bước</li>
+      <li>Tài nguyên và link tham khảo</li>
+    </ul>
+    <p>Ở thực tế, bạn sẽ lưu đường dẫn tệp video/PDF trong database và backend trả về cho frontend để mở trực tiếp trong modal.</p>
+    <div class="note">
+      <strong>Lưu ý:</strong> Để dùng dữ liệu thật, bạn cần lưu trường <code>url</code> trong database và backend trả lại khi gọi API <code>/api/lesson-files/lesson/:lessonId</code>.
+    </div>
+  </div>
+</body>
+</html>

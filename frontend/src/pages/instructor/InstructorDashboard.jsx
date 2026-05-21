@@ -18,7 +18,7 @@ export default function InstructorDashboard() {
         const userStr = localStorage.getItem('user');
         if (!userStr) return;
         const user = JSON.parse(userStr);
-        const res = await axios.get("http://localhost:8080/api/courses", {
+        const res = await axios.get("/api/courses", {
           headers: { Authorization: `Bearer ${user.token}` }
         });
         const allCourses = Array.isArray(res.data) ? res.data : (res.data.data || []);

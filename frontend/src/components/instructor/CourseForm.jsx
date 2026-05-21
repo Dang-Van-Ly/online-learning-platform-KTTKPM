@@ -26,7 +26,7 @@ export default function CourseForm() {
     if (isEditMode) {
       const fetchCourse = async () => {
         try {
-          const res = await axios.get(`http://localhost:8080/api/courses/${id}`);
+          const res = await axios.get(`/api/courses/${id}`);
           const c = res.data;
           setFormData({
             name: c.name || c.title || "",
@@ -74,9 +74,9 @@ export default function CourseForm() {
       };
 
       if (isEditMode) {
-        await axios.put(`http://localhost:8080/api/courses/${id}`, payload, { headers });
+        await axios.put(`/api/courses/${id}`, payload, { headers });
       } else {
-        await axios.post("http://localhost:8080/api/courses", payload, { headers });
+        await axios.post("/api/courses", payload, { headers });
       }
       
       navigate('/instructor/courses');
