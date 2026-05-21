@@ -1,5 +1,6 @@
-
 services:
+
+  # ==================== INFRASTRUCTURE ====================
 
   db:
     image: mariadb:11
@@ -21,11 +22,13 @@ services:
     ports:
       - "6379:6379"
 
-  backend:
-    build: ./backend
-    container_name: backend
+  # ==================== MICROSERVICES ====================
+
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
     ports:
-      - "8080:8080"
+      - "8081:8081"
     depends_on:
       db:
         condition: service_healthy
@@ -38,10 +41,58 @@ services:
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
 
+  course-service:
+    build: ./course-service
+    container_name: course-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/online_learning
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/online_learning
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+
+  # ==================== API GATEWAY ====================
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth-service
+      - course-service
+      - order-service
+
+  # ==================== FRONTEND ====================
+
   frontend:
     build: ./frontend
     container_name: frontend
     ports:
       - "3000:80"
     depends_on:
-      - backend
+      - api-gateway
