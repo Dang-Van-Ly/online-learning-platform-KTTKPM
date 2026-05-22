@@ -41,24 +41,24 @@ export default function Login() {
 
             // Lưu thông tin user vào context
             loginUser(userData);
-<<<<<<< HEAD
-            
-            // Load purchased courses and membership data
-            await loadUserData(userData.userId);
-            
+
+            // Load purchased courses and membership data (nếu có)
+            try {
+                await loadUserData(userData.userId);
+            } catch (e) {
+                // Không block login nếu loadUserData lỗi
+                console.warn("loadUserData failed:", e);
+            }
+
             // 3. Chuyển hướng về trang tương ứng sau khi thành công
             alert("Đăng nhập thành công!");
+
+            // Nếu có redirect query, ưu tiên chuyển hướng đó
             if (redirectPath && redirectPath !== "/") {
                 navigate(redirectPath, { replace: true });
-            } else if (userData.role === "INSTRUCTOR" || userData.role === "INSTRUCTOR_ROLE") {
-=======
-
-            alert("Đăng nhập thành công!");
-
-            if (userData.role === "ADMIN" || userData.role === "ROLE_ADMIN") {
-                navigate("/admin"); // Thêm dòng này để Admin vào đúng trang quản trị
-            } else if (userData.role === "INSTRUCTOR" || userData.role === "ROLE_INSTRUCTOR") {
->>>>>>> origin/nga
+            } else if (typeof userData.role === 'string' && userData.role.includes("ADMIN")) {
+                navigate("/admin");
+            } else if (typeof userData.role === 'string' && userData.role.includes("INSTRUCTOR")) {
                 navigate("/instructor");
             } else {
                 navigate("/");

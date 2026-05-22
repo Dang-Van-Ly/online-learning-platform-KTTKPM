@@ -9,10 +9,9 @@ import java.util.List;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
-<<<<<<< HEAD:order-service/src/main/java/com/onlinelearning/backend/order/repository/OrderRepository.java
     // Query custom nếu cần, ví dụ tìm tất cả orders của 1 user
     List<Order> findByUserId(Long userId);
-=======
+
+    // Lấy tất cả đơn hàng theo thời gian tạo giảm dần
     List<Order> findAllByOrderByCreatedAtDesc();
->>>>>>> origin/nga:backend/src/main/java/com/onlinelearning/backend/order/repository/OrderRepository.java
 }

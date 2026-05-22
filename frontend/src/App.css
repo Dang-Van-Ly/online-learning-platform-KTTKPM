@@ -183,3 +183,9 @@
     border-right-color: var(--border);
   }
 }
+
+/* Ensure chart parents have non-zero layout so ResponsiveContainer/ChartJS can measure */
+.chart-container {
+  min-width: 0; /* prevents flex children from collapsing in some layouts */
+  min-height: 200px; /* give charts a sensible default height */
+}

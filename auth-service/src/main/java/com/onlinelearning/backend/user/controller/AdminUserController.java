@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,7 @@ import java.util.Map;
 public class AdminUserController {
 
     private final UserService userService;
+    private static final Logger logger = LoggerFactory.getLogger(AdminUserController.class);
 
     public AdminUserController(UserService userService) {
         this.userService = userService;
@@ -38,7 +41,12 @@ public class AdminUserController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(userService.getUsersByRole(Role.USER, page, pageable));
+        try {
+            return ResponseEntity.ok(userService.getUsersByRole(Role.USER, page, pageable));
+        } catch (Exception e) {
+            logger.error("Error fetching students page {} size {}", page, size, e);
+            return ResponseEntity.status(500).body(Map.of("message", "Lỗi máy chủ khi lấy danh sách học viên."));
+        }
     }
 
     @GetMapping("/instructors")
@@ -46,7 +54,12 @@ public class AdminUserController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(userService.getUsersByRole(Role.INSTRUCTOR, page, pageable));
+        try {
+            return ResponseEntity.ok(userService.getUsersByRole(Role.INSTRUCTOR, page, pageable));
+        } catch (Exception e) {
+            logger.error("Error fetching instructors page {} size {}", page, size, e);
+            return ResponseEntity.status(500).body(Map.of("message", "Lỗi máy chủ khi lấy danh sách giảng viên."));
+        }
     }
 
     @GetMapping("/{id}")

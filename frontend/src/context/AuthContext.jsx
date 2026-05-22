@@ -6,7 +6,6 @@ import api from "../api/axios";
 // DÒNG QUAN TRỌNG NHẤT: Phải có "export" ở đây
 export const AuthContext = createContext();
 
-<<<<<<< HEAD
 const STORAGE_USER_KEY = "user";
 const STORAGE_PURCHASED_KEY = "purchasedCourseIds";
 const STORAGE_CART_KEY = "cartItems";
@@ -31,16 +30,19 @@ const normalizeMembershipInfo = (membership) => {
 };
 
 export const AuthProvider = ({ children }) => {
+    // Khởi tạo state đồng bộ từ localStorage để tránh bị "đá" ra trang chủ
     const [user, setUser] = useState(() => {
         const savedUser = localStorage.getItem(STORAGE_USER_KEY);
-        if (!savedUser) return null;
-        try {
-            return JSON.parse(savedUser);
-        } catch (error) {
-            console.error('Error parsing saved user:', error);
-            localStorage.removeItem(STORAGE_USER_KEY);
-            return null;
+        if (savedUser) {
+            try {
+                return JSON.parse(savedUser);
+            } catch (error) {
+                console.error('Error parsing saved user:', error);
+                localStorage.removeItem(STORAGE_USER_KEY);
+                return null;
+            }
         }
+        return null;
     });
     const [purchasedCourseIds, setPurchasedCourseIds] = useState(() => {
         const savedPurchased = localStorage.getItem(STORAGE_PURCHASED_KEY);
@@ -154,22 +156,6 @@ export const AuthProvider = ({ children }) => {
             return normalizeMembershipInfo(next);
         });
     };
-=======
-export const AuthProvider = ({ children }) => {
-    // Khởi tạo state đồng bộ từ localStorage để tránh bị "đá" ra trang chủ
-    const [user, setUser] = useState(() => {
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-            try {
-                return JSON.parse(savedUser);
-            } catch (error) {
-                console.error('Error parsing saved user:', error);
-                return null;
-            }
-        }
-        return null;
-    });
->>>>>>> origin/nga
 
     const loginUser = (data) => {
         setUser(data);
@@ -325,8 +311,6 @@ export const AuthProvider = ({ children }) => {
             clearCart,
             addMembership,
             loadUserData,
-            clearCart,
-            addMembership,
             useMembershipCourse
         }}>
             {children}

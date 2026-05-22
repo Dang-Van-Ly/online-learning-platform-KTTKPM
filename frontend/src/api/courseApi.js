@@ -1,8 +1,8 @@
 import api from './axios';
 
-<<<<<<< HEAD
-const API_URL = "/api/courses";
-const CHAPTER_URL = "/api/chapters";
+const COURSE_PATH = "/courses";
+const CHAPTER_PATH = "/chapters";
+const ADMIN_COURSE_PATH = "/admin/courses";
 
 // Simple in-memory cache to prevent duplicate requests
 const cache = new Map();
@@ -27,7 +27,6 @@ const retryRequest = async (requestFn, maxRetries = 3, baseDelay = 1000) => {
             return await requestFn();
         } catch (error) {
             if (error.response?.status === 429 && attempt < maxRetries) {
-                // Exponential backoff: 1s, 2s, 4s, etc.
                 const delay = baseDelay * Math.pow(2, attempt);
                 console.warn(`Rate limited (429). Retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries + 1})`);
                 await new Promise(resolve => setTimeout(resolve, delay));
@@ -37,10 +36,6 @@ const retryRequest = async (requestFn, maxRetries = 3, baseDelay = 1000) => {
         }
     }
 };
-=======
-const COURSE_PATH = "/courses";
-const ADMIN_COURSE_PATH = "/admin/courses"; // Đường dẫn dành riêng cho Admin
->>>>>>> origin/nga
 
 // --- CÁC HÀM CÔNG KHAI (Dành cho học viên) ---
 export const getAllCourses = async (category) => {
@@ -49,17 +44,11 @@ export const getAllCourses = async (category) => {
     if (cached) return cached;
 
     try {
-<<<<<<< HEAD
-        const url = category ? `${API_URL}?category=${encodeURIComponent(category)}` : API_URL;
-        const response = await retryRequest(() => axios.get(url));
+        const url = category ? `${COURSE_PATH}?category=${encodeURIComponent(category)}` : COURSE_PATH;
+        const response = await retryRequest(() => api.get(url));
         const data = response.data;
         setCached(cacheKey, data);
         return data;
-=======
-        const url = category ? `${COURSE_PATH}?category=${encodeURIComponent(category)}` : COURSE_PATH;
-        const response = await api.get(url);
-        return response.data;
->>>>>>> origin/nga
     } catch (error) {
         console.error("Lỗi khi lấy danh sách khóa học:", error);
         return [];
@@ -72,29 +61,23 @@ export const getCourseById = async (id) => {
     if (cached) return cached;
 
     try {
-<<<<<<< HEAD
-        const response = await retryRequest(() => axios.get(`${API_URL}/${id}`));
+        const response = await retryRequest(() => api.get(`${COURSE_PATH}/${id}`));
         const data = response.data;
         setCached(cacheKey, data);
         return data;
-=======
-        const response = await api.get(`${COURSE_PATH}/${id}`);
-        return response.data;
->>>>>>> origin/nga
     } catch (error) {
         console.error(`Lỗi khi lấy chi tiết khóa học id ${id}:`, error);
         return null;
     }
 };
 
-<<<<<<< HEAD
 export const getChaptersByCourse = async (courseId) => {
     const cacheKey = `chapters_${courseId}`;
     const cached = getCached(cacheKey);
     if (cached) return cached;
 
     try {
-        const response = await retryRequest(() => axios.get(`${CHAPTER_URL}/course/${courseId}`));
+        const response = await retryRequest(() => api.get(`${CHAPTER_PATH}/course/${courseId}`));
         const data = response.data;
         setCached(cacheKey, data);
         return data;
@@ -106,7 +89,7 @@ export const getChaptersByCourse = async (courseId) => {
 
 export const getTopCourses = async (limit = 6) => {
     try {
-        const response = await axios.get(`${API_URL}/top?limit=${limit}`);
+        const response = await api.get(`${COURSE_PATH}/top?limit=${limit}`);
         return response.data;
     } catch (error) {
         console.error("Error fetching top courses:", error);
@@ -125,7 +108,7 @@ const fallbackFiles = (lessonId) => ([
 
 export const getFilesByLesson = async (lessonId) => {
     try {
-        const response = await retryRequest(() => axios.get(`/api/lesson-files/lesson/${lessonId}`));
+        const response = await retryRequest(() => api.get(`/lesson-files/lesson/${lessonId}`));
         const data = response.data;
         return Array.isArray(data) && data.length > 0 ? data : fallbackFiles(lessonId);
     } catch (error) {
@@ -136,7 +119,7 @@ export const getFilesByLesson = async (lessonId) => {
 
 export const getNewestCourses = async (limit = 6) => {
     try {
-        const response = await axios.get(`${API_URL}/newest?limit=${limit}`);
+        const response = await api.get(`${COURSE_PATH}/newest?limit=${limit}`);
         return response.data;
     } catch (error) {
         console.error("Error fetching newest courses:", error);
@@ -146,7 +129,7 @@ export const getNewestCourses = async (limit = 6) => {
 
 export const getHomepageData = async () => {
     try {
-        const response = await axios.get(`${API_URL}/homepage`);
+        const response = await api.get(`${COURSE_PATH}/homepage`);
         return response.data;
     } catch (error) {
         console.error("Error fetching homepage data:", error);
@@ -154,21 +137,17 @@ export const getHomepageData = async () => {
     }
 };
 
-=======
 // --- CÁC HÀM QUẢN TRỊ (Dành cho Admin - Cần Token) ---
-
-// 1. Lấy danh sách khóa học đang chờ duyệt (0)
 export const getPendingCourses = async () => {
     try {
         const response = await api.get(`${ADMIN_COURSE_PATH}/pending`);
         return response.data;
     } catch (error) {
         console.error("Lỗi lấy danh sách chờ duyệt:", error);
-        throw error; // Quăng lỗi để component CourseManagement bắt được
+        throw error;
     }
 };
 
-// 2. Phê duyệt khóa học (Chuyển trạng thái sang 1)
 export const approveCourse = async (id) => {
     try {
         const response = await api.put(`${ADMIN_COURSE_PATH}/${id}/approve`);
@@ -179,7 +158,6 @@ export const approveCourse = async (id) => {
     }
 };
 
-// 3. Từ chối khóa học (Chuyển trạng thái sang 2)
 export const rejectCourse = async (id) => {
     try {
         const response = await api.put(`${ADMIN_COURSE_PATH}/${id}/reject`);
@@ -189,4 +167,3 @@ export const rejectCourse = async (id) => {
         throw error;
     }
 };
->>>>>>> origin/nga

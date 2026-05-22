@@ -23,6 +23,11 @@ public class OrderService {
         return orderRepository.findAll();
     }
 
+    // Lấy tất cả đơn hàng cho Admin (theo thời gian tạo giảm dần)
+    public List<Order> getAllOrdersForAdmin() {
+        return orderRepository.findAllByOrderByCreatedAtDesc();
+    }
+
     // Lấy đơn hàng theo id
     public Optional<Order> getOrderById(Long id) {
         return orderRepository.findById(id);
@@ -54,6 +59,16 @@ public class OrderService {
     // Cập nhật đơn hàng
     public Order updateOrder(Order order) {
         return orderRepository.save(order);
+    }
+
+    // Cập nhật trạng thái đơn hàng (Admin)
+    public void updateOrderStatus(Long id, String status) {
+        Optional<Order> opt = orderRepository.findById(id);
+        if (opt.isPresent()) {
+            Order order = opt.get();
+            order.setStatus(status);
+            orderRepository.save(order);
+        }
     }
 
     // Xóa đơn hàng

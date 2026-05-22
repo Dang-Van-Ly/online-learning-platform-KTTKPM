@@ -38,4 +38,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     // Sum revenue for a course (pricePaid per enrollment)
     @Query("SELECT COALESCE(SUM(e.pricePaid),0) FROM Enrollment e WHERE e.course.id = :courseId")
     Double sumRevenueByCourseId(@Param("courseId") Long courseId);
+
+    // Count courses by status (e.g., ACTIVE, PENDING, REJECTED)
+    long countByStatus(String status);
 }

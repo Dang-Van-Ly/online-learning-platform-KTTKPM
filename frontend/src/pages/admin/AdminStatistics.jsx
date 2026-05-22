@@ -54,7 +54,7 @@ export default function AdminStatistics() {
                 {/* BIỂU ĐỒ TRÒN */}
                 <div style={cardStyle}>
                     <h3 style={cardTitle}>Cơ cấu Thành viên</h3>
-                    <div style={{ width: '100%', height: 300 }}>
+                    <div className="chart-container" style={{ width: '100%', height: 300 }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie data={userData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="value" label>
@@ -72,7 +72,7 @@ export default function AdminStatistics() {
                 {/* BIỂU ĐỒ CỘT */}
                 <div style={cardStyle}>
                     <h3 style={cardTitle}>Tình trạng Khóa học</h3>
-                    <div style={{ width: '100%', height: 300 }}>
+                    <div className="chart-container" style={{ width: '100%', height: 300 }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={courseData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />

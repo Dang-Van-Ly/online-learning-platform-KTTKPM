@@ -189,6 +189,37 @@ public class CourseService {
         }, "GET HOMEPAGE DATA");
     }
 
+    // ================= ADMIN HELPERS =================
+    // Lấy danh sách khóa học đang chờ duyệt
+    public List<Course> getPendingCourses() {
+        return executeWithRetry(() -> {
+            List<Course> list = repo.findByStatus("PENDING");
+            list.forEach(this::populateStats);
+            return list;
+        }, "GET PENDING COURSES");
+    }
+
+    // Phê duyệt khóa học
+    public void approveCourse(Long id) {
+        executeWithRetry(() -> {
+            Course course = repo.findById(id).orElseThrow(() -> new RuntimeException("Course không tồn tại"));
+            course.setStatus("ACTIVE");
+            course.setUpdatedAt(LocalDateTime.now());
+            repo.save(course);
+            return null;
+        }, "APPROVE COURSE");
+    }
+
+    // Từ chối khóa học
+    public void rejectCourse(Long id) {
+        executeWithRetry(() -> {
+            Course course = repo.findById(id).orElseThrow(() -> new RuntimeException("Course không tồn tại"));
+            course.setStatus("REJECTED");
+            course.setUpdatedAt(LocalDateTime.now());
+            repo.save(course);
+            return null;
+        }, "REJECT COURSE");
+    }
 
     // ================= RETRY CORE LOGIC =================
     private <T> T executeWithRetry(RetrySupplier<T> action, String actionName) {
