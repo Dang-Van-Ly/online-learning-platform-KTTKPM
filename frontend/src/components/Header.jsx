@@ -151,7 +151,12 @@ const KHOKHOAHOCHeader = () => {
             Khóa học dưới 500k
           </li>
 
-          <li className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap">Hướng dẫn</li>
+          <li
+            className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap"
+            onClick={() => navigate('/huong-dan')}
+          >
+            Hướng dẫn
+          </li>
           <li className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap">Blog</li>
         </ul>
       </nav>

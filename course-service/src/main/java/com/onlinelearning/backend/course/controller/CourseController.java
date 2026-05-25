@@ -12,15 +12,24 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+
+import com.onlinelearning.backend.course.entity.CourseHistory;
+import com.onlinelearning.backend.course.repository.CourseHistoryRepository;
 
 @RestController
 @RequestMapping("/api/courses")
 public class CourseController {
 
     private final CourseService service;
+    private final CourseHistoryRepository historyRepo;
 
-    public CourseController(CourseService service) {
+    public CourseController(CourseService service, CourseHistoryRepository historyRepo) {
         this.service = service;
+        this.historyRepo = historyRepo;
     }
 
     // Lấy danh sách khóa học (API mà bạn đang bị lỗi 500)
@@ -77,9 +86,6 @@ public class CourseController {
 
             Course savedCourse = service.createWithImage(request);
             return new ResponseEntity<>(savedCourse, HttpStatus.CREATED);
-        } catch (java.io.IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Upload ảnh thất bại: " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Tạo khóa học thất bại: " + e.getMessage());
@@ -128,5 +134,34 @@ public class CourseController {
     public ResponseEntity<String> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.ok("Xóa khóa học thành công");
+    }
+
+    // Lấy lịch sử thay đổi trạng thái của tất cả khóa học của instructor
+    @GetMapping("/instructor/{instructorId}/history")
+    public ResponseEntity<List<Map<String, Object>>> getInstructorHistory(@PathVariable String instructorId) {
+        List<CourseHistory> list = historyRepo.findByCourseInstructorIdOrderByChangedAtDesc(instructorId);
+
+        // Group by course id preserving order
+        Map<Long, Map<String, Object>> grouped = new LinkedHashMap<>();
+        for (CourseHistory h : list) {
+            Long cid = h.getCourse() != null ? h.getCourse().getId() : null;
+            if (cid == null) continue;
+            Map<String, Object> entry = grouped.get(cid);
+            if (entry == null) {
+                entry = new HashMap<>();
+                entry.put("courseId", cid);
+                entry.put("courseName", h.getCourse().getName());
+                entry.put("history", new ArrayList<Map<String, Object>>());
+                grouped.put(cid, entry);
+            }
+            List<Map<String, Object>> hist = (List<Map<String, Object>>) entry.get("history");
+            Map<String, Object> item = new HashMap<>();
+            item.put("status", h.getStatus());
+            item.put("changedBy", h.getChangedBy());
+            item.put("changedAt", h.getChangedAt());
+            hist.add(item);
+        }
+
+        return ResponseEntity.ok(new ArrayList<>(grouped.values()));
     }
 }

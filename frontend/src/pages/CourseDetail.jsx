@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { getCourseById, getAllCourses, getChaptersByCourse, getFilesByLesson } from "../api/courseApi";
+import api from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
 import { ShoppingCart, PlayCircle, Star, MessageCircle, Lock, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -133,14 +134,27 @@ export default function CourseDetail() {
   );
   const membershipAvailableForThisCourse = membershipActive && courseLocked;
 
-  const handleUnlockWithMembership = () => {
+  const handleUnlockWithMembership = async () => {
     if (!membershipAvailableForThisCourse) {
       alert("Không thể mở khóa theo membership. Vui lòng kiểm tra lại số lượt hoặc trạng thái gói.");
       return;
     }
-    useMembershipCourse(id);
-    alert(`Đã mở khóa khóa học bằng gói membership. Còn ${membershipRemainingDaily - 1} lượt hôm nay và ${membershipRemainingTotal - 1} lượt tổng.`);
-    setActiveTab("learn");
+    try {
+      // Gọi API enroll để backend ghi nhận và kiểm tra giới hạn membership
+      await api.post("/enrollments", {
+        userId: user.userId,
+        courseId: Number(id),
+        pricePaid: course?.price || 0,
+      });
+      // Cập nhật local state: trừ lượt membership + thêm vào danh sách đã mua
+      useMembershipCourse(id);
+      addPurchasedCourse(id);
+      alert(`Đã mở khóa khóa học bằng gói membership. Còn ${membershipRemainingDaily - 1} lượt hôm nay và ${membershipRemainingTotal - 1} lượt tổng.`);
+      setActiveTab("learn");
+    } catch (error) {
+      const msg = error?.response?.data || error?.message || "Lỗi không xác định";
+      alert("Không thể mở khóa: " + msg);
+    }
   };
 
   // Build lesson list from real API data
@@ -456,31 +470,110 @@ function LearnTab({ chapters = [], lessonFiles = {}, course = {}, hasPurchased =
     if (!file) return;
     let url = file.url || file.path || file.fileUrl;
     if (!url) return;
-    setActiveFile({ ...file, url });
+    setActiveFile({ ...file, url, fileType: file.fileType || file.type || "" });
   };
 
   const closeFile = () => setActiveFile(null);
 
   const renderFilePreview = (file) => {
-    const lower = String(file?.url || file?.path || file?.fileUrl || "").toLowerCase();
-    const isVideo = lower.endsWith('.mp4');
+    const url = String(file?.url || file?.path || file?.fileUrl || "");
+    const lower = url.toLowerCase();
+    const fileType = file?.fileType || file?.type || "";
+
+    // YouTube embed
+    const isYoutube = fileType === "video/youtube" ||
+                      lower.includes("youtube.com/embed") ||
+                      lower.includes("youtu.be/");
+
+    if (isYoutube) {
+      let embedUrl = url;
+      if (lower.includes("youtube.com/watch")) {
+        const videoId = new URL(url).searchParams.get("v");
+        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      } else if (lower.includes("youtu.be/")) {
+        const videoId = url.split("youtu.be/")[1]?.split("?")[0];
+        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      }
+      return (
+        <iframe
+          title={file.name || file.title || "Video bài học"}
+          src={embedUrl}
+          className="w-full h-[70vh] border-none"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      );
+    }
+
+    // Google Docs embed (chuyển /edit -> /preview)
+    const isGoogleDoc = fileType === "application/gdoc" ||
+                        lower.includes("docs.google.com/document");
+    if (isGoogleDoc) {
+      const previewUrl = url.replace(/\/edit.*$/, "/preview").replace(/\/view.*$/, "/preview");
+      return (
+        <iframe
+          title={file.name || file.title || "Tài liệu Google Docs"}
+          src={previewUrl}
+          className="w-full h-[70vh] border-none"
+          allow="autoplay"
+        />
+      );
+    }
+
+    // Google Drive (folder/file) — không embed được, mở tab mới
+    const isGoogleDrive = fileType === "application/gpdf" ||
+                          lower.includes("drive.google.com");
+    if (isGoogleDrive) {
+      // Nếu là file Drive (có /file/d/), chuyển sang preview
+      if (lower.includes("drive.google.com/file/d/")) {
+        const previewUrl = url.replace(/\/view.*$/, "/preview").replace(/\/edit.*$/, "/preview");
+        return (
+          <iframe
+            title={file.name || file.title || "Tài liệu PDF"}
+            src={previewUrl}
+            className="w-full h-[70vh] border-none"
+          />
+        );
+      }
+      // Folder Drive — mở tab mới
+      return (
+        <div className="flex flex-col items-center justify-center h-[40vh] gap-4 text-slate-600">
+          <span className="text-5xl">📁</span>
+          <p className="text-base font-medium">Tài liệu lưu trên Google Drive</p>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-xl bg-blue-600 px-6 py-3 text-white font-semibold hover:bg-blue-700 transition"
+          >
+            Mở Google Drive
+          </a>
+        </div>
+      );
+    }
+
+    const isVideo = lower.endsWith('.mp4') || lower.endsWith('.webm') || lower.endsWith('.ogg');
     const isPdf = lower.endsWith('.pdf');
     const isHtml = lower.endsWith('.html');
+
     if (isVideo) {
       return (
-        <video controls className="w-full h-[70vh] bg-black" src={file.url}>
+        <video controls className="w-full h-[70vh] bg-black" src={url}>
           Trình duyệt của bạn không hỗ trợ thẻ video.
         </video>
       );
     }
     if (isPdf || isHtml) {
       return (
-        <iframe title={file.name || 'Preview'} src={file.url} className="w-full h-[70vh] border-none" />
+        <iframe title={file.name || 'Preview'} src={url} className="w-full h-[70vh] border-none" />
       );
     }
     return (
       <div className="p-6 text-center text-sm text-slate-600">
-        Đây là tệp không thể xem trực tiếp. <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Mở tệp trong tab mới</a>.
+        Đây là tệp không thể xem trực tiếp.{" "}
+        <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+          Mở tệp trong tab mới
+        </a>.
       </div>
     );
   };
@@ -581,10 +674,15 @@ function LearnTab({ chapters = [], lessonFiles = {}, course = {}, hasPurchased =
                               {files.length > 0 ? (
                                 files.map((file, j) => {
                                   const fileUrl = file.url || file.path || file.fileUrl;
-                                  const fileName = file.name || file.title || fileUrl?.split('/').pop() || `Tệp ${j + 1}`;
+                                  const fileType = file.fileType || file.type || "";
                                   const lower = String(fileUrl || '').toLowerCase();
-                                  const isVideo = lower.endsWith('.mp4');
+                                  const isYoutube = fileType === "video/youtube" || lower.includes("youtube.com/embed") || lower.includes("youtu.be/");
+                                  const isGoogleDoc = fileType === "application/gdoc" || lower.includes("docs.google.com");
+                                  const isGoogleDrive = fileType === "application/gpdf" || lower.includes("drive.google.com");
+                                  const isVideo = !isYoutube && (lower.endsWith('.mp4') || lower.endsWith('.webm'));
                                   const isPdf = lower.endsWith('.pdf');
+                                  const icon = isYoutube ? '🎬' : isGoogleDoc ? '📝' : isGoogleDrive ? '📄' : isVideo ? '🎬' : isPdf ? '📄' : '📎';
+                                  const displayName = isYoutube ? '▶ Video bài học' : isGoogleDoc ? '📝 Tài liệu bài học' : isGoogleDrive ? '📄 Tài liệu PDF' : (file.name || file.title || fileUrl?.split('/').pop() || `Tệp ${j + 1}`);
                                   return (
                                   <button
                                     key={j}
@@ -592,8 +690,8 @@ function LearnTab({ chapters = [], lessonFiles = {}, course = {}, hasPurchased =
                                     onClick={() => openFile({ ...file, url: fileUrl })}
                                     className="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs text-slate-700 hover:border-blue-300 hover:bg-white"
                                   >
-                                    <span>{isVideo ? '🎬' : isPdf ? '📄' : '📎'}</span>
-                                    <span className="truncate">{fileName}</span>
+                                    <span>{icon}</span>
+                                    <span className="truncate">{displayName}</span>
                                   </button>
                                 );
                               })

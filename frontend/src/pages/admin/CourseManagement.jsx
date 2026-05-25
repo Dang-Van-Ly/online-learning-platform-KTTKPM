@@ -11,7 +11,7 @@ export default function CourseManagement() {
         try {
             setLoading(true);
             // URL sẽ gọi đúng theo logic chuỗi PENDING
-            const url = filter === 'PENDING' ? 'admin/courses/pending' : 'admin/courses';
+            const url = filter === 'PENDING' ? '/admin/courses/pending' : '/admin/courses';
             const response = await api.get(url);
             setCourses(response.data);
         } catch (error) {
@@ -25,10 +25,10 @@ export default function CourseManagement() {
         fetchCourses();
     }, [filter]);
 
-    // 2. Phê duyệt khóa học (PENDING -> ACTIVE)
+    // 2. Phê duyệt khóa học (PENDING -> PUBLISHED)
     const handleApprove = async (id) => {
         try {
-            await api.put(`admin/courses/${id}/approve`);
+            await api.put(`/admin/courses/${id}/approve`);
             alert("Đã phê duyệt khóa học thành công!");
             fetchCourses();
         } catch (error) {
@@ -40,7 +40,7 @@ export default function CourseManagement() {
     const handleReject = async (id) => {
         if (window.confirm("Xác nhận từ chối khóa học này?")) {
             try {
-                await api.put(`admin/courses/${id}/reject`);
+                await api.put(`/admin/courses/${id}/reject`);
                 fetchCourses();
             } catch (error) {
                 alert("Không thể thực hiện thao tác.");
@@ -52,7 +52,7 @@ export default function CourseManagement() {
     const handleDelete = async (id) => {
         if (window.confirm("Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa?")) {
             try {
-                await api.delete(`admin/courses/${id}`);
+                await api.delete(`/admin/courses/${id}`);
                 fetchCourses();
             } catch (error) {
                 alert("Lỗi khi xóa dữ liệu.");
@@ -108,7 +108,7 @@ export default function CourseManagement() {
                             <td style={tdStyle}>
                                     <span style={statusBadgeStyle(course.status)}>
                                         {course.status === "PENDING" ? "Đang chờ" :
-                                            course.status === "ACTIVE" ? "Đã duyệt" : "Từ chối"}
+                                            course.status === "PUBLISHED" ? "Đã duyệt" : "Từ chối"}
                                     </span>
                             </td>
                             <td style={tdStyle}>

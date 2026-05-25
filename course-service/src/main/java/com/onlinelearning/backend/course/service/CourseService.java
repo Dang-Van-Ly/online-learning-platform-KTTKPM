@@ -3,7 +3,9 @@ package com.onlinelearning.backend.course.service;
 import com.onlinelearning.backend.course.dto.CourseRequest;
 import com.onlinelearning.backend.course.entity.Course;
 import com.onlinelearning.backend.course.repository.CourseRepository;
+import com.onlinelearning.backend.storage.service.LocalStorageService;
 import com.onlinelearning.backend.storage.service.S3Service;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -17,15 +19,23 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
+import com.onlinelearning.backend.course.entity.CourseHistory;
+import com.onlinelearning.backend.course.repository.CourseHistoryRepository;
+
 @Service
+@Slf4j
 public class CourseService {
 
     private final CourseRepository repo;
     private final S3Service s3Service;
+    private final LocalStorageService localStorageService;
+    private final CourseHistoryRepository historyRepo;
 
-    public CourseService(CourseRepository repo, S3Service s3Service) {
+    public CourseService(CourseRepository repo, S3Service s3Service, LocalStorageService localStorageService, CourseHistoryRepository historyRepo) {
         this.repo = repo;
         this.s3Service = s3Service;
+        this.localStorageService = localStorageService;
+        this.historyRepo = historyRepo;
     }
 
     // ================= CREATE (JSON, không có ảnh) =================
@@ -35,7 +45,21 @@ public class CourseService {
             course.setUpdatedAt(LocalDateTime.now());
             course.setStudentsCount(0L);
             course.setRevenue(0.0);
-            return repo.save(course);
+            if (course.getStatus() == null || !"DRAFT".equalsIgnoreCase(course.getStatus())) {
+                course.setStatus("PENDING");
+            }
+            Course saved = repo.save(course);
+            // create history record
+            try {
+                CourseHistory h = new CourseHistory();
+                h.setCourse(saved);
+                h.setStatus(saved.getStatus());
+                h.setChangedBy(saved.getInstructorId());
+                historyRepo.save(h);
+            } catch (Exception ex) {
+                log.warn("Could not save course history: {}", ex.getMessage());
+            }
+            return saved;
         }, "CREATE COURSE");
     }
 
@@ -46,7 +70,7 @@ public class CourseService {
      * 2. Map CourseRequest → Course entity
      * 3. Lưu vào DB với imageUrl
      */
-    public Course createWithImage(CourseRequest request) throws IOException {
+    public Course createWithImage(CourseRequest request) {
         Course course = new Course();
         course.setName(request.getName());
         course.setDescription(request.getDescription());
@@ -61,19 +85,44 @@ public class CourseService {
         // Upload thumbnail nếu có
         MultipartFile image = request.getImage();
         if (image != null && !image.isEmpty()) {
-            String imageUrl = s3Service.uploadCourseThumbnail(image);
-            course.setImageUrl(imageUrl);
-            course.setImage(imageUrl); // backward-compatible
+            try {
+                String imageUrl = s3Service.uploadCourseThumbnail(image);
+                course.setImageUrl(imageUrl);
+                course.setImage(imageUrl); // backward-compatible
+            } catch (Exception e) {
+                log.warn("Upload ảnh thumbnail S3 thất bại, chuyển sang lưu cục bộ: {}", e.getMessage());
+                try {
+                    String localUrl = localStorageService.saveFile(image, "thumbnails");
+                    course.setImageUrl(localUrl);
+                    course.setImage(localUrl);
+                } catch (Exception localEx) {
+                    log.error("Lưu ảnh cục bộ thất bại: {}", localEx.getMessage(), localEx);
+                }
+            }
         }
 
-        return executeWithRetry(() -> repo.save(course), "CREATE COURSE WITH IMAGE");
+        if (course.getStatus() == null || !"DRAFT".equalsIgnoreCase(course.getStatus())) {
+            course.setStatus("PENDING");
+        }
+
+        Course saved = executeWithRetry(() -> repo.save(course), "CREATE COURSE WITH IMAGE");
+        try {
+            CourseHistory h = new CourseHistory();
+            h.setCourse(saved);
+            h.setStatus(saved.getStatus());
+            h.setChangedBy(saved.getInstructorId());
+            historyRepo.save(h);
+        } catch (Exception ex) {
+            log.warn("Could not save course history (with image): {}", ex.getMessage());
+        }
+        return saved;
     }
 
     // ================= GET ALL (CACHE DISABLED TEMPORARILY) =================
     // @Cacheable(value = "courses")
     public List<Course> getAll() {
         return executeWithRetry(() -> {
-            List<Course> courses = repo.findAll();
+            List<Course> courses = repo.findByStatusIn(java.util.Arrays.asList("PUBLISHED", "ACTIVE"));
             courses.forEach(this::populateStats);
             return courses;
         }, "GET ALL COURSES");
@@ -82,7 +131,7 @@ public class CourseService {
     // ================= GET BY CATEGORY =================
     public List<Course> getByCategory(String category) {
         return executeWithRetry(() -> {
-            List<Course> courses = repo.findByCategoryIgnoreCase(category);
+            List<Course> courses = repo.findByCategoryIgnoreCaseAndStatusIn(category, java.util.Arrays.asList("PUBLISHED", "ACTIVE"));
             courses.forEach(this::populateStats);
             return courses;
         }, "GET COURSES BY CATEGORY");
@@ -127,6 +176,16 @@ public class CourseService {
             course.setUpdatedAt(LocalDateTime.now());
 
             Course saved = repo.save(course);
+            // save history about update
+            try {
+                CourseHistory h = new CourseHistory();
+                h.setCourse(saved);
+                h.setStatus(saved.getStatus());
+                h.setChangedBy(saved.getInstructorId());
+                historyRepo.save(h);
+            } catch (Exception ex) {
+                log.warn("Could not save course history (update): {}", ex.getMessage());
+            }
             populateStats(saved);
             return saved;
 
@@ -175,8 +234,8 @@ public class CourseService {
             newest.forEach(this::populateStats);
             data.put("newestCourses", newest);
 
-            // 3. Grouped by Category (all published courses grouped)
-            List<Course> allPublished = repo.findByStatus("PUBLISHED");
+            // 3. Grouped by Category (all published or active courses grouped)
+            List<Course> allPublished = repo.findByStatusIn(java.util.Arrays.asList("PUBLISHED", "ACTIVE"));
             allPublished.forEach(this::populateStats);
 
             Map<String, List<Course>> grouped = allPublished.stream()
@@ -203,9 +262,18 @@ public class CourseService {
     public void approveCourse(Long id) {
         executeWithRetry(() -> {
             Course course = repo.findById(id).orElseThrow(() -> new RuntimeException("Course không tồn tại"));
-            course.setStatus("ACTIVE");
+            course.setStatus("PUBLISHED");
             course.setUpdatedAt(LocalDateTime.now());
-            repo.save(course);
+            Course saved = repo.save(course);
+            try {
+                CourseHistory h = new CourseHistory();
+                h.setCourse(saved);
+                h.setStatus(saved.getStatus());
+                h.setChangedBy("admin");
+                historyRepo.save(h);
+            } catch (Exception ex) {
+                log.warn("Could not save course history (approve): {}", ex.getMessage());
+            }
             return null;
         }, "APPROVE COURSE");
     }
@@ -216,7 +284,16 @@ public class CourseService {
             Course course = repo.findById(id).orElseThrow(() -> new RuntimeException("Course không tồn tại"));
             course.setStatus("REJECTED");
             course.setUpdatedAt(LocalDateTime.now());
-            repo.save(course);
+            Course saved = repo.save(course);
+            try {
+                CourseHistory h = new CourseHistory();
+                h.setCourse(saved);
+                h.setStatus(saved.getStatus());
+                h.setChangedBy("admin");
+                historyRepo.save(h);
+            } catch (Exception ex) {
+                log.warn("Could not save course history (reject): {}", ex.getMessage());
+            }
             return null;
         }, "REJECT COURSE");
     }

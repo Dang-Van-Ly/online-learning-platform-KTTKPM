@@ -19,3 +19,11 @@ export const resetPassword = (email, otp, newPassword) => {
         `${API_URL}/reset-password?email=${encodeURIComponent(email)}&otp=${otp}&newPassword=${encodeURIComponent(newPassword)}`
     );
 };
+
+export const changePassword = (userId, currentPassword, newPassword) => {
+    return axios.post(`${API_URL}/change-password`, {
+        userId,
+        currentPassword,
+        newPassword,
+    });
+};

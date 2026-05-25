@@ -24,5 +24,6 @@ public class Membership {
 
     @OneToMany(mappedBy = "membership", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<User_membership> userMemberships;
 }

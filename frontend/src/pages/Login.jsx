@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import axios from "axios";
+import api from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom"; 
 import Header from "../components/Header"; 
@@ -23,7 +23,7 @@ export default function Login() {
             return;
         }
         try {
-            const res = await axios.post("/auth/login", {
+            const res = await api.post("/auth/login", {
                 username: username.trim(),
                 password: password.trim()
             });
@@ -197,6 +197,7 @@ export default function Login() {
                         <input
                             style={styles.input}
                             type="text"
+                            autoComplete="username"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                         />
@@ -206,6 +207,7 @@ export default function Login() {
                             <input
                                 style={styles.input}
                                 type="password"
+                                autoComplete="current-password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />

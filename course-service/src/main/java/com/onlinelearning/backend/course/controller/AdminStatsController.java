@@ -37,7 +37,7 @@ public class AdminStatsController {
 
         // 2. Thống kê Khóa học theo Trạng thái
         Map<String, Long> courseStatusStats = new HashMap<>();
-        courseStatusStats.put("Đã duyệt", courseRepo.countByStatus("ACTIVE"));
+        courseStatusStats.put("Đã duyệt", courseRepo.countByStatusIn(java.util.Arrays.asList("PUBLISHED", "ACTIVE")));
         courseStatusStats.put("Đang chờ", courseRepo.countByStatus("PENDING"));
         courseStatusStats.put("Từ chối", courseRepo.countByStatus("REJECTED"));
         data.put("courseStatus", courseStatusStats);

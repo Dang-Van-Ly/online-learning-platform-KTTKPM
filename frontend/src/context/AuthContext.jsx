@@ -248,6 +248,18 @@ export const AuthProvider = ({ children }) => {
             return;
         }
 
+        // Helper: parse date từ ISO string hoặc Java array [year,month,day,hour,min,sec,nano]
+        const parseDate = (val) => {
+            if (!val) return null;
+            if (typeof val === 'string') return val;
+            if (Array.isArray(val)) {
+                // [year, month, day, hour, min, sec, nano] — month là 1-based
+                const [y, mo, d, h = 0, mi = 0, s = 0] = val;
+                return new Date(y, mo - 1, d, h, mi, s).toISOString();
+            }
+            return String(val);
+        };
+
         try {
             // Load purchased courses from orders
             const ordersRes = await api.get(`/orders/user/${userId}`);
@@ -268,27 +280,36 @@ export const AuthProvider = ({ children }) => {
             const membershipRes = await api.get(`/user-membership/user/${userId}`);
             const memberships = membershipRes.data || [];
             if (memberships && memberships.length > 0) {
-                // Take the latest active membership
+                // Lấy gói ACTIVE còn hạn mới nhất
+                const now = new Date();
                 const activeMembership = memberships
-                    .filter(m => m.status === 'ACTIVE')
-                    .sort((a, b) => new Date(b.endDate) - new Date(a.endDate))[0];
+                    .filter(m => {
+                        if (m.status !== 'ACTIVE') return false;
+                        const end = new Date(parseDate(m.endDate));
+                        return end > now;
+                    })
+                    .sort((a, b) => new Date(parseDate(b.endDate)) - new Date(parseDate(a.endDate)))[0];
+
                 if (activeMembership) {
+                    const plan = activeMembership.membership;
+                    const totalCourses = (plan.durationDays || 0) * (plan.coursesPerDay || 0);
                     const membershipData = {
-                        id: activeMembership.membership.id,
-                        name: activeMembership.membership.name,
-                        totalCourses: activeMembership.membership.totalCourses,
-                        dailyLimit: activeMembership.membership.dailyLimit,
-                        durationDays: activeMembership.membership.durationDays,
-                        price: activeMembership.membership.price,
-                        startDate: activeMembership.startDate,
-                        expiresAt: activeMembership.endDate,
-                        status: activeMembership.status,
+                        id: plan.id,
+                        name: plan.name,
+                        title: plan.name,           // giữ cả 2 để tương thích
+                        totalCourses: totalCourses,
+                        dailyLimit: plan.coursesPerDay || 0,
+                        durationDays: plan.durationDays || 0,
+                        price: plan.price,
+                        startDate: parseDate(activeMembership.startDate),
+                        expiresAt: parseDate(activeMembership.endDate),
+                        status: "active",
                         usedCourses: 0,
                         usedToday: 0,
                         lastUsedDate: null,
                         usedCourseIds: [],
                     };
-                    addMembership(membershipData);
+                    persistMembershipInfo(membershipData);
                 }
             }
         } catch (error) {

@@ -14,6 +14,7 @@ import SearchCourses from "./pages/SearchCourses";
 import CourseDetail from "./pages/CourseDetail";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
+import Guide from "./pages/Guide";
 
 // Instructor routes
 import InstructorLayout from "./layouts/InstructorLayout";
@@ -45,6 +46,7 @@ function App() {
                 <Route path="/gio-hang" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-success" element={<OrderSuccess />} />
+                <Route path="/huong-dan" element={<Guide />} />
 
                 {/* --- KHU VỰC GIẢNG VIÊN --- */}
                 <Route path="/instructor" element={<InstructorLayout />}>

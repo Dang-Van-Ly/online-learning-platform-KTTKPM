@@ -1,5 +1,6 @@
 package com.onlinelearning.backend.auth;
 
+import com.onlinelearning.backend.auth.dto.ChangePasswordRequest;
 import com.onlinelearning.backend.auth.dto.LoginRequest;
 import com.onlinelearning.backend.config.JwtUtil;
 import com.onlinelearning.backend.user.entity.Role;
@@ -128,5 +129,31 @@ public class AuthController {
         redisTemplate.delete("RESET_OTP:" + email);
 
         return ResponseEntity.ok("Đặt lại mật khẩu thành công!");
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request) {
+        if (request.getUserId() == null || request.getCurrentPassword() == null || request.getNewPassword() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Vui lòng cung cấp id người dùng, mật khẩu hiện tại và mật khẩu mới.");
+        }
+
+        Optional<User> userOptional = userRepository.findById(request.getUserId());
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Người dùng không tồn tại!");
+        }
+
+        User user = userOptional.get();
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mật khẩu hiện tại không đúng!");
+        }
+
+        if (request.getNewPassword().length() < 6) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mật khẩu mới phải có ít nhất 6 ký tự.");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        return ResponseEntity.ok("Đổi mật khẩu thành công!");
     }
 }

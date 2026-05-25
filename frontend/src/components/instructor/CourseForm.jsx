@@ -15,7 +15,7 @@ export default function CourseForm() {
     description: "",
     price: 0,
     type: "FREE",
-    status: "PUBLISHED",
+    status: "PENDING",
     image: "",
     category: "technology"
   });
@@ -37,7 +37,7 @@ export default function CourseForm() {
             description: c.description || "",
             price: c.price || 0,
             type: c.type || "FREE",
-            status: c.status || "PUBLISHED",
+            status: c.status || "PENDING",
             image: c.image || "",
             category: c.category || "technology"
           });
@@ -111,6 +111,10 @@ export default function CourseForm() {
         instructorId: user.username
       };
 
+      if (!isEditMode && payload.status !== "DRAFT") {
+        payload.status = "PENDING";
+      }
+
       if (isEditMode) {
         await axios.put(`/api/courses/${id}`, payload, { headers });
       } else if (imageFile) {
@@ -120,7 +124,7 @@ export default function CourseForm() {
         fd.append("price", formData.type === "FREE" ? 0 : (formData.price || 0));
         fd.append("category", formData.category || "");
         fd.append("type", formData.type || "FREE");
-        fd.append("status", formData.status || "DRAFT");
+        fd.append("status", formData.status === "DRAFT" ? "DRAFT" : "PENDING");
         fd.append("instructorId", user.username || "");
         fd.append("image", imageFile);
         await axios.post("/api/courses/with-image", fd, {
@@ -133,6 +137,7 @@ export default function CourseForm() {
         await axios.post("/api/courses", payload, { headers });
       }
 
+      alert("Khóa học của bạn đã được gửi yêu cầu duyệt. Vui lòng chờ admin duyệt trước khi nó hiển thị công khai.");
       navigate('/instructor/courses');
     } catch (err) {
       console.error("Failed to save course", err);
@@ -292,6 +297,7 @@ export default function CourseForm() {
                   className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none font-medium cursor-pointer"
                 >
                   <option value="DRAFT">Bản nháp (DRAFT)</option>
+                  <option value="PENDING">Chờ duyệt (PENDING)</option>
                   <option value="PUBLISHED">Công khai (PUBLISHED)</option>
                 </select>
               </div>

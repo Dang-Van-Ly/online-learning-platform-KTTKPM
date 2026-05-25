@@ -20,15 +20,18 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     // Tìm kiếm khóa học theo danh mục
     List<Course> findByCategoryIgnoreCase(String category);
 
-    // Tìm kiếm khóa học hoạt động theo danh mục
-    List<Course> findByCategoryIgnoreCaseAndStatus(String category, String status);
+    // Tìm kiếm khóa học theo trạng thái trong danh sách
+    List<Course> findByStatusIn(List<String> statuses);
 
-    // Lấy danh sách khóa học mới nhất (chỉ PUBLISHED)
-    @Query("SELECT c FROM Course c WHERE c.status = 'PUBLISHED' ORDER BY c.createdAt DESC, c.id DESC")
+    // Tìm kiếm khóa học theo danh mục và nhiều trạng thái
+    List<Course> findByCategoryIgnoreCaseAndStatusIn(String category, List<String> statuses);
+
+    // Lấy danh sách khóa học mới nhất (chỉ PUBLISHED hoặc ACTIVE)
+    @Query("SELECT c FROM Course c WHERE c.status IN ('PUBLISHED','ACTIVE') ORDER BY c.createdAt DESC, c.id DESC")
     List<Course> findNewestCourses(org.springframework.data.domain.Pageable pageable);
 
-    // Lấy danh sách khóa học nổi bật nhất dựa trên số lượng học viên thực tế (chỉ PUBLISHED)
-    @Query("SELECT c FROM Course c LEFT JOIN Enrollment e ON e.course.id = c.id WHERE c.status = 'PUBLISHED' GROUP BY c.id ORDER BY COUNT(e) DESC, c.id DESC")
+    // Lấy danh sách khóa học nổi bật nhất dựa trên số lượng học viên thực tế (chỉ PUBLISHED hoặc ACTIVE)
+    @Query("SELECT c FROM Course c LEFT JOIN Enrollment e ON e.course.id = c.id WHERE c.status IN ('PUBLISHED','ACTIVE') GROUP BY c.id ORDER BY COUNT(e) DESC, c.id DESC")
     List<Course> findTopCourses(org.springframework.data.domain.Pageable pageable);
 
     // Count enrollments for a course
@@ -41,4 +44,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     // Count courses by status (e.g., ACTIVE, PENDING, REJECTED)
     long countByStatus(String status);
+
+    // Count courses by multiple statuses
+    long countByStatusIn(List<String> statuses);
 }

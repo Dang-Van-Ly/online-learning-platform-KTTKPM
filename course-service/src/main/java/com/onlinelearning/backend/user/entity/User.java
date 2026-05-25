@@ -1,5 +1,6 @@
 package com.onlinelearning.backend.user.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,6 +21,7 @@ public class User implements Serializable {
     private Long id;
 
     private String username;
+    @JsonIgnore
     private String password;
     private String phone;
     private String email;

@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 import { getCourseById } from "../api/courseApi";
 import api from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
-import { membershipPackages } from "../data/membershipPackages";
+import { membershipPackages, membershipDbIds } from "../data/membershipPackages";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -120,7 +120,7 @@ export default function Checkout() {
         // Save membership to backend
         const membershipRes = await api.post("/user-membership/buy", {
           userId: user.userId,
-          membershipId: membershipPackage.id,
+          membershipId: membershipDbIds[packageId],
         });
         if (!membershipRes.data) throw new Error("Lỗi mua gói thành viên");
         const membershipData = buildMembershipPayload(membershipPackage);
@@ -150,7 +150,7 @@ export default function Checkout() {
         // Save membership to backend
         const membershipRes = await api.post("/user-membership/buy", {
           userId: user.userId,
-          membershipId: membershipPackage.id,
+          membershipId: membershipDbIds[packageId],
         });
         if (!membershipRes.data) throw new Error("Lỗi mua gói thành viên");
         const membershipData = buildMembershipPayload(membershipPackage);

@@ -1,33 +1,33 @@
-package com.onlinelearning.backend.membership.entity;
+package com.onlinelearning.backend.membership;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
+/**
+ * Read-only mapping tới bảng user_membership (owned by order-service).
+ * Course-service chỉ đọc để kiểm tra membership còn hạn.
+ */
 @Entity
 @Table(name = "user_membership")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class User_membership {
+public class UserMembership {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "user_id")
     private Long userId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "membership_id")
-    private Membership membership;
+    private MembershipPlan membership;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime startDate;
-
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime endDate;
-
     private String status;
 }

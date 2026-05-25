@@ -53,13 +53,13 @@ export default function AnalyticsChart({ enrollments }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm" style={{ minHeight: 420 }}>
       <div className="mb-6">
         <h2 className="text-lg font-bold text-slate-800">Revenue & Enrollments</h2>
         <p className="text-sm text-slate-500">Last 6 months overview</p>
       </div>
       
-      <div className="h-80 w-full">
+      <div style={{ width: '100%', height: 400, minHeight: 400 }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>

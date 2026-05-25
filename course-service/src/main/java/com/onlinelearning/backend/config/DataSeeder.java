@@ -158,7 +158,7 @@ public class DataSeeder implements CommandLineRunner {
             course.setCategory((String) c[4]);
             course.setInstructorId((String) c[5]);
             course.setType((String) c[6]);
-            course.setStatus("ACTIVE");
+            course.setStatus("PUBLISHED");
             course = courseRepository.save(course);
 
             String[] chapters = chapterData[i][0];

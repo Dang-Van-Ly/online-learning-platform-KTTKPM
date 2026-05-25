@@ -1,3 +1,13 @@
+// Map từ package key → database ID (phải khớp với thứ tự insert trong DB)
+export const membershipDbIds = {
+  basic: 1,
+  standard: 2,
+  silver: 3,
+  premium: 4,
+  gold: 5,
+  diamond: 6,
+};
+
 export const membershipPackages = {
   basic: {
     id: "basic",

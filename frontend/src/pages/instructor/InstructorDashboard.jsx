@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axios';
 
 import StatsCards from '../../components/instructor/StatsCards';
 import AnalyticsChart from '../../components/instructor/AnalyticsChart';
 import RecentEnrollments from '../../components/instructor/RecentEnrollments';
 import TopCourses from '../../components/instructor/TopCourses';
 import QuickActions from '../../components/instructor/QuickActions';
+import CourseHistory from '../../components/instructor/CourseHistory';
 
 export default function InstructorDashboard() {
   const [loading, setLoading] = useState(true);
@@ -24,18 +25,14 @@ export default function InstructorDashboard() {
         const userStr = localStorage.getItem('user');
         if (!userStr) return;
         const user = JSON.parse(userStr);
-        const coursesRes = await axios.get("/api/courses", {
-          headers: { Authorization: `Bearer ${user.token}` }
-        });
+        const coursesRes = await api.get("/courses");
         const allCourses = Array.isArray(coursesRes.data) ? coursesRes.data : (coursesRes.data.data || []);
         const myCourses = allCourses.filter(c => c.instructorId === user.username);
         setCourses(myCourses);
         
-        // Fetch instructor's enrollments using new API
+        // Fetch instructor's enrollments using shared API instance
         try {
-          const enrollmentsRes = await axios.get(`http://localhost:8080/api/enrollments/instructor/${user.username}`, {
-            headers: { Authorization: `Bearer ${user.token}` }
-          });
+          const enrollmentsRes = await api.get(`/enrollments/instructor/${user.username}`);
           if (Array.isArray(enrollmentsRes.data)) {
             setEnrollments(enrollmentsRes.data);
           }
@@ -97,6 +94,11 @@ export default function InstructorDashboard() {
         <div className="lg:col-span-1">
           <QuickActions />
         </div>
+      </div>
+
+      {/* 4. Course History */}
+      <div className="mt-6">
+        <CourseHistory username={JSON.parse(localStorage.getItem('user') || 'null')?.username} />
       </div>
     </div>
   );
