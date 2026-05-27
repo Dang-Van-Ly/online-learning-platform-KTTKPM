@@ -13,6 +13,7 @@ export default function CourseDetail() {
   const [course, setCourse] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [newCourses, setNewCourses] = useState([]);
   const [relatedCourses, setRelatedCourses] = useState([]);
   const [activeTab, setActiveTab] = useState("desc");
@@ -71,7 +72,11 @@ export default function CourseDetail() {
         setNewCourses(others.sort((a, b) => (b.id || 0) - (a.id || 0)).slice(0, 6));
         setRelatedCourses(others.sort(() => Math.random() - 0.5).slice(0, 8));
       } catch (error) {
-        console.error("Error loading course data:", error);
+        if (error?.response?.status === 404) {
+          if (isMounted) setNotFound(true);
+        } else {
+          console.error("Error loading course data:", error);
+        }
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -96,8 +101,8 @@ export default function CourseDetail() {
     <><Header /><div className="flex justify-center items-center min-h-[400px] text-gray-500 text-lg">Đang tải dữ liệu...</div><Footer /></>
   );
 
-  if (!course) return (
-    <><Header /><div className="flex flex-col justify-center items-center min-h-[400px] gap-4"><h2 className="text-xl font-bold">Không tìm thấy khóa học</h2><button onClick={() => navigate("/")} className="bg-blue-600 text-white px-6 py-2 rounded">Quay về trang chủ</button></div><Footer /></>
+  if (notFound || !course) return (
+    <NotFoundPage navigate={navigate} />
   );
 
   const isFree = ((course?.type || "").toLowerCase() === "free") || Number(course?.price) === 0;
@@ -141,10 +146,12 @@ export default function CourseDetail() {
     }
     try {
       // Gọi API enroll để backend ghi nhận và kiểm tra giới hạn membership
+      // pricePaid = 0 vì user mở khóa bằng membership, không trả tiền trực tiếp
       await api.post("/enrollments", {
         userId: user.userId,
         courseId: Number(id),
-        pricePaid: course?.price || 0,
+        pricePaid: 0,
+        type: "MEMBERSHIP",
       });
       // Cập nhật local state: trừ lượt membership + thêm vào danh sách đã mua
       useMembershipCourse(id);
@@ -396,8 +403,8 @@ function DescTab({ course, targetAudience, lessonList }) {
         với phương pháp học thực chiến, dễ hiểu và hiệu quả.
       </p>
 
-      {course.image && (
-        <img src={course.image} alt={course.name} className="w-full rounded-lg mb-6 border border-gray-200" />
+      {(course.imageUrl || course.image) && (
+        <img src={course.imageUrl || course.image} alt={course.name} className="w-full rounded-lg mb-6 border border-gray-200" />
       )}
 
       <p className="mb-6 text-gray-600">{course.description}</p>
@@ -592,6 +599,29 @@ function LearnTab({ chapters = [], lessonFiles = {}, course = {}, hasPurchased =
             </div>
             <div className="bg-slate-900 p-4">
               {renderFilePreview(activeFile)}
+              <div className="mt-3 flex items-center justify-between gap-4">
+                <a
+                  href={activeFile.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-slate-200 underline break-all"
+                >
+                  Mở link gốc
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      navigator.clipboard?.writeText(activeFile.url || '');
+                    } catch (e) {
+                      /* ignore */
+                    }
+                  }}
+                  className="text-sm bg-slate-100 text-slate-800 px-3 py-1 rounded-xl hover:bg-slate-200"
+                >
+                  Sao chép link
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -730,5 +760,45 @@ function FeatureCard({ icon, iconBg, title, desc, highlight }) {
         <p className="text-xs text-gray-500 leading-tight">{desc}</p>
       </div>
     </div>
+  );
+}
+
+// ===================== NOT FOUND PAGE =====================
+function NotFoundPage({ navigate }) {
+  const [countdown, setCountdown] = React.useState(3);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          navigate("/");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [navigate]);
+
+  return (
+    <>
+      <Header />
+      <div className="flex flex-col justify-center items-center min-h-[60vh] gap-6 px-4">
+        <div className="text-8xl">😕</div>
+        <h2 className="text-2xl font-bold text-gray-800">Khóa học không tồn tại</h2>
+        <p className="text-gray-500 text-center max-w-md">
+          Khóa học này đã bị xóa hoặc không còn khả dụng.
+          Bạn sẽ được chuyển về trang chủ sau <span className="font-bold text-blue-600">{countdown}</span> giây.
+        </p>
+        <button
+          onClick={() => navigate("/")}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg shadow transition"
+        >
+          Về trang chủ ngay
+        </button>
+      </div>
+      <Footer />
+    </>
   );
 }

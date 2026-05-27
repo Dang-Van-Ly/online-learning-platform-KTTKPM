@@ -8,7 +8,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 export default function Profile() {
-    const { user, logoutUser, purchasedCourseIds, membershipInfo, membershipHistory } = useContext(AuthContext);
+    const { user, logoutUser, purchasedCourseIds, membershipInfo, membershipHistory, removeStalePurchasedIds } = useContext(AuthContext);
     const [recentPurchasedCourses, setRecentPurchasedCourses] = useState([]);
     const [allPurchasedCourses, setAllPurchasedCourses] = useState([]);
     const [membershipUnlockedCourses, setMembershipUnlockedCourses] = useState([]);
@@ -103,13 +103,15 @@ export default function Profile() {
             const allItems = await Promise.all(
                 purchasedCourseIds.map(async (courseId) => {
                     const course = await getCourseById(courseId);
-                    return course ? { id: courseId, name: course.name } : null;
+                    return course ? { id: courseId, name: course.name } : { id: courseId, notFound: true };
                 })
             );
-            const validItems = allItems.filter(Boolean);
+            // Tách id không tồn tại và xóa khỏi localStorage
+            const staleIds = allItems.filter(i => i.notFound).map(i => i.id);
+            if (staleIds.length > 0) removeStalePurchasedIds(staleIds);
+
+            const validItems = allItems.filter(i => !i.notFound);
             setAllPurchasedCourses(validItems);
-            
-            // Fetch 4 khóa học gần đây
             setRecentPurchasedCourses(validItems.slice(-4));
         };
 
@@ -236,7 +238,7 @@ export default function Profile() {
 
     const menuItems = [
         { id: 1, title: "Khóa Học Hội Viên", icon: "👤" },
-        { id: 2, title: `Khóa Học Đã Mua (${purchasedCourseIds?.length || 0})`, icon: "📚" },
+        { id: 2, title: `Khóa Học Đã Mua (${allPurchasedCourses?.length || 0})`, icon: "📚" },
         { id: 3, title: "Khóa Học Yêu Thích", icon: "❤️" },
         { id: 4, title: "Đơn Hàng", icon: "📋" },
         { id: 5, title: "Gói Hội Viên", icon: "🎁" },

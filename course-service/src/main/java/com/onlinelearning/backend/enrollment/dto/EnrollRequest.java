@@ -11,4 +11,5 @@ public class EnrollRequest {
     private Long userId;
     private Long courseId;
     private Double pricePaid;
+    private String type; // "MEMBERSHIP" khi mở khóa bằng gói hội viên
 }

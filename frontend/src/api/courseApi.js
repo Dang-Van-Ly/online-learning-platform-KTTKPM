@@ -56,31 +56,24 @@ export const getAllCourses = async (category) => {
 };
 
 export const getCourseById = async (id) => {
-    const cacheKey = `course_${id}`;
-    const cached = getCached(cacheKey);
-    if (cached) return cached;
-
+    // Don't cache - always fetch fresh so new imageUrl shows immediately
     try {
         const response = await retryRequest(() => api.get(`${COURSE_PATH}/${id}`));
-        const data = response.data;
-        setCached(cacheKey, data);
-        return data;
+        return response.data;
     } catch (error) {
-        console.error(`Lỗi khi lấy chi tiết khóa học id ${id}:`, error);
+        // Suppress 404 logs — course simply doesn't exist, caller handles null
+        if (error?.response?.status !== 404) {
+            console.error(`Lỗi khi lấy chi tiết khóa học id ${id}:`, error);
+        }
         return null;
     }
 };
 
 export const getChaptersByCourse = async (courseId) => {
-    const cacheKey = `chapters_${courseId}`;
-    const cached = getCached(cacheKey);
-    if (cached) return cached;
-
+    // Don't cache chapters - always fetch fresh to show newly created content
     try {
         const response = await retryRequest(() => api.get(`${CHAPTER_PATH}/course/${courseId}`));
-        const data = response.data;
-        setCached(cacheKey, data);
-        return data;
+        return response.data;
     } catch (error) {
         console.error(`Error fetching chapters for course ${courseId}:`, error);
         return [];
@@ -134,6 +127,16 @@ export const getHomepageData = async () => {
     } catch (error) {
         console.error("Error fetching homepage data:", error);
         return null;
+    }
+};
+
+export const getCoursesByInstructor = async (instructorId) => {
+    try {
+        const response = await api.get(`${COURSE_PATH}/instructor/${instructorId}`);
+        return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+        console.error(`Error fetching courses for instructor ${instructorId}:`, error);
+        return [];
     }
 };
 
