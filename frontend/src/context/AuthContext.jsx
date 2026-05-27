@@ -187,6 +187,16 @@ export const AuthProvider = ({ children }) => {
         });
     };
 
+    // Xóa các courseId không còn tồn tại trong DB khỏi localStorage
+    const removeStalePurchasedIds = (staleIds) => {
+        if (!staleIds?.length) return;
+        setPurchasedCourseIds((prev) => {
+            const next = prev.filter(id => !staleIds.includes(id));
+            localStorage.setItem(STORAGE_PURCHASED_KEY, JSON.stringify(next));
+            return next;
+        });
+    };
+
     const addToCart = (course) => {
         if (!course || !course.id) return;
         const newId = String(course.id);
@@ -274,6 +284,21 @@ export const AuthProvider = ({ children }) => {
                     });
                 }
             });
+
+            // Also load enrollments (includes membership-unlocked courses)
+            try {
+                const enrollRes = await api.get(`/enrollments/user/${userId}`);
+                const enrollments = enrollRes.data || [];
+                enrollments.forEach(e => {
+                    const cid = String(e.course?.id || e.courseId || "");
+                    if (cid && !purchasedIds.includes(cid)) {
+                        purchasedIds.push(cid);
+                    }
+                });
+            } catch (enrollErr) {
+                console.warn('Could not load enrollments:', enrollErr.message);
+            }
+
             persistPurchasedCourseIds(purchasedIds);
 
             // Load membership
@@ -293,10 +318,36 @@ export const AuthProvider = ({ children }) => {
                 if (activeMembership) {
                     const plan = activeMembership.membership;
                     const totalCourses = (plan.durationDays || 0) * (plan.coursesPerDay || 0);
+
+                    // Load membership-unlocked course IDs from enrollments
+                    let usedCourseIds = [];
+                    let usedTodayCount = 0;
+                    const todayStr = new Date().toISOString().split("T")[0];
+                    try {
+                        const enrollRes = await api.get(`/enrollments/user/${userId}`);
+                        const enrollments = enrollRes.data || [];
+                        usedCourseIds = enrollments
+                            .filter(e => e.type === 'MEMBERSHIP' || e.pricePaid === 0)
+                            .map(e => String(e.course?.id || e.courseId || ""))
+                            .filter(Boolean);
+                        // Chỉ đếm enrollment membership hôm nay (không đếm enrollment mua bằng tiền)
+                        usedTodayCount = enrollments.filter(e => {
+                            if (!e.enrolledAt) return false;
+                            if (e.type !== 'MEMBERSHIP' && e.pricePaid !== 0) return false;
+                            return e.enrolledAt.split("T")[0] === todayStr;
+                        }).length;
+                    } catch (e) { /* ignore */ }
+
+                    // Giữ lại usedToday từ localStorage nếu lớn hơn (tránh reset khi backend chưa cập nhật)
+                    const savedMembership = (() => { try { return JSON.parse(localStorage.getItem(STORAGE_MEMBERSHIP_KEY)); } catch { return null; } })();
+                    const savedLastDay = savedMembership?.lastUsedDate ? savedMembership.lastUsedDate.split("T")[0] : null;
+                    const savedUsedToday = savedLastDay === todayStr ? Number(savedMembership?.usedToday || 0) : 0;
+                    const finalUsedToday = Math.max(usedTodayCount, savedUsedToday);
+
                     const membershipData = {
                         id: plan.id,
                         name: plan.name,
-                        title: plan.name,           // giữ cả 2 để tương thích
+                        title: plan.name,
                         totalCourses: totalCourses,
                         dailyLimit: plan.coursesPerDay || 0,
                         durationDays: plan.durationDays || 0,
@@ -304,10 +355,10 @@ export const AuthProvider = ({ children }) => {
                         startDate: parseDate(activeMembership.startDate),
                         expiresAt: parseDate(activeMembership.endDate),
                         status: "active",
-                        usedCourses: 0,
-                        usedToday: 0,
-                        lastUsedDate: null,
-                        usedCourseIds: [],
+                        usedCourses: usedCourseIds.length,
+                        usedToday: finalUsedToday,
+                        lastUsedDate: finalUsedToday > 0 ? new Date().toISOString() : null,
+                        usedCourseIds: usedCourseIds,
                     };
                     persistMembershipInfo(membershipData);
                 }
@@ -327,6 +378,7 @@ export const AuthProvider = ({ children }) => {
             loginUser,
             logoutUser,
             addPurchasedCourse,
+            removeStalePurchasedIds,
             addToCart,
             removeFromCart,
             clearCart,
