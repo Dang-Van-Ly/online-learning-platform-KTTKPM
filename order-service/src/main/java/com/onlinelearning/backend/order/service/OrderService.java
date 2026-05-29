@@ -1,5 +1,7 @@
 package com.onlinelearning.backend.order.service;
 
+import com.onlinelearning.backend.messaging.EventPublisher;
+import com.onlinelearning.backend.messaging.OrderCreatedEvent;
 import com.onlinelearning.backend.order.dto.OrderItemRequest;
 import com.onlinelearning.backend.order.dto.OrderRequest;
 import com.onlinelearning.backend.order.entity.Order;
@@ -17,6 +19,9 @@ public class OrderService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private EventPublisher eventPublisher;
 
     // Lấy tất cả đơn hàng
     public List<Order> getAllOrders() {
@@ -53,7 +58,25 @@ public class OrderService {
         }
         order.setOrderItems(items);
 
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+
+        // Publish event to RabbitMQ
+        List<String> courseNames = items.stream()
+                .map(i -> "Khóa học #" + i.getCourseId())
+                .toList();
+        OrderCreatedEvent event = OrderCreatedEvent.builder()
+                .orderId(saved.getId())
+                .userId(saved.getUserId())
+                .userEmail(request.getUserEmail() != null ? request.getUserEmail() : "")
+                .userName(request.getUserName() != null ? request.getUserName() : "Học viên")
+                .totalPrice(saved.getTotalPrice())
+                .paymentMethod(saved.getPaymentMethod())
+                .courseNames(courseNames)
+                .status(saved.getStatus())
+                .build();
+        eventPublisher.publishOrderCreated(event);
+
+        return saved;
     }
 
     // Cập nhật đơn hàng

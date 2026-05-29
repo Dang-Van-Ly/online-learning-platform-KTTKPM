@@ -2,6 +2,7 @@ package com.onlinelearning.backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -31,20 +32,20 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/api/user-membership/buy").permitAll()
                         .requestMatchers(
-                                "/",
+                                "/api/user-membership/**",
+                                "/api/memberships/**",
+                                "/api/promotions/**",
                                 "/api/orders/**",
                                 "/api/carts/**",
                                 "/api/cart-items/**",
                                 "/api/order-items/**",
-                                "/api/memberships/**",
-                                "/api/user-membership/**",
-                                "/api/promotions/**",
                                 "/api/chats/**",
                                 "/api/chat-rooms/**",
                                 "/swagger-ui/**",

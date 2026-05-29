@@ -117,6 +117,12 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
+		<!-- RABBITMQ -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-amqp</artifactId>
+		</dependency>
+
 		<!-- JACKSON JSR310 (Java 8 Date/Time support) -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>

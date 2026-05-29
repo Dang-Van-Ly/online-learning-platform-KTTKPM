@@ -34,13 +34,20 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-
     environment:
       SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/online_learning
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/ || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    env_file:
+      - .env
 
   course-service:
     build: ./course-service
@@ -58,6 +65,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || curl -f http://localhost:8082/ || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    env_file:
+      - .env
 
   order-service:
     build: ./order-service
@@ -75,6 +90,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/ || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    env_file:
+      - .env
 
   # ==================== API GATEWAY ====================
 
@@ -84,9 +107,12 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - auth-service
-      - course-service
-      - order-service
+      auth-service:
+        condition: service_healthy
+      course-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
 
   # ==================== FRONTEND ====================
 
