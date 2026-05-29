@@ -190,36 +190,37 @@ public class DataSeeder implements CommandLineRunner {
                     String safeTitle = lessonTitles[k].replaceAll("[^a-zA-Z0-9 ]", "").trim().replaceAll("\\s+", "-").toLowerCase();
                     if (safeTitle.length() > 40) safeTitle = safeTitle.substring(0, 40);
 
-                    // Determine which files this lesson has based on position
-                    // Pattern: 0=mp4 only, 1=mp4+pdf, 2=mp4+doc, 3=mp4+pdf+doc, repeat
+                    // Video YouTube - xen kẽ 2 link
+                    String[] youtubeUrls = {
+                        "https://www.youtube.com/watch?v=AFfnd-m5u8g&t=953s",
+                        "https://www.youtube.com/watch?v=g26EvuuRzzY&t=1213s"
+                    };
+                    Lesson_file video = new Lesson_file();
+                    video.setFileName(safeTitle + ".mp4");
+                    video.setFileUrl(youtubeUrls[k % 2]);
+                    video.setFileType("video/youtube");
+                    video.setOrderNumber(1);
+                    video.setLesson(lesson);
+                    lessonFileRepository.save(video);
+
+                    // PDF - Google Drive
                     int pattern = k % 4;
-
-                    // Always add mp4
-                    Lesson_file mp4 = new Lesson_file();
-                    mp4.setFileName(safeTitle + ".mp4");
-                    mp4.setFileUrl("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4");
-                    mp4.setFileType("video/mp4");
-                    mp4.setOrderNumber(1);
-                    mp4.setLesson(lesson);
-                    lessonFileRepository.save(mp4);
-
-                    // Add PDF for pattern 1 and 3
                     if (pattern == 1 || pattern == 3) {
                         Lesson_file pdf = new Lesson_file();
                         pdf.setFileName("tai-lieu-" + safeTitle + ".pdf");
-                        pdf.setFileUrl("https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf");
-                        pdf.setFileType("application/pdf");
+                        pdf.setFileUrl("https://drive.google.com/file/d/1IGiU4wx0XiLo9suWTbbjBeNxhQucQUhw/view?usp=sharing");
+                        pdf.setFileType("application/gpdf");
                         pdf.setOrderNumber(2);
                         pdf.setLesson(lesson);
                         lessonFileRepository.save(pdf);
                     }
 
-                    // Add DOC for pattern 2 and 3
+                    // DOC - Google Drive (dùng cùng link PDF làm placeholder)
                     if (pattern == 2 || pattern == 3) {
                         Lesson_file doc = new Lesson_file();
                         doc.setFileName("bai-tap-" + safeTitle + ".docx");
-                        doc.setFileUrl("https://file-examples.com/storage/feaade38c1651bd01984236/2017/02/file-sample_100kB.docx");
-                        doc.setFileType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+                        doc.setFileUrl("https://drive.google.com/file/d/1IGiU4wx0XiLo9suWTbbjBeNxhQucQUhw/view?usp=sharing");
+                        doc.setFileType("application/gpdf");
                         doc.setOrderNumber(pattern == 3 ? 3 : 2);
                         doc.setLesson(lesson);
                         lessonFileRepository.save(doc);

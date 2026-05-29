@@ -4,7 +4,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -31,7 +33,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
 
-        // ❌ không có token -> bỏ qua
+        // Không có token -> bỏ qua, để Spring Security tự xử lý theo rule permitAll/authenticated
         if (header == null || header.isBlank() || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -40,9 +42,10 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = header.substring(7);
 
         try {
-
-            // ❗ nếu đã auth rồi thì không set lại
-            if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            // Chỉ bỏ qua nếu đã có auth thực sự (không phải anonymous)
+            Authentication existing = SecurityContextHolder.getContext().getAuthentication();
+            if (existing != null && existing.isAuthenticated()
+                    && !(existing instanceof AnonymousAuthenticationToken)) {
                 filterChain.doFilter(request, response);
                 return;
             }
@@ -50,7 +53,7 @@ public class JwtFilter extends OncePerRequestFilter {
             String userId = jwtUtil.extractUserId(token);
             String role = jwtUtil.extractRole(token);
 
-            // ✅ normalize role
+            // Normalize role
             if (role == null) role = "USER";
             role = role.toUpperCase();
 

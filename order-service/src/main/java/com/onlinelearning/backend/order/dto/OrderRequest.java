@@ -6,48 +6,31 @@ import java.util.List;
 public class OrderRequest {
 
     private Long userId;
+    private String userEmail;
+    private String userName;
     private BigDecimal totalPrice;
     private String status;
     private String paymentMethod;
     private List<OrderItemRequest> orderItems;
 
-    public Long getUserId() {
-        return userId;
-    }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
+    public String getUserEmail() { return userEmail; }
+    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 
-    public BigDecimal getTotalPrice() {
-        return totalPrice;
-    }
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
 
-    public void setTotalPrice(BigDecimal totalPrice) {
-        this.totalPrice = totalPrice;
-    }
+    public BigDecimal getTotalPrice() { return totalPrice; }
+    public void setTotalPrice(BigDecimal totalPrice) { this.totalPrice = totalPrice; }
 
-    public String getStatus() {
-        return status;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
 
-    public String getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public void setPaymentMethod(String paymentMethod) {
-        this.paymentMethod = paymentMethod;
-    }
-
-    public List<OrderItemRequest> getOrderItems() {
-        return orderItems;
-    }
-
-    public void setOrderItems(List<OrderItemRequest> orderItems) {
-        this.orderItems = orderItems;
-    }
+    public List<OrderItemRequest> getOrderItems() { return orderItems; }
+    public void setOrderItems(List<OrderItemRequest> orderItems) { this.orderItems = orderItems; }
 }
