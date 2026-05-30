@@ -40,18 +40,24 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User request) {
+        // 1. Kiểm tra trùng Username
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username đã tồn tại!");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("USERNAME_ALREADY_EXISTS");
         }
 
+        // 2. Kiểm tra trùng Email
+        if (userRepository.existsByEmail(request.getEmail())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("EMAIL_ALREADY_EXISTS");
+        }
+
+        // Nếu không trùng thì tiến hành gửi OTP như cũ
         String otp = String.valueOf((int)((Math.random() * 899999) + 100000));
         try {
             redisTemplate.opsForValue().set("OTP:" + request.getEmail(), otp, 5, TimeUnit.MINUTES);
             emailService.sendOtpEmail(request.getEmail(), otp);
-            return ResponseEntity.ok("Mã OTP đã gửi về email: " + request.getEmail());
+            return ResponseEntity.ok("OTP_SENT");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Lỗi hệ thống: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("SERVER_ERROR");
         }
     }
 
