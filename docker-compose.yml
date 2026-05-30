@@ -22,6 +22,23 @@ services:
     ports:
       - "6379:6379"
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"    # AMQP protocol
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   # ==================== MICROSERVICES ====================
 
   auth-service:
@@ -59,12 +76,18 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      rabbitmq:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/online_learning
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || curl -f http://localhost:8082/ || exit 0"]
       interval: 10s
@@ -84,18 +107,52 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      rabbitmq:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/online_learning
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8083/ || exit 0"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
+    env_file:
+      - .env
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_MAIL_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SPRING_MAIL_PORT: ${SMTP_PORT:-465}
+      SPRING_MAIL_USERNAME: ${SMTP_USERNAME}
+      SPRING_MAIL_PASSWORD: ${SMTP_PASSWORD}
+      PLATFORM_NAME: ${PLATFORM_NAME:-Online Learning Platform}
+      SENDER_EMAIL: ${SENDER_EMAIL:-noreply@onlinelearning.com}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     env_file:
       - .env
 
@@ -113,6 +170,8 @@ services:
         condition: service_healthy
       order-service:
         condition: service_healthy
+      notification-service:
+        condition: service_healthy
 
   # ==================== FRONTEND ====================
 
@@ -123,3 +182,6 @@ services:
       - "3000:80"
     depends_on:
       - api-gateway
+
+volumes:
+  rabbitmq_data:
