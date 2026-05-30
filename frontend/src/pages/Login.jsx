@@ -28,11 +28,11 @@ export default function Login() {
             localStorage.setItem("token", res.data.token);
 
             const userData = {
+                id: res.data.id,
                 username: res.data.username,
                 email: res.data.email || res.data.username,
                 fullName: res.data.fullName || res.data.name || res.data.username,
-                // Chuẩn hóa role về chữ hoa để so sánh không bị sai
-                role: (res.data.role || res.data.roles || 'USER').toString().toUpperCase(),
+                role: (res.data.role || 'USER').toString().toUpperCase(),
                 token: res.data.token,
             };
 

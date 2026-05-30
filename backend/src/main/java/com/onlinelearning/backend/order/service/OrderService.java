@@ -3,6 +3,8 @@ package com.onlinelearning.backend.order.service;
 import com.onlinelearning.backend.order.entity.Order;
 import com.onlinelearning.backend.order.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,7 +17,7 @@ public class OrderService {
     @Autowired
     private OrderRepository orderRepository;
 
-    // Lấy tất cả đơn hàng
+    // Lấy tất cả đơn hàng (không phân trang - dùng cho các logic cũ nếu có)
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
     }
@@ -30,7 +32,6 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    // Cập nhật đơn hàng
     public Order updateOrder(Order order) {
         return orderRepository.save(order);
     }
@@ -40,9 +41,9 @@ public class OrderService {
         orderRepository.deleteById(id);
     }
 
-    // Lấy tất cả đơn hàng cho Admin sắp xếp mới nhất lên đầu
-    public List<Order> getAllOrdersForAdmin() {
-        return orderRepository.findAllByOrderByCreatedAtDesc();
+    // Lấy tất cả đơn hàng cho Admin (CÓ PHÂN TRANG)
+    public Page<Order> getAllOrdersForAdmin(Pageable pageable) {
+        return orderRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
     // Duyệt trạng thái đơn hàng bảo mật bằng Transaction

@@ -1,48 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { Grid, Card, CardContent, Typography, Box } from '@mui/material';
 import { People, LibraryBooks, AttachMoney, TrendingUp } from '@mui/icons-material';
-import axios from 'axios';
+import api from '../../api/axios';
 import ChartSection from '../../components/instructor/ChartSection';
 import ActivityList from '../../components/instructor/ActivityList';
 
 export default function InstructorDashboard() {
   const [stats, setStats] = useState({
     totalCourses: 0,
-    totalStudents: 124, // mock data
-    totalRevenue: 2500000, // mock data
+    totalStudents: 0,
+    totalRevenue: 0,
+    avgRating: 0,
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchStats = async () => {
       try {
-        const userStr = localStorage.getItem('user');
-        if (!userStr) return;
-        const user = JSON.parse(userStr);
-        const res = await axios.get("http://localhost:8080/api/courses", {
-          headers: { Authorization: `Bearer ${user.token}` }
-        });
-        const allCourses = Array.isArray(res.data) ? res.data : (res.data.data || []);
-        // local filter
-        const myCourses = allCourses.filter(c => c.instructorId === user.username);
-        
-        setStats(prev => ({
-          ...prev,
-          totalCourses: myCourses.length,
-          totalStudents: myCourses.length * 42, // mock metric
-          totalRevenue: myCourses.length * 500000 // mock metric
-        }));
+        setLoading(true);
+        const response = await api.get('/instructor/stats');
+        setStats(response.data);
       } catch (err) {
         console.error("Failed to load dashboard stats", err);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchCourses();
+    fetchStats();
   }, []);
 
   const statCards = [
-    { title: 'Total Courses', value: stats.totalCourses, icon: <LibraryBooks fontSize="large" color="primary" />, color: '#e3f2fd' },
-    { title: 'Active Students', value: stats.totalStudents, icon: <People fontSize="large" color="success" />, color: '#e8f5e9' },
-    { title: 'Total Revenue', value: `${stats.totalRevenue.toLocaleString()} VND`, icon: <AttachMoney fontSize="large" color="warning" />, color: '#fff3e0' },
-    { title: 'Avg. Rating', value: '4.8 / 5.0', icon: <TrendingUp fontSize="large" color="error" />, color: '#ffebee' },
+    { title: 'Total Courses', value: loading ? '...' : stats.totalCourses, icon: <LibraryBooks fontSize="large" color="primary" />, color: '#e3f2fd' },
+    { title: 'Active Students', value: loading ? '...' : stats.totalStudents, icon: <People fontSize="large" color="success" />, color: '#e8f5e9' },
+    { title: 'Total Revenue', value: loading ? '...' : `${stats.totalRevenue.toLocaleString()} VND`, icon: <AttachMoney fontSize="large" color="warning" />, color: '#fff3e0' },
+    { title: 'Avg. Rating', value: loading ? '...' : `${stats.avgRating} / 5.0`, icon: <TrendingUp fontSize="large" color="error" />, color: '#ffebee' },
   ];
 
   return (

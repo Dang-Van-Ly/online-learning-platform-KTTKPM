@@ -5,39 +5,34 @@ import { AuthContext } from "../../context/AuthContext";
 export default function AdminLayout() {
     const navigate = useNavigate();
     const { logoutUser } = useContext(AuthContext);
+    useEffect(() => {
+        const savedUserStr = localStorage.getItem('user');
+        console.log("1. Dữ liệu thô trong máy:", savedUserStr);
 
-    // =========================================================================
-    // TẠM THỜI ẨN ĐOẠN CHECK ROLE ĐỂ KHÔNG BỊ ĐÁ RA NGOÀI KHI ĐANG LÀM ĐỒ ÁN NA NGA
-    // =========================================================================
-    // useEffect(() => {
-    //     const savedUserStr = localStorage.getItem('user');
-    //     console.log("1. Dữ liệu thô trong máy:", savedUserStr);
-    //
-    //     if (!savedUserStr) {
-    //         console.error("LỖI: Không tìm thấy user trong localStorage -> Đá về login");
-    //         navigate('/login');
-    //         return;
-    //     }
-    //
-    //     try {
-    //         const savedUser = JSON.parse(savedUserStr);
-    //         console.log("2. Role hiện tại là:", savedUser.role);
-    //
-    //         // Kiểm tra không phân biệt hoa thường và xóa khoảng trắng dư thừa
-    //         const currentRole = savedUser.role?.toString().trim().toUpperCase();
-    //
-    //         if (currentRole !== 'ADMIN' && currentRole !== 'ROLE_ADMIN') {
-    //             alert(`BẠN BỊ ĐÁ VÌ: Role của bạn là [${currentRole}] chứ không phải [ADMIN]`);
-    //             navigate('/');
-    //         } else {
-    //             console.log("3. CHÚC MỪNG: Role khớp, cho phép vào Admin!");
-    //         }
-    //     } catch (e) {
-    //         console.error("LỖI: Dữ liệu JSON bị hỏng", e);
-    //         navigate('/login');
-    //     }
-    // }, [navigate]);
-    // =========================================================================
+        if (!savedUserStr) {
+            console.error("LỖI: Không tìm thấy user trong localStorage -> Đá về login");
+            navigate('/login');
+            return;
+        }
+
+        try {
+            const savedUser = JSON.parse(savedUserStr);
+            console.log("2. Role hiện tại là:", savedUser.role);
+
+            // Kiểm tra không phân biệt hoa thường và xóa khoảng trắng dư thừa
+            const currentRole = savedUser.role?.toString().trim().toUpperCase();
+
+            if (currentRole !== 'ADMIN' && currentRole !== 'ROLE_ADMIN') {
+                alert(`BẠN BỊ ĐÁ VÌ: Role của bạn là [${currentRole}] chứ không phải [ADMIN]`);
+                navigate('/');
+            } else {
+                console.log("3. CHÚC MỪNG: Role khớp, cho phép vào Admin!");
+            }
+        } catch (e) {
+            console.error("LỖI: Dữ liệu JSON bị hỏng", e);
+            navigate('/login');
+        }
+    }, [navigate]);
 
     const getNavLinkStyle = ({ isActive }) => ({
         color: "white", textDecoration: "none", fontSize: "16px", display: "block",
@@ -59,7 +54,6 @@ export default function AdminLayout() {
                         <li><NavLink to="/admin/courses" style={getNavLinkStyle}>📁 Duyệt Khóa học</NavLink></li>
                         <li><NavLink to="/admin/orders" style={getNavLinkStyle}>🛒 Quản lý Đơn hàng</NavLink></li>
 
-                        {/* ĐÃ CHÈN ĐỒNG BỘ NÚT KHUYẾN MÃI Ở ĐÂY NHA NGA */}
                         <li><NavLink to="/admin/promotions" style={getNavLinkStyle}>🎁 Quản lý Khuyến mãi</NavLink></li>
 
                         <hr style={{ border: '0.5px solid rgba(255,255,255,0.1)', margin: '30px 0' }} />

@@ -9,6 +9,7 @@ import FilteredCourses from "./pages/FilteredCourses";
 import SearchCourses from "./pages/SearchCourses";
 import CourseDetail from "./pages/CourseDetail";
 import Register from "./pages/Register";
+import Blog from "./pages/Blog";
 
 // Instructor routes
 import InstructorLayout from "./layouts/InstructorLayout";
@@ -57,6 +58,7 @@ function App() {
 
                 <Route path="/filtered-courses" element={<FilteredCourses />} />
                 <Route path="/search" element={<SearchCourses />} />
+                <Route path="/blog" element={<Blog />} />
 
                 <Route path="/home" element={<Navigate to="/" replace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />

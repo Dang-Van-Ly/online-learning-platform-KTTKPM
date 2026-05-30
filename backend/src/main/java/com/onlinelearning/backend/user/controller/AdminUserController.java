@@ -10,7 +10,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import java.util.List;
 import java.util.Map;
 
@@ -35,18 +37,15 @@ public class AdminUserController {
 
     @GetMapping("/students")
     public ResponseEntity<?> getStudents(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(userService.getUsersByRole(Role.USER, page, pageable));
+            @PageableDefault(size = 10, sort = "id") Pageable pageable) {
+        // Dùng @PageableDefault để tự động lấy page và size từ URL (?page=0&size=10)
+        return ResponseEntity.ok(userService.getUsersByRole(Role.USER, pageable));
     }
 
     @GetMapping("/instructors")
     public ResponseEntity<?> getInstructors(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(userService.getUsersByRole(Role.INSTRUCTOR, page, pageable));
+            @PageableDefault(size = 10, sort = "id") Pageable pageable) {
+        return ResponseEntity.ok(userService.getUsersByRole(Role.INSTRUCTOR, pageable));
     }
 
     @GetMapping("/{id}")

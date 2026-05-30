@@ -77,8 +77,10 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         Optional<User> userOptional = userRepository.findByUsername(request.getUsername());
         if (userOptional.isPresent() && passwordEncoder.matches(request.getPassword(), userOptional.get().getPassword())) {
-            String token = jwtUtil.generateToken(userOptional.get());
-            return ResponseEntity.ok(new AuthResponse(token, userOptional.get().getUsername(), userOptional.get().getRole()));
+            User user = userOptional.get();
+            String token = jwtUtil.generateToken(user);
+
+            return ResponseEntity.ok(new AuthResponse(user.getId(), token, user.getUsername(), user.getRole()));
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Sai tài khoản hoặc mật khẩu!");
     }

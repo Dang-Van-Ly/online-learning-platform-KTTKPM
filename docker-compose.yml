@@ -37,6 +37,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
+    env_file:
+      - .env
 
   frontend:
     build: ./frontend
