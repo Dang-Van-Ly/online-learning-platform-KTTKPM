@@ -44,8 +44,8 @@ public class PromotionService {
             java.time.LocalDate today = java.time.LocalDate.now();
             java.time.LocalDate startDate = promotion.getStartDate().toLocalDate();
 
-            // 🔑 Ngày bắt đầu phải từ ngày hôm nay trở về sau (không được nằm trong quá khứ)
-            if (startDate.isBefore(today)) {
+            // 🔑 Chỉ kiểm tra ngày quá khứ nếu là tạo mới (ID = null)
+            if (promotion.getId() == null && startDate.isBefore(today)) {
                 throw new RuntimeException("Lỗi: Ngày bắt đầu không được ở trong quá khứ (phải từ ngày hôm nay trở đi)!");
             }
 
@@ -90,7 +90,9 @@ public class PromotionService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mã khuyến mãi với ID: " + id));
 
         // Đổ dữ liệu mới từ Frontend vào Object cũ
-        existing.setCode(details.getCode().toUpperCase());
+        if (details.getCode() != null) {
+            existing.setCode(details.getCode().toUpperCase());
+        }
         existing.setDiscountType(details.getDiscountType());
         existing.setDiscountValue(details.getDiscountValue());
         existing.setMinOrderValue(details.getMinOrderValue());

@@ -105,6 +105,7 @@ export default function CourseDetail() {
     <NotFoundPage navigate={navigate} />
   );
 
+  const isInstructor = Boolean(user && course && user.username === course.instructorId);
   const isFree = ((course?.type || "").toLowerCase() === "free") || Number(course?.price) === 0;
   const hasPurchased = Boolean(
     course?.isPurchased ||
@@ -114,7 +115,7 @@ export default function CourseDetail() {
     purchasedCourseIds.includes(String(id))
   );
   const isPaidCourse = course && !isFree;
-  const courseLocked = isPaidCourse && !hasPurchased;
+  const courseLocked = isPaidCourse && !hasPurchased && !isInstructor;
   const isInCart = cartItems.some(item => String(item.id) === String(id));
 
   const handleAddToCart = () => {
@@ -246,35 +247,54 @@ export default function CourseDetail() {
               <button className="flex justify-center items-center gap-2 border-2 border-gray-700 text-gray-700 hover:bg-gray-50 font-bold py-2.5 rounded text-sm transition">
                 <Star size={16} /> Nhóm Cộng Đồng Kho Khóa Học
               </button>
-              <div className="grid grid-cols-2 gap-3 mt-1">
-                <button
-                  onClick={isInCart ? () => navigate('/gio-hang') : handleAddToCart}
-                  className="flex justify-center items-center gap-2 bg-blue-800 hover:bg-blue-900 text-white font-bold py-2.5 rounded shadow text-sm"
-                >
-                  <ShoppingCart size={16} /> {isInCart ? "Đến giỏ hàng" : "Thêm vào giỏ"}
-                </button>
-                {courseLocked ? (
-                  <div className="grid gap-3">
-                    {membershipAvailableForThisCourse ? (
-                      <button onClick={handleUnlockWithMembership} className="flex justify-center items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded shadow text-sm">
-                        🔓 Mở khóa theo membership ({membershipRemainingDaily} lượt hôm nay / {membershipRemainingTotal} tổng)
-                      </button>
-                    ) : membershipInfo && membershipInfo.status === "active" ? (
-                      <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
-                        Gói membership: Còn {membershipRemainingTotal} lượt tổng, {membershipRemainingDaily} lượt hôm nay
-                        {membershipRemainingTotal === 0 && " (đã hết lượt)"}
-                        {membershipRemainingDaily === 0 && " (hết lượt hôm nay)"}
-                      </div>
-                    ) : null}
-                    <button onClick={handleCheckout} className="flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded shadow text-sm">
-                      💳 Thanh toán ngay
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={() => setActiveTab("learn")} className="flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded shadow text-sm">
-                    ▶️ Tiếp tục học
+              <div className="flex flex-col gap-2 mt-1">
+                {isInstructor && (
+                  <button
+                    onClick={() => navigate(`/instructor/courses/${id}/chapters`)}
+                    className="flex justify-center items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded shadow-sm text-sm w-full transition-all"
+                  >
+                    🛠️ Thêm / Quản lý chương học
                   </button>
                 )}
+                <div className="grid grid-cols-2 gap-3">
+                  {!isInstructor && (
+                    <button
+                      onClick={isInCart ? () => navigate('/gio-hang') : handleAddToCart}
+                      className="flex justify-center items-center gap-2 bg-blue-800 hover:bg-blue-900 text-white font-bold py-2.5 rounded shadow text-sm"
+                    >
+                      <ShoppingCart size={16} /> {isInCart ? "Đến giỏ hàng" : "Thêm vào giỏ"}
+                    </button>
+                  )}
+                  {isInstructor ? (
+                    <button
+                      onClick={() => setActiveTab("learn")}
+                      className="flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded shadow text-sm col-span-2"
+                    >
+                      ▶️ Xem nội dung khóa học
+                    </button>
+                  ) : courseLocked ? (
+                    <div className="grid gap-3">
+                      {membershipAvailableForThisCourse ? (
+                        <button onClick={handleUnlockWithMembership} className="flex justify-center items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded shadow text-sm">
+                          🔓 Mở khóa theo membership ({membershipRemainingDaily} lượt hôm nay / {membershipRemainingTotal} tổng)
+                        </button>
+                      ) : membershipInfo && membershipInfo.status === "active" ? (
+                        <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                          Gói membership: Còn {membershipRemainingTotal} lượt tổng, {membershipRemainingDaily} lượt hôm nay
+                          {membershipRemainingTotal === 0 && " (đã hết lượt)"}
+                          {membershipRemainingDaily === 0 && " (hết lượt hôm nay)"}
+                        </div>
+                      ) : null}
+                      <button onClick={handleCheckout} className="flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded shadow text-sm">
+                        💳 Thanh toán ngay
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setActiveTab("learn")} className="flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded shadow text-sm">
+                      ▶️ Tiếp tục học
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -700,34 +720,41 @@ function LearnTab({ chapters = [], lessonFiles = {}, course = {}, hasPurchased =
                               Bài học này chỉ mở khi bạn đã đăng ký khóa học. Vui lòng mua để xem toàn bộ nội dung.
                             </div>
                           ) : (
-                            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                              {files.length > 0 ? (
-                                files.map((file, j) => {
-                                  const fileUrl = file.url || file.path || file.fileUrl;
-                                  const fileType = file.fileType || file.type || "";
-                                  const lower = String(fileUrl || '').toLowerCase();
-                                  const isYoutube = fileType === "video/youtube" || lower.includes("youtube.com/embed") || lower.includes("youtu.be/");
-                                  const isGoogleDoc = fileType === "application/gdoc" || lower.includes("docs.google.com");
-                                  const isGoogleDrive = fileType === "application/gpdf" || lower.includes("drive.google.com");
-                                  const isVideo = !isYoutube && (lower.endsWith('.mp4') || lower.endsWith('.webm'));
-                                  const isPdf = lower.endsWith('.pdf');
-                                  const icon = isYoutube ? '🎬' : isGoogleDoc ? '📝' : isGoogleDrive ? '📄' : isVideo ? '🎬' : isPdf ? '📄' : '📎';
-                                  const displayName = isYoutube ? '▶ Video bài học' : isGoogleDoc ? '📝 Tài liệu bài học' : isGoogleDrive ? '📄 Tài liệu PDF' : (file.name || file.title || fileUrl?.split('/').pop() || `Tệp ${j + 1}`);
-                                  return (
-                                  <button
-                                    key={j}
-                                    type="button"
-                                    onClick={() => openFile({ ...file, url: fileUrl })}
-                                    className="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs text-slate-700 hover:border-blue-300 hover:bg-white"
-                                  >
-                                    <span>{icon}</span>
-                                    <span className="truncate">{displayName}</span>
-                                  </button>
-                                );
-                              })
-                            ) : (
-                              <p className="text-xs text-slate-500">Chưa có tệp cho bài học này</p>
-                            )}
+                            <div className="mt-3">
+                              {lesson.content && (
+                                <div className="mb-4 text-sm text-slate-605 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/80 whitespace-pre-wrap leading-relaxed">
+                                  {lesson.content}
+                                </div>
+                              )}
+                              <div className="grid gap-2 sm:grid-cols-2">
+                                {files.length > 0 ? (
+                                  files.map((file, j) => {
+                                    const fileUrl = file.url || file.path || file.fileUrl;
+                                    const fileType = file.fileType || file.type || "";
+                                    const lower = String(fileUrl || '').toLowerCase();
+                                    const isYoutube = fileType === "video/youtube" || lower.includes("youtube.com/embed") || lower.includes("youtu.be/");
+                                    const isGoogleDoc = fileType === "application/gdoc" || lower.includes("docs.google.com");
+                                    const isGoogleDrive = fileType === "application/gpdf" || lower.includes("drive.google.com");
+                                    const isVideo = !isYoutube && (lower.endsWith('.mp4') || lower.endsWith('.webm'));
+                                    const isPdf = lower.endsWith('.pdf');
+                                    const icon = isYoutube ? '🎬' : isGoogleDoc ? '📝' : isGoogleDrive ? '📄' : isVideo ? '🎬' : isPdf ? '📄' : '📎';
+                                    const displayName = isYoutube ? '▶ Video bài học' : isGoogleDoc ? '📝 Tài liệu bài học' : isGoogleDrive ? '📄 Tài liệu PDF' : (file.name || file.title || fileUrl?.split('/').pop() || `Tệp ${j + 1}`);
+                                    return (
+                                      <button
+                                        key={j}
+                                        type="button"
+                                        onClick={() => openFile({ ...file, url: fileUrl })}
+                                        className="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs text-slate-700 hover:border-blue-300 hover:bg-white"
+                                      >
+                                        <span>{icon}</span>
+                                        <span className="truncate">{displayName}</span>
+                                      </button>
+                                    );
+                                  })
+                                ) : (
+                                  <p className="text-xs text-slate-500">Chưa có tệp cho bài học này</p>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>

@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "lessons")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Lesson {
 
     @Id
@@ -23,6 +24,9 @@ public class Lesson {
     private String status;
     private LocalDateTime createdAt;
 
+    @Column(columnDefinition = "TEXT")
+    private String content;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
@@ -30,5 +34,7 @@ public class Lesson {
 
     @JsonIgnoreProperties("lessons")
     @ManyToOne
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Chapter chapter;
 }

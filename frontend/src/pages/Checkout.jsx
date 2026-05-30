@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import QRPaymentSimulator from "../components/QRPaymentSimulator";
 import { getCourseById } from "../api/courseApi";
 import api from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
@@ -299,24 +300,14 @@ export default function Checkout() {
                     Xác nhận thanh toán
                   </button>
                   {paymentState === "qr" && (
-                    <div className="mt-6 rounded-3xl border border-dashed border-blue-300 bg-blue-50 p-6">
-                      <div className="flex flex-col items-center gap-4 text-center">
-                        <div className="text-lg font-semibold text-slate-900">Quét mã QR để thanh toán</div>
-                        <div className="rounded-3xl bg-white p-4 shadow-sm border border-slate-200">
-                          <img
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(`ThanhToan:${checkoutItems.map(item => item.name).join(',')}:${user?.email}:${totalPrice}`)}`}
-                            alt="Mã QR thanh toán"
-                            className="mx-auto h-64 w-64"
-                          />
-                        </div>
-                        <p className="text-sm text-slate-600">Quét mã QR bằng ví Momo, ZaloPay, AirPay hoặc ngân hàng để hoàn tất thanh toán.</p>
-                        <button
-                          onClick={confirmQrPayment}
-                          className="mt-2 rounded-3xl bg-emerald-600 px-6 py-3 text-white font-semibold hover:bg-emerald-700 transition"
-                        >
-                          Đã thanh toán, hoàn tất đơn hàng
-                        </button>
-                      </div>
+                    <div className="mt-6">
+                      <QRPaymentSimulator
+                        amount={totalPrice}
+                        email={user?.email}
+                        items={checkoutItems}
+                        onPaymentComplete={confirmQrPayment}
+                        onPaymentCancel={() => setPaymentState("ready")}
+                      />
                     </div>
                   )}
                 </div>
