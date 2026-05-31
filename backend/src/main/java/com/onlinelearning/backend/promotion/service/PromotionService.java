@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class PromotionService {
@@ -14,8 +16,8 @@ public class PromotionService {
     private PromotionRepository promotionRepository;
 
     // 1. Lấy tất cả danh sách
-    public List<Promotion> getAll() {
-        return promotionRepository.findAll();
+    public Page<Promotion> getAll(Pageable pageable) {
+        return promotionRepository.findAll(pageable);
     }
 
     // 2. Hàm xóa mã

@@ -28,7 +28,7 @@ export default function AdminDashboard() {
 
     const statCards = [
         { 
-            title: "Tổng học viên", 
+            title: "Tổng người dùng",
             count: loading ? "..." : stats.totalUsers?.toLocaleString() || "0", 
             icon: "👥", 
             color: "#4e73df" 

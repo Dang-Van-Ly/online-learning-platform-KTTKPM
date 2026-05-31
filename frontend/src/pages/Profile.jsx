@@ -135,47 +135,70 @@ export default function Profile() {
                             </div>
                         </>
                     ) : (
-                        <div className="bg-white py-10 px-[30px] rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.05)] border border-gray-100">
-                            <h2 className="text-2xl font-bold mb-6 text-[#222]">🔒 Đổi Mật Khẩu Tài Khoản</h2>
-                            <form onSubmit={handleChangePassword} className="flex flex-col gap-5 max-w-md">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-600 mb-2">Mật khẩu cũ *</label>
+                        <div className="bg-white py-10 px-8 lg:px-12 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+                            <div className="mb-8 border-b border-gray-100 pb-5">
+                                <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                                    <span className="text-[#ff8c42] text-3xl">🔒</span> Đổi Mật Khẩu
+                                </h2>
+                                <p className="text-gray-500 text-sm mt-2">Đảm bảo tài khoản của bạn được bảo mật bằng một mật khẩu mạnh và duy nhất.</p>
+                            </div>
+
+                            <form onSubmit={handleChangePassword} className="flex flex-col gap-6">
+                                {/* Mật khẩu cũ (Full width) */}
+                                <div className="relative max-w-lg">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                                        Mật khẩu hiện tại <span className="text-red-500">*</span>
+                                    </label>
                                     <input
                                         type="password" required
-                                        className="w-full border border-gray-300 p-3 rounded-lg outline-none focus:border-[#ff8c42]"
+                                        placeholder="Nhập mật khẩu hiện tại"
+                                        className="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl focus:ring-4 focus:ring-[#ff8c42]/15 focus:border-[#ff8c42] focus:bg-white block p-4 outline-none transition-all duration-300"
                                         onChange={(e) => setPasswordData({...passwordData, oldPassword: e.target.value})}
                                         value={passwordData.oldPassword}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-600 mb-2">Mật khẩu mới *</label>
-                                    <input
-                                        type="password" required
-                                        className="w-full border border-gray-300 p-3 rounded-lg outline-none focus:border-[#ff8c42]"
-                                        onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                                        value={passwordData.newPassword}
-                                    />
+
+                                {/* Cụm Mật khẩu mới (Chia 2 cột trên màn hình lớn) */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                                            Mật khẩu mới <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="password" required
+                                            placeholder="Nhập mật khẩu mới"
+                                            className="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl focus:ring-4 focus:ring-[#ff8c42]/15 focus:border-[#ff8c42] focus:bg-white block p-4 outline-none transition-all duration-300"
+                                            onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                                            value={passwordData.newPassword}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                                            Xác nhận mật khẩu <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="password" required
+                                            placeholder="Nhập lại mật khẩu mới"
+                                            className="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl focus:ring-4 focus:ring-[#ff8c42]/15 focus:border-[#ff8c42] focus:bg-white block p-4 outline-none transition-all duration-300"
+                                            onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                                            value={passwordData.confirmPassword}
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-600 mb-2">Xác nhận mật khẩu mới *</label>
-                                    <input
-                                        type="password" required
-                                        className="w-full border border-gray-300 p-3 rounded-lg outline-none focus:border-[#ff8c42]"
-                                        onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                                        value={passwordData.confirmPassword}
-                                    />
-                                </div>
-                                <div className="flex gap-3">
+
+                                {/* Buttons container */}
+                                <div className="flex items-center gap-4 mt-4 pt-6 border-t border-gray-100 max-w-3xl">
                                     <button
                                         type="submit"
-                                        className="bg-[#ff8c42] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#e67e35] transition-all shadow-md"
+                                        className="bg-[#ff8c42] text-white px-8 py-3.5 rounded-xl font-bold hover:bg-[#e67e35] hover:shadow-lg hover:shadow-[#ff8c42]/30 transition-all duration-300 active:scale-95 flex items-center gap-2"
                                     >
-                                        Lưu thay đổi
+                                        <span>Lưu thay đổi</span>
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab("DASHBOARD")}
-                                        className="bg-gray-100 text-gray-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-200"
+                                        className="bg-gray-50 text-gray-600 px-8 py-3.5 rounded-xl font-bold hover:bg-gray-200 hover:text-gray-800 transition-all duration-300 active:scale-95"
                                     >
                                         Hủy bỏ
                                     </button>
