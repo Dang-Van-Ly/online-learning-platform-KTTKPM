@@ -30,4 +30,14 @@ public class User_membership {
     private LocalDateTime endDate;
 
     private String status;
+
+    private Integer usedCourses;
+
+    private Integer usedToday;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime lastUsedDate;
+
+    @Column(columnDefinition = "TEXT")
+    private String usedCourseIds; // JSON string or comma-separated ids
 }

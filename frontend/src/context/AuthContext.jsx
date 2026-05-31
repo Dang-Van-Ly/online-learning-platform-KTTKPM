@@ -4,11 +4,31 @@ import axios from "axios";
 import api from "../api/axios";
 
 // DÒNG QUAN TRỌNG NHẤT: Phải có "export" ở đây
-export const AuthContext = createContext();
+export const AuthContext = createContext({
+    user: null,
+    purchasedCourseIds: [],
+    cartItems: [],
+    favoriteCourseIds: [],
+    membershipInfo: null,
+    membershipHistory: [],
+    loginUser: () => {},
+    logoutUser: () => {},
+    addPurchasedCourse: () => {},
+    addToCart: () => {},
+    removeFromCart: () => {},
+    clearCart: () => {},
+    addFavoriteCourse: () => {},
+    removeFavoriteCourse: () => {},
+    toggleFavoriteCourse: () => {},
+    addMembership: () => {},
+    loadUserData: () => {},
+    useMembershipCourse: () => {},
+});
 
 const STORAGE_USER_KEY = "user";
 const STORAGE_PURCHASED_KEY = "purchasedCourseIds";
 const STORAGE_CART_KEY = "cartItems";
+const STORAGE_FAVORITES_KEY = "favoriteCourseIds";
 const STORAGE_MEMBERSHIP_KEY = "membershipInfo";
 const STORAGE_MEMBERSHIP_HISTORY_KEY = "membershipHistory";
 
@@ -65,6 +85,18 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             console.error('Error parsing cart items:', error);
             localStorage.removeItem(STORAGE_CART_KEY);
+            return [];
+        }
+    });
+    const [favoriteCourseIds, setFavoriteCourseIds] = useState(() => {
+        const savedFavorites = localStorage.getItem(STORAGE_FAVORITES_KEY);
+        if (!savedFavorites) return [];
+        try {
+            const ids = JSON.parse(savedFavorites);
+            return Array.isArray(ids) ? ids.map(String) : [];
+        } catch (error) {
+            console.error('Error parsing favorite course IDs:', error);
+            localStorage.removeItem(STORAGE_FAVORITES_KEY);
             return [];
         }
     });
@@ -153,7 +185,48 @@ export const AuthProvider = ({ children }) => {
                 usedCourseIds: Array.from(new Set([...(prev.usedCourseIds || []), String(courseId)])),
             };
             localStorage.setItem(STORAGE_MEMBERSHIP_KEY, JSON.stringify(normalizeMembershipInfo(next)));
+
+            // Persist usage to backend in background (best-effort)
+            try {
+                if (user && user.userId) {
+                    api.post('/user-membership/use', { userId: user.userId, courseId: Number(courseId) }).catch(err => {
+                        console.warn('Failed to persist membership usage:', err?.message || err);
+                    });
+                }
+            } catch (e) {
+                console.warn('Failed to call membership use API', e);
+            }
+
             return normalizeMembershipInfo(next);
+        });
+    };
+
+    const addFavoriteCourse = (courseId) => {
+        const newId = String(courseId);
+        setFavoriteCourseIds((prev) => {
+            if (prev.includes(newId)) return prev;
+            const next = [...prev, newId];
+            localStorage.setItem(STORAGE_FAVORITES_KEY, JSON.stringify(next));
+            return next;
+        });
+    };
+
+    const removeFavoriteCourse = (courseId) => {
+        const idToRemove = String(courseId);
+        setFavoriteCourseIds((prev) => {
+            const next = prev.filter(id => id !== idToRemove);
+            localStorage.setItem(STORAGE_FAVORITES_KEY, JSON.stringify(next));
+            return next;
+        });
+    };
+
+    const toggleFavoriteCourse = (courseId) => {
+        const courseIdStr = String(courseId);
+        setFavoriteCourseIds((prev) => {
+            const exists = prev.includes(courseIdStr);
+            const next = exists ? prev.filter(id => id !== courseIdStr) : [...prev, courseIdStr];
+            localStorage.setItem(STORAGE_FAVORITES_KEY, JSON.stringify(next));
+            return next;
         });
     };
 
@@ -169,11 +242,13 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setPurchasedCourseIds([]);
         setCartItems([]);
+        setFavoriteCourseIds([]);
         setMembershipHistory([]);
         persistMembershipInfo(null);
         localStorage.removeItem(STORAGE_USER_KEY);
         localStorage.removeItem(STORAGE_PURCHASED_KEY);
         localStorage.removeItem(STORAGE_CART_KEY);
+        localStorage.removeItem(STORAGE_FAVORITES_KEY);
         localStorage.removeItem(STORAGE_MEMBERSHIP_HISTORY_KEY);
     };
 
@@ -291,25 +366,78 @@ export const AuthProvider = ({ children }) => {
                     .sort((a, b) => new Date(parseDate(b.endDate)) - new Date(parseDate(a.endDate)))[0];
 
                 if (activeMembership) {
-                    const plan = activeMembership.membership;
-                    const totalCourses = (plan.durationDays || 0) * (plan.coursesPerDay || 0);
-                    const membershipData = {
-                        id: plan.id,
-                        name: plan.name,
-                        title: plan.name,           // giữ cả 2 để tương thích
-                        totalCourses: totalCourses,
-                        dailyLimit: plan.coursesPerDay || 0,
-                        durationDays: plan.durationDays || 0,
-                        price: plan.price,
-                        startDate: parseDate(activeMembership.startDate),
-                        expiresAt: parseDate(activeMembership.endDate),
-                        status: "active",
-                        usedCourses: 0,
-                        usedToday: 0,
-                        lastUsedDate: null,
-                        usedCourseIds: [],
-                    };
-                    persistMembershipInfo(membershipData);
+                        const plan = activeMembership.membership;
+                        const totalCourses = (plan.durationDays || 0) * (plan.coursesPerDay || 0);
+
+                        // Try to parse usedCourseIds (may be JSON array or comma-separated string)
+                        let parsedUsedCourseIds = [];
+                        try {
+                            if (activeMembership.usedCourseIds) {
+                                if (Array.isArray(activeMembership.usedCourseIds)) parsedUsedCourseIds = activeMembership.usedCourseIds.map(String);
+                                else if (typeof activeMembership.usedCourseIds === 'string') {
+                                    const s = activeMembership.usedCourseIds.trim();
+                                    if (s.startsWith('[')) {
+                                        parsedUsedCourseIds = JSON.parse(s).map(String);
+                                    } else if (s.length > 0) {
+                                        parsedUsedCourseIds = s.split(',').map(p => p.trim()).filter(Boolean).map(String);
+                                    }
+                                }
+                            }
+
+                        } catch (e) {
+                            console.warn('Failed to parse usedCourseIds', e);
+                        }
+
+                        // Compute usedToday and usedCourses from enrollments as the source-of-truth
+                        let computedUsedToday = Number(activeMembership.usedToday || 0);
+                        let computedUsedCourses = Number(activeMembership.usedCourses || 0);
+                        try {
+                            const enrollRes = await api.get(`/enrollments/user/${userId}`);
+                            const enrolls = Array.isArray(enrollRes.data) ? enrollRes.data : (enrollRes.data || []);
+                            const now = new Date();
+                            const todayStr = now.toISOString().split('T')[0];
+                            // count enrollments that fall within membership period
+                            const start = parseDate(activeMembership.startDate);
+                            const end = parseDate(activeMembership.endDate);
+                            const startDateObj = start ? new Date(start) : null;
+                            const endDateObj = end ? new Date(end) : null;
+
+                            const enrollsInMembership = enrolls.filter(en => {
+                                const enrolledAt = en.enrolledAt || en.enrolled_at || en.createdAt || en.created_at || null;
+                                if (!enrolledAt) return false;
+                                const d = new Date(enrolledAt);
+                                if (startDateObj && d < startDateObj) return false;
+                                if (endDateObj && d > endDateObj) return false;
+                                return true;
+                            });
+
+                            computedUsedCourses = enrollsInMembership.length;
+                            computedUsedToday = enrollsInMembership.filter(en => {
+                                const enrolledAt = en.enrolledAt || en.enrolled_at || en.createdAt || en.created_at || null;
+                                if (!enrolledAt) return false;
+                                return new Date(enrolledAt).toISOString().split('T')[0] === todayStr;
+                            }).length;
+                        } catch (e) {
+                            console.warn('Failed to fetch enrollments to compute membership usage', e);
+                        }
+
+                        const membershipData = {
+                            id: plan.id,
+                            name: plan.name,
+                            title: plan.name,           // giữ cả 2 để tương thích
+                            totalCourses: totalCourses,
+                            dailyLimit: plan.coursesPerDay || 0,
+                            durationDays: plan.durationDays || 0,
+                            price: plan.price,
+                            startDate: parseDate(activeMembership.startDate),
+                            expiresAt: parseDate(activeMembership.endDate),
+                            status: "active",
+                            usedCourses: computedUsedCourses,
+                            usedToday: computedUsedToday,
+                            lastUsedDate: parseDate(activeMembership.lastUsedDate) || null,
+                            usedCourseIds: parsedUsedCourseIds,
+                        };
+                        persistMembershipInfo(membershipData);
                 }
             }
         } catch (error) {
@@ -322,6 +450,7 @@ export const AuthProvider = ({ children }) => {
             user,
             purchasedCourseIds,
             cartItems,
+            favoriteCourseIds,
             membershipInfo,
             membershipHistory,
             loginUser,
@@ -330,6 +459,9 @@ export const AuthProvider = ({ children }) => {
             addToCart,
             removeFromCart,
             clearCart,
+            addFavoriteCourse,
+            removeFavoriteCourse,
+            toggleFavoriteCourse,
             addMembership,
             loadUserData,
             useMembershipCourse

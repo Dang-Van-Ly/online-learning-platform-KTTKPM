@@ -118,10 +118,15 @@ export default function Checkout() {
 
     try {
       if (packageId && membershipPackage) {
+        const currentUserId = user?.userId || user?.id || null;
+        if (!currentUserId) throw new Error("Không xác định được thông tin người dùng.");
         // Save membership to backend
         const membershipRes = await api.post("/user-membership/buy", {
-          userId: user.userId,
+          userId: currentUserId,
           membershipId: membershipDbIds[packageId],
+          membershipCode: packageId,
+          userEmail: user?.email,
+          userName: user?.fullName || user?.username || null,
         });
         if (!membershipRes.data) throw new Error("Lỗi mua gói thành viên");
         const membershipData = buildMembershipPayload(membershipPackage);
@@ -138,20 +143,36 @@ export default function Checkout() {
       }
       setPaymentState("qr");
     } catch (error) {
-      console.error("Lỗi thanh toán:", error);
-      alert("Lỗi khi xử lý thanh toán, vui lòng thử lại");
+      console.error("Lỗi thanh toán:", error.response?.data || error.message || error);
+      alert(`Lỗi khi xử lý thanh toán: ${error.response?.data?.error || error.message || "Vui lòng thử lại"}`);
     }
   };
 
-  const confirmQrPayment = async () => {
+  const confirmQrPayment = async (payload = 'QR') => {
     if (checkoutItems.length === 0) return;
-    
+
     try {
+      // If payload is an object with orderId, it means QR component created the order and it's been paid
+      if (payload && typeof payload === 'object' && payload.orderId) {
+        // finalize local state
+        checkoutItems.forEach((item) => addPurchasedCourse(item.id));
+        if (!courseId) clearCart();
+        navigate(`/order-success?amount=${encodeURIComponent(totalPrice)}`);
+        return;
+      }
+
+      const selectedMethod = typeof payload === 'string' ? payload : 'QR';
+
       if (packageId && membershipPackage) {
+        const currentUserId = user?.userId || user?.id || null;
+        if (!currentUserId) throw new Error("Không xác định được thông tin người dùng.");
         // Save membership to backend
         const membershipRes = await api.post("/user-membership/buy", {
-          userId: user.userId,
+          userId: currentUserId,
           membershipId: membershipDbIds[packageId],
+          membershipCode: packageId,
+          userEmail: user?.email,
+          userName: user?.fullName || user?.username || null,
         });
         if (!membershipRes.data) throw new Error("Lỗi mua gói thành viên");
         const membershipData = buildMembershipPayload(membershipPackage);
@@ -159,21 +180,21 @@ export default function Checkout() {
         navigate(`/order-success?package=${encodeURIComponent(packageId)}&amount=${encodeURIComponent(totalPrice)}`);
         return;
       }
-      
-      // Save course orders to backend
+
+      // Save course orders to backend (non-QR quick path)
       const orderRes = await api.post("/orders", {
         userId: user.userId,
         totalPrice: totalPrice,
         status: "COMPLETED",
-        paymentMethod: "QR",
+        paymentMethod: selectedMethod.toUpperCase(),
         orderItems: checkoutItems.map((item) => ({
           courseId: item.id,
           price: item.price,
         })),
       });
-      
+
       if (!orderRes.data) throw new Error("Lỗi tạo đơn hàng");
-      
+
       checkoutItems.forEach((item) => addPurchasedCourse(item.id));
       if (!courseId) clearCart();
       navigate(`/order-success?amount=${encodeURIComponent(totalPrice)}`);
@@ -304,6 +325,7 @@ export default function Checkout() {
                       <QRPaymentSimulator
                         amount={totalPrice}
                         email={user?.email}
+                        userId={user?.userId}
                         items={checkoutItems}
                         onPaymentComplete={confirmQrPayment}
                         onPaymentCancel={() => setPaymentState("ready")}

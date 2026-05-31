@@ -1,51 +1,57 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, Clock, Smartphone, CreditCard, Bank, Loader } from 'lucide-react';
+import { CheckCircle, Clock, Smartphone, CreditCard, Loader } from 'lucide-react';
+import api from '../api/axios';
 
 const QRPaymentSimulator = ({ 
   amount, 
   email, 
+  userId,
   items = [], 
   onPaymentComplete,
   onPaymentCancel 
 }) => {
-  const [paymentStep, setPaymentStep] = useState(1); // 1: Show QR, 2: Scanning, 3: Processing, 4: Success
+  const [paymentStep, setPaymentStep] = useState(1); // 1: Show QR, 2: Processing, 3: Success
   const [countdown, setCountdown] = useState(180); // 3 minutes countdown
-  const [selectedMethod, setSelectedMethod] = useState('momo'); // momo, zalopay, bank, vnpay
+  const [selectedMethod, setSelectedMethod] = useState('vnpay'); // momo, zalopay, bank, vnpay
   const [isProcessing, setIsProcessing] = useState(false);
+  const [orderId, setOrderId] = useState(null);
+  const [paymentUrl, setPaymentUrl] = useState('');
+  const [paymentError, setPaymentError] = useState('');
 
   // Format amount
   const formattedAmount = new Intl.NumberFormat('vi-VN').format(amount || 0);
 
-  // Generate QR data
-  const generateQRData = () => {
-    const itemNames = items.map(item => item.name).join(', ');
-    const data = {
-      type: 'PAYMENT',
-      amount: amount,
-      currency: 'VND',
-      description: `Thanh toán khóa học: ${itemNames}`,
-      account: email,
-      timestamp: new Date().toISOString(),
-      method: selectedMethod
-    };
-    return encodeURIComponent(JSON.stringify(data));
-  };
-
-  // QR code URL with selected method logo
   const getQRCodeUrl = () => {
     const baseUrl = 'https://api.qrserver.com/v1/create-qr-code/';
-    const qrData = generateQRData();
+    const qrData = selectedMethod === 'vnpay' && paymentUrl ? paymentUrl : generateQRData(selectedMethod);
     const size = '300x300';
     const color = selectedMethod === 'momo' ? 'AF0F6E' : 
                   selectedMethod === 'zalopay' ? '0066FF' : 
                   selectedMethod === 'vnpay' ? '005BA3' : '008000';
-    
-    return `${baseUrl}?size=${size}&data=${qrData}&color=${color}&bgcolor=FFFFFF&margin=10`;
+
+    return `${baseUrl}?size=${size}&data=${encodeURIComponent(qrData)}&color=${color}&bgcolor=FFFFFF&margin=10`;
+  };
+
+  const generateQRData = (method) => {
+    const itemNames = items.map(item => item.name).join(', ');
+    const description = `Thanh toán khóa học: ${itemNames}`;
+
+    switch (method) {
+      case 'momo':
+        return `momo://pay?amount=${amount}&note=${encodeURIComponent(description)}`;
+      case 'zalopay':
+        return `zalo://qr?amount=${amount}&memo=${encodeURIComponent(description)}`;
+      case 'vnpay':
+        return paymentUrl || `Thanh toán VNPay: ${description}`;
+      case 'bank':
+      default:
+        return `banktransfer://pay?amount=${amount}&bank=VIETCOMBANK&desc=${encodeURIComponent(description)}`;
+    }
   };
 
   // Get method logo
-  const getMethodLogo = () => {
-    switch(selectedMethod) {
+  const getMethodLogo = (method) => {
+    switch(method) {
       case 'momo':
         return 'https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png';
       case 'zalopay':
@@ -60,15 +66,125 @@ const QRPaymentSimulator = ({
   };
 
   // Get method name
-  const getMethodName = () => {
-    switch(selectedMethod) {
+  const getMethodName = (method) => {
+    switch(method) {
       case 'momo': return 'Ví MoMo';
       case 'zalopay': return 'Ví ZaloPay';
       case 'vnpay': return 'VNPay QR';
-      case 'bank': return 'Ngân hàng';
+      case 'bank': return 'Chuyển khoản ngân hàng';
       default: return 'QR Code';
     }
   };
+
+  const getMethodInstructions = (method) => {
+    switch(method) {
+      case 'momo':
+        return [
+          'Mở ứng dụng MoMo.',
+          'Chọn chức năng "Quét mã QR".',
+          'Hướng camera về mã QR trên màn hình.',
+          'Kiểm tra thông tin và xác nhận thanh toán.'
+        ];
+      case 'zalopay':
+        return [
+          'Mở ứng dụng ZaloPay.',
+          'Chọn mục "Quét mã".',
+          'Quét mã QR trên màn hình.',
+          'Xác nhận số tiền và hoàn tất.'
+        ];
+      case 'vnpay':
+        return [
+          'Mở ứng dụng ngân hàng hoặc VNPay-QR.',
+          'Chọn chức năng "Quét mã QR".',
+          'Quét mã QR trên màn hình.',
+          'Kiểm tra thông tin và xác nhận thanh toán.'
+        ];
+      case 'bank':
+      default:
+        return [
+          'Mở ứng dụng ngân hàng của bạn.',
+          'Chọn chức năng chuyển khoản.',
+          'Nhập số tài khoản và nội dung chuyển khoản.',
+          'Xác nhận và hoàn tất giao dịch.'
+        ];
+    }
+  };
+
+  const getBankDetails = () => {
+    if (selectedMethod !== 'vnpay') return null;
+
+    return {
+      bankName: 'VNPay QR',
+      accountName: 'BTL KTTKPM',
+      accountNumber: '7044888123',
+      note: 'Thanh toán khóa học'
+    };
+  };
+
+  const handleManualComplete = async () => {
+    if (!orderId) {
+      setPaymentError('Chưa tạo đơn hàng VNPay. Vui lòng thử lại.');
+      return;
+    }
+
+    try {
+      const host = window.location.hostname;
+      const orderServicePort = 8083;
+      const url = `http://${host}:${orderServicePort}/api/orders/public/${orderId}`;
+      const response = await fetch(url, { method: 'GET' });
+      if (!response.ok) {
+        throw new Error(`status ${response.status}`);
+      }
+      const statusText = await response.text();
+      if (statusText === 'PAID' || statusText === 'COMPLETED') {
+        setPaymentStep(4);
+        if (onPaymentComplete) onPaymentComplete({ orderId, status: statusText, selectedMethod });
+      } else {
+        setPaymentError('Thanh toán chưa hoàn tất. Vui lòng kiểm tra lại ứng dụng VNPay và thử lại sau.');
+      }
+    } catch (error) {
+      console.error('Error confirming VNPay payment', error);
+      setPaymentError('Không thể kiểm tra trạng thái thanh toán. Vui lòng thử lại.');
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const createVnpayOrder = async () => {
+      if (selectedMethod !== 'vnpay' || orderId || isProcessing) return;
+
+      setIsProcessing(true);
+      setPaymentError('');
+      try {
+        const res = await api.post('/orders/vnpay', {
+          userId: typeof userId !== 'undefined' ? userId : null,
+          userEmail: email || null,
+          totalPrice: amount || 0,
+          status: 'PENDING',
+          paymentMethod: 'VNPAY',
+          orderItems: (items || []).map(i => ({ courseId: i.id, price: i.price })),
+        });
+        if (mounted && res?.data) {
+          setOrderId(res.data.orderId);
+          setPaymentUrl(res.data.paymentUrl);
+        }
+      } catch (e) {
+        console.error('Could not create VNPay order', e);
+        if (mounted) {
+          setPaymentError('Lỗi khi tạo đơn VNPay. Vui lòng thử lại.');
+        }
+      } finally {
+        if (mounted) {
+          setIsProcessing(false);
+        }
+      }
+    };
+
+    createVnpayOrder();
+    return () => {
+      mounted = false;
+    };
+  }, [selectedMethod, amount, email, items, orderId, userId, isProcessing]);
 
   // Countdown timer
   useEffect(() => {
@@ -87,36 +203,78 @@ const QRPaymentSimulator = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Handle scan simulation
-  const handleScanSimulation = () => {
-    if (paymentStep === 1) {
-      setPaymentStep(2); // Scanning
+  useEffect(() => {
+    let mounted = true;
+    const createVnpayOrder = async () => {
+      if (selectedMethod !== 'vnpay' || orderId || isProcessing) return;
+
       setIsProcessing(true);
-      
-      // Simulate scanning process
-      setTimeout(() => {
-        setPaymentStep(3); // Processing
-      }, 2000);
+      setPaymentError('');
+      try {
+        const res = await api.post('/orders/vnpay', {
+          userId: typeof userId !== 'undefined' ? userId : null,
+          userEmail: email || null,
+          totalPrice: amount || 0,
+          status: 'PENDING',
+          paymentMethod: 'VNPAY',
+          orderItems: (items || []).map(i => ({ courseId: i.id, price: i.price })),
+        });
+        if (mounted && res?.data) {
+          setOrderId(res.data.orderId);
+          setPaymentUrl(res.data.paymentUrl);
+        }
+      } catch (e) {
+        console.error('Could not create VNPay order', e);
+        if (mounted) {
+          setPaymentError('Lỗi khi tạo đơn VNPay. Vui lòng thử lại.');
+        }
+      } finally {
+        if (mounted) {
+          setIsProcessing(false);
+        }
+      }
+    };
 
-      // Simulate payment processing
-      setTimeout(() => {
-        setPaymentStep(4); // Success
-        setIsProcessing(false);
-        
-        // Auto complete after success
-        setTimeout(() => {
-          if (onPaymentComplete) onPaymentComplete();
-        }, 1500);
-      }, 4000);
-    }
-  };
+    createVnpayOrder();
+    return () => {
+      mounted = false;
+    };
+  }, [selectedMethod, amount, email, items, orderId, userId, isProcessing]);
 
-  // Handle manual payment complete
-  const handleManualComplete = () => {
-    if (paymentStep === 1) {
-      handleScanSimulation();
-    }
-  };
+  // Poll order status and finish payment when backend reports PAID/COMPLETED
+  useEffect(() => {
+    if (!orderId) return;
+    let cancelled = false;
+    const interval = setInterval(async () => {
+      try {
+        const host = window.location.hostname;
+        const orderServicePort = 8083;
+        const url = `http://${host}:${orderServicePort}/api/orders/public/${orderId}`;
+        const r = await fetch(url, { method: 'GET' });
+        if (!r.ok) {
+          throw new Error(`status ${r.status}`);
+        }
+        const statusText = await r.text();
+        if (!cancelled && (statusText === 'PAID' || statusText === 'COMPLETED')) {
+          setPaymentStep(4);
+          if (onPaymentComplete) onPaymentComplete({ orderId, status: statusText, selectedMethod });
+          clearInterval(interval);
+        }
+      } catch (e) {
+        console.error('Error polling order status', e);
+      }
+    }, 2000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [orderId, onPaymentComplete, selectedMethod]);
+
+  const instructions = React.useMemo(
+    () => getMethodInstructions(selectedMethod || 'vnpay'),
+    [selectedMethod]
+  );
 
   // Handle cancel
   const handleCancel = () => {
@@ -138,7 +296,11 @@ const QRPaymentSimulator = ({
           {['momo', 'zalopay', 'vnpay', 'bank'].map((method) => (
             <button
               key={method}
-              onClick={() => setSelectedMethod(method)}
+              onClick={() => {
+                setSelectedMethod(method);
+                setCountdown(180);
+                setPaymentStep(1);
+              }}
               className={`p-3 rounded-lg border-2 flex flex-col items-center justify-center transition-all ${
                 selectedMethod === method 
                   ? 'border-blue-500 bg-blue-50' 
@@ -146,12 +308,12 @@ const QRPaymentSimulator = ({
               }`}
             >
               <img 
-                src={getMethodLogo()} 
+                src={getMethodLogo(method)} 
                 alt={method}
                 className="h-8 w-8 object-contain mb-1"
               />
-              <span className="text-xs font-medium text-gray-700">
-                {getMethodName()}
+              <span className="text-xs font-medium text-gray-700 text-center">
+                {getMethodName(method)}
               </span>
             </button>
           ))}
@@ -184,22 +346,12 @@ const QRPaymentSimulator = ({
             {/* Method Overlay */}
             <div className="absolute bottom-4 right-4 bg-white rounded-full p-2 shadow-md">
               <img 
-                src={getMethodLogo()} 
+                src={getMethodLogo(selectedMethod)} 
                 alt={selectedMethod}
                 className="h-8 w-8"
               />
             </div>
           </div>
-
-          {/* Scanning Animation */}
-          {paymentStep === 2 && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-xl">
-              <div className="text-center">
-                <Loader className="h-12 w-12 text-white animate-spin mx-auto mb-2" />
-                <p className="text-white font-medium">Đang quét mã QR...</p>
-              </div>
-            </div>
-          )}
 
           {/* Processing Animation */}
           {paymentStep === 3 && (
@@ -232,7 +384,7 @@ const QRPaymentSimulator = ({
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Phương thức:</span>
-            <span className="font-semibold">{getMethodName()}</span>
+            <span className="font-semibold">{getMethodName(selectedMethod)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Nội dung:</span>
@@ -243,30 +395,14 @@ const QRPaymentSimulator = ({
 
       {/* Instructions */}
       <div className="mb-6">
-        <h4 className="text-sm font-semibold text-gray-700 mb-2">Hướng dẫn thanh toán:</h4>
-        <div className="space-y-2">
-          <div className="flex items-start gap-2">
-            <Smartphone className="h-5 w-5 text-blue-500 mt-0.5" />
-            <span className="text-sm text-gray-600">Mở ứng dụng {getMethodName()} trên điện thoại</span>
-          </div>
-          <div className="flex items-start gap-2">
-            <div className="h-5 w-5 flex items-center justify-center">
-              <span className="text-blue-500 font-bold">1</span>
+        <h4 className="text-sm font-semibold text-gray-700 mb-3">Hướng dẫn thanh toán:</h4>
+        <div className="space-y-3 text-sm text-gray-600">
+          {instructions.map((step, index) => (
+            <div key={index} className="flex items-start gap-2">
+              <div className="h-6 w-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold">{index + 1}</div>
+              <span>{step}</span>
             </div>
-            <span className="text-sm text-gray-600">Chọn tính năng "Quét mã QR"</span>
-          </div>
-          <div className="flex items-start gap-2">
-            <div className="h-5 w-5 flex items-center justify-center">
-              <span className="text-blue-500 font-bold">2</span>
-            </div>
-            <span className="text-sm text-gray-600">Hướng camera về mã QR trên màn hình</span>
-          </div>
-          <div className="flex items-start gap-2">
-            <div className="h-5 w-5 flex items-center justify-center">
-              <span className="text-blue-500 font-bold">3</span>
-            </div>
-            <span className="text-sm text-gray-600">Xác nhận thanh toán trong ứng dụng</span>
-          </div>
+          ))}
         </div>
       </div>
 
@@ -275,18 +411,20 @@ const QRPaymentSimulator = ({
         {paymentStep === 1 && (
           <>
             <button
-              onClick={handleScanSimulation}
-              disabled={isProcessing}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isProcessing ? 'Đang xử lý...' : 'Giả lập quét QR (Demo)'}
-            </button>
-            <button
               onClick={handleManualComplete}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-xl transition"
+              disabled={!orderId || isProcessing}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Đã thanh toán, hoàn tất đơn hàng
+              Tôi đã quét mã và thanh toán
             </button>
+            {isProcessing && (
+              <div className="text-sm text-gray-600">Đang tạo đơn VNPay, vui lòng chờ...</div>
+            )}
+            {paymentError && (
+              <div className="rounded-2xl bg-red-100 border border-red-200 px-4 py-3 text-sm text-red-700">
+                {paymentError}
+              </div>
+            )}
           </>
         )}
 
