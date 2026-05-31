@@ -23,6 +23,7 @@ import InstructorDashboard from "./pages/instructor/InstructorDashboard";
 import CourseList from "./components/instructor/CourseList";
 import CourseForm from "./components/instructor/CourseForm";
 import EarningsPage from "./pages/instructor/EarningsPage";
+import ChapterManagement from "./pages/instructor/ChapterManagement";
 import AdminLayout from "./pages/admin/AdminLayout.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import UserManagement from "./pages/admin/UserManagement.jsx";
@@ -54,6 +55,7 @@ function App() {
                 <Route path="/instructor" element={<InstructorLayout />}>
                     <Route index element={<InstructorDashboard />} />
                     <Route path="courses" element={<CourseList />} />
+                    <Route path="courses/:id/chapters" element={<ChapterManagement />} />
                     <Route path="create" element={<CourseForm />} />
                     <Route path="edit/:id" element={<CourseForm />} />
                     <Route path="earnings" element={<EarningsPage />} />

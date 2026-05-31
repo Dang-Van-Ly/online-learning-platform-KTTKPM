@@ -45,9 +45,11 @@ public class EnrollmentService {
             throw new RuntimeException("User đã đăng ký khóa học này rồi");
         }
 
-        // Kiểm tra membership nếu khóa học có giá > 0
         double price = request.getPricePaid() != null ? request.getPricePaid() : 0.0;
-        if (price > 0) {
+        boolean isMembershipEnroll = "MEMBERSHIP".equalsIgnoreCase(request.getType());
+
+        // Kiểm tra membership limit khi mở khóa bằng gói hội viên
+        if (isMembershipEnroll) {
             checkMembershipLimit(user.getId());
         }
 
@@ -57,6 +59,10 @@ public class EnrollmentService {
         enrollment.setPricePaid(price);
         enrollment.setStatus("ACTIVE");
         enrollment.setEnrolledAt(LocalDateTime.now());
+        // Lưu type để frontend có thể lọc usedCourseIds sau khi đăng nhập lại
+        if (isMembershipEnroll) {
+            enrollment.setType("MEMBERSHIP");
+        }
 
         return enrollmentRepository.save(enrollment);
     }

@@ -5,7 +5,7 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Button, Typography, Chip, Box, IconButton, CircularProgress, Tooltip
 } from "@mui/material";
-import { Edit, Delete, Visibility, People } from "@mui/icons-material";
+import { Edit, Delete, Visibility, People, MenuBook } from "@mui/icons-material";
 
 export default function CourseList() {
   const [courses, setCourses] = useState([]);
@@ -144,15 +144,26 @@ export default function CourseList() {
                       />
                     </TableCell>
                     <TableCell align="center">
-                      <IconButton color="info" onClick={() => navigate(`/course/${id}`)}>
-                        <Visibility fontSize="small" />
-                      </IconButton>
-                      <IconButton color="primary" onClick={() => navigate(`/instructor/edit/${id}`)}>
-                        <Edit fontSize="small" />
-                      </IconButton>
-                      <IconButton color="error" onClick={() => handleDelete(id)}>
-                        <Delete fontSize="small" />
-                      </IconButton>
+                      <Tooltip title="Xem khóa học">
+                        <IconButton color="info" onClick={() => navigate(`/course/${id}`)}>
+                          <Visibility fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Chỉnh sửa khóa học">
+                        <IconButton color="primary" onClick={() => navigate(`/instructor/edit/${id}`)}>
+                          <Edit fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Quản lý chương học">
+                        <IconButton color="secondary" onClick={() => navigate(`/instructor/courses/${id}/chapters`)}>
+                          <MenuBook fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Xóa khóa học">
+                        <IconButton color="error" onClick={() => handleDelete(id)}>
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 );

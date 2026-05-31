@@ -52,6 +52,7 @@ public class LessonService {
         lesson.setTitle(newData.getTitle());
         lesson.setOrderNumber(newData.getOrderNumber());
         lesson.setIsFree(newData.getIsFree());
+        lesson.setContent(newData.getContent());
         lesson.setStatus(newData.getStatus());
 
         return repo.save(lesson);

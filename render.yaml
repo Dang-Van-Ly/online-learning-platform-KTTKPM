@@ -1,0 +1,142 @@
+services:
+  # ==================== AUTH SERVICE ====================
+  - type: web
+    name: auth-service
+    runtime: docker
+    dockerfilePath: ./auth-service/Dockerfile
+    dockerContext: ./auth-service
+    plan: free
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        value: "jdbc:mysql://zephyr.proxy.rlwy.net:44048/railway"
+      - key: SPRING_DATASOURCE_USERNAME
+        value: "root"
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: "lZGsaqkyeXCrwIwJKERDLKUkikmhMUKS"
+      - key: SPRING_DATASOURCE_DRIVER
+        value: "com.mysql.cj.jdbc.Driver"
+      - key: SPRING_JPA_DIALECT
+        value: "org.hibernate.dialect.MySQL8Dialect"
+      - key: SPRING_DATA_REDIS_HOST
+        value: "zephyr.proxy.rlwy.net"
+      - key: SPRING_DATA_REDIS_PORT
+        value: "14584"
+      - key: SPRING_DATA_REDIS_PASSWORD
+        value: "cIGNGoJAUBlblmWMsEOwpUOksfrnDuWE"
+      - key: SPRING_DATA_REDIS_SSL_ENABLED
+        value: "false"
+      - key: SPRING_DATA_REDIS_USERNAME
+        value: "default"
+      - key: AWS_ACCESS_KEY
+        sync: false
+      - key: AWS_SECRET_KEY
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_BUCKET_NAME
+        sync: false
+
+  # ==================== COURSE SERVICE ====================
+  - type: web
+    name: course-service
+    runtime: docker
+    dockerfilePath: ./course-service/Dockerfile
+    dockerContext: ./course-service
+    plan: free
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        value: "jdbc:mysql://zephyr.proxy.rlwy.net:44048/railway"
+      - key: SPRING_DATASOURCE_USERNAME
+        value: "root"
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: "lZGsaqkyeXCrwIwJKERDLKUkikmhMUKS"
+      - key: SPRING_DATASOURCE_DRIVER
+        value: "com.mysql.cj.jdbc.Driver"
+      - key: SPRING_JPA_DIALECT
+        value: "org.hibernate.dialect.MySQL8Dialect"
+      - key: SPRING_DATA_REDIS_HOST
+        value: "zephyr.proxy.rlwy.net"
+      - key: SPRING_DATA_REDIS_PORT
+        value: "14584"
+      - key: SPRING_DATA_REDIS_PASSWORD
+        value: "cIGNGoJAUBlblmWMsEOwpUOksfrnDuWE"
+      - key: SPRING_DATA_REDIS_SSL_ENABLED
+        value: "false"
+      - key: SPRING_DATA_REDIS_USERNAME
+        value: "default"
+      - key: AWS_ACCESS_KEY
+        sync: false
+      - key: AWS_SECRET_KEY
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_BUCKET_NAME
+        sync: false
+
+  # ==================== ORDER SERVICE ====================
+  - type: web
+    name: order-service
+    runtime: docker
+    dockerfilePath: ./order-service/Dockerfile
+    dockerContext: ./order-service
+    plan: free
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        value: "jdbc:mysql://zephyr.proxy.rlwy.net:44048/railway"
+      - key: SPRING_DATASOURCE_USERNAME
+        value: "root"
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: "lZGsaqkyeXCrwIwJKERDLKUkikmhMUKS"
+      - key: SPRING_DATASOURCE_DRIVER
+        value: "com.mysql.cj.jdbc.Driver"
+      - key: SPRING_JPA_DIALECT
+        value: "org.hibernate.dialect.MySQL8Dialect"
+      - key: SPRING_DATA_REDIS_HOST
+        value: "zephyr.proxy.rlwy.net"
+      - key: SPRING_DATA_REDIS_PORT
+        value: "14584"
+      - key: SPRING_DATA_REDIS_PASSWORD
+        value: "cIGNGoJAUBlblmWMsEOwpUOksfrnDuWE"
+      - key: SPRING_DATA_REDIS_SSL_ENABLED
+        value: "false"
+      - key: SPRING_DATA_REDIS_USERNAME
+        value: "default"
+
+  # ==================== API GATEWAY ====================
+  - type: web
+    name: api-gateway
+    runtime: docker
+    dockerfilePath: ./api-gateway/Dockerfile
+    dockerContext: ./api-gateway
+    plan: free
+    envVars:
+      # Điền sau khi 3 services trên deploy xong
+      # Lấy URL từ Render dashboard, bỏ https:// và trailing slash
+      # Ví dụ: auth-service-xxxx.onrender.com
+      - key: AUTH_SERVICE_HOST
+        sync: false
+      - key: COURSE_SERVICE_HOST
+        sync: false
+      - key: ORDER_SERVICE_HOST
+        sync: false
+      # URL đầy đủ của frontend, ví dụ: https://online-learning-frontend.onrender.com
+      - key: FRONTEND_ORIGIN
+        sync: false
+
+  # ==================== FRONTEND ====================
+  - type: web
+    name: online-learning-frontend
+    runtime: static
+    staticPublishPath: ./dist
+    buildCommand: npm install && npm run build
+    rootDir: frontend
+    plan: free
+    envVars:
+      # Điền sau khi api-gateway deploy xong
+      # Ví dụ: https://api-gateway-xxxx.onrender.com
+      - key: VITE_API_BASE_URL
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

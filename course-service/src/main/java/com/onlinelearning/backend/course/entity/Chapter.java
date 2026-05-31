@@ -11,6 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "chapters")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Chapter {
 
     @Id
@@ -25,12 +26,14 @@ public class Chapter {
     // ❗ CHẶN LOOP về Course
     @ManyToOne
     @JoinColumn(name = "course_id")
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private Course course;
 
     // ❗ CHẶN LOOP xuống Lesson
     @OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("chapter")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<Lesson> lessons;
 
     @PrePersist

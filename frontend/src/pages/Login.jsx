@@ -1,17 +1,17 @@
 import { useState, useContext } from "react";
 import api from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate, useLocation } from "react-router-dom"; 
-import Header from "../components/Header"; 
-import Footer from "../components/Footer"; 
+import { useNavigate, useLocation } from "react-router-dom";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 export default function Login() {
     const { loginUser, loadUserData } = useContext(AuthContext);
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    
+
     // 2. Khởi tạo navigate và location
-    const navigate = useNavigate(); 
+    const navigate = useNavigate();
     const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
     const redirectPath = searchParams.get("redirect") || "/";
@@ -63,10 +63,18 @@ export default function Login() {
             } else {
                 navigate("/");
             }
-            
+
         } catch (err) {
-            console.error(err);
-            alert("Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản!");
+            console.error("Lỗi chi tiết:");
+            console.log(err.response?.status); // Sẽ in ra 502
+            console.log(err.response?.data);   // Xem backend có trả về thông báo gì không
+
+            // Thông báo cho người dùng biết server đang có vấn đề
+            if (err.response?.status === 502) {
+                alert("Server Backend hiện không phản hồi (502). Vui lòng kiểm tra lại server!");
+            } else {
+                alert("Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản!");
+            }
         }
     };
 
@@ -229,7 +237,7 @@ export default function Login() {
                         <div style={styles.line}></div>
                     </div>
 
-                    <button 
+                    <button
                         style={styles.registerBtn}
                         type="button"
                         onClick={() => navigate("/register")}
