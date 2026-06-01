@@ -256,6 +256,22 @@ export default function CourseForm() {
     setLoading(true);
     setError("");
     try {
+      // For new courses: warn if no chapters, but allow creation
+      // User can add chapters later via ChapterManagement page
+      if (!isEditMode) {
+        const chaptersToValidate = newChapters.filter(ch => ch.title.trim());
+        
+        // Validate all chapters that DO exist have lessons
+        for (const chap of chaptersToValidate) {
+          const lessonsWithTitle = chap.lessons.filter(ls => ls.title.trim());
+          if (lessonsWithTitle.length === 0) {
+            setError(`Chương "${chap.title}" không có bài học nào. Vui lòng thêm ít nhất 1 bài học cho mỗi chương.`);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
       const userStr = localStorage.getItem('user');
       if (!userStr) throw new Error("Not logged in");
       const user = JSON.parse(userStr);
@@ -321,7 +337,13 @@ export default function CourseForm() {
         }
       }
 
-      alert("Khóa học của bạn đã được gửi yêu cầu duyệt. Vui lòng chờ admin duyệt trước khi nó hiển thị công khai.");
+      // Determine success message based on chapters
+      if (chaptersToPublish.length === 0) {
+        // No chapters were added
+        alert(`✅ Khóa học "${formData.name}" đã được tạo thành công!\n\n⏭️ Bước tiếp theo:\nVui lòng quản lý chương học của bạn bằng cách nhấp vào nút "Quản lý chương học" trong trang Khóa học của tôi để thêm chương và bài học.`);
+      } else {
+        alert("✅ Khóa học của bạn đã được gửi yêu cầu duyệt. Vui lòng chờ admin duyệt trước khi nó hiển thị công khai.");
+      }
       navigate('/instructor/courses');
     } catch (err) {
       console.error("Failed to save course", err);
@@ -440,6 +462,15 @@ export default function CourseForm() {
                 </div>
               </div>
 
+              {/* Info box */}
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex gap-2">
+                <Info size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="text-xs text-blue-700">
+                  <p className="font-semibold mb-1">💡 Tùy chọn:</p>
+                  <p>Bạn có thể thêm chương & bài học ngay bây giờ, hoặc tạo khóa học trước rồi quản lý chương sau bằng nút "Quản lý chương học" trên trang của tôi.</p>
+                </div>
+              </div>
+
               <div className="space-y-4">
                 {newChapters.map((chap, ci) => (
                   <div key={ci} className="border border-indigo-100 rounded-2xl bg-indigo-50/30 overflow-hidden">
@@ -451,6 +482,7 @@ export default function CourseForm() {
                         value={chap.title}
                         onChange={e => updateChapterTitle(ci, e.target.value)}
                         placeholder={`VD: Chương ${ci + 1}: Giới thiệu`}
+                        required
                         className="flex-1 bg-white/20 text-white placeholder-white/60 rounded-lg px-3 py-1.5 text-sm font-medium outline-none focus:bg-white/30 transition-all"
                       />
                       {newChapters.length > 1 && (
@@ -471,6 +503,7 @@ export default function CourseForm() {
                               value={ls.title}
                               onChange={e => updateLesson(ci, li, 'title', e.target.value)}
                               placeholder={`Bài ${li + 1}: Tên bài học`}
+                              required
                               className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all"
                             />
                             <label className="flex items-center gap-1.5 cursor-pointer select-none">

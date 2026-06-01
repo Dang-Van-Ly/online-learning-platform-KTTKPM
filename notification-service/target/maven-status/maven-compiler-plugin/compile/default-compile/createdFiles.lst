@@ -1,0 +1,7 @@
+com\onlinelearning\notification\consumer\NotificationConsumer.class
+com\onlinelearning\notification\config\RabbitMQConfig.class
+com\onlinelearning\notification\dto\MembershipBoughtEvent.class
+com\onlinelearning\notification\dto\OrderCreatedEvent.class
+com\onlinelearning\notification\NotificationServiceApplication.class
+com\onlinelearning\notification\dto\EnrollmentEvent.class
+com\onlinelearning\notification\service\EmailService.class
