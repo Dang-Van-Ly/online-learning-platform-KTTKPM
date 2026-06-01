@@ -41,18 +41,14 @@ public class ChapterService {
     @CacheEvict(value = {"chapters", "lessons", "lessonsByChapter"}, allEntries = true)
     public Chapter publishChapter(ChapterPublishRequest dto) {
         try {
-            // Validate files
-            if (dto.getFiles() != null && !dto.getFiles().isEmpty()) {
-                for (ChapterPublishRequest.FileDto fd : dto.getFiles()) {
-                    if (fd.getFileName() == null || fd.getFileName().trim().isEmpty()) {
-                        throw new IllegalArgumentException("Tên tệp không được để trống");
-                    }
-                    if (fd.getFileUrl() == null || fd.getFileUrl().trim().isEmpty()) {
-                        throw new IllegalArgumentException("URL tệp không được để trống");
-                    }
-                    if (fd.getFileType() == null || fd.getFileType().trim().isEmpty()) {
-                        throw new IllegalArgumentException("Loại tệp không được để trống");
-                    }
+            // Validate lessons
+            if (dto.getLessons() == null || dto.getLessons().isEmpty()) {
+                throw new IllegalArgumentException("Chương phải có ít nhất 1 bài học");
+            }
+
+            for (ChapterPublishRequest.LessonDto lessonDto : dto.getLessons()) {
+                if (lessonDto.getTitle() == null || lessonDto.getTitle().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Tiêu đề bài học không được để trống");
                 }
             }
 
@@ -63,6 +59,7 @@ public class ChapterService {
             List<Chapter> existing = repo.findByCourseId(dto.getCourseId());
             int nextChapterOrder = existing.size() + 1;
 
+            // Create Chapter
             Chapter chapter = new Chapter();
             chapter.setCourse(course);
             chapter.setTitle(dto.getTitle() != null ? dto.getTitle().trim() : "");
@@ -71,32 +68,35 @@ public class ChapterService {
             Chapter savedChapter = repo.save(chapter);
             log.info("Created chapter {} for course {}", savedChapter.getId(), dto.getCourseId());
 
-            Lesson lesson = new Lesson();
-            lesson.setChapter(savedChapter);
-            lesson.setTitle("Nội dung bài học");
-            lesson.setContent(dto.getContent() != null ? dto.getContent() : "");
-            lesson.setOrderNumber(1);
-            lesson.setIsFree(nextChapterOrder == 1);
-            lesson.setStatus("ACTIVE");
-            Lesson savedLesson = lessonRepo.save(lesson);
-            log.info("Created lesson {} for chapter {}", savedLesson.getId(), savedChapter.getId());
+            // Create multiple Lessons for the Chapter
+            int lessonOrder = 1;
+            for (ChapterPublishRequest.LessonDto lessonDto : dto.getLessons()) {
+                Lesson lesson = new Lesson();
+                lesson.setChapter(savedChapter);
+                lesson.setTitle(lessonDto.getTitle().trim());
+                lesson.setContent(lessonDto.getContent() != null ? lessonDto.getContent() : "");
+                lesson.setOrderNumber(lessonOrder);
+                lesson.setIsFree(lessonDto.getIsFree() != null ? lessonDto.getIsFree() : (nextChapterOrder == 1 && lessonOrder == 1));
+                lesson.setStatus("ACTIVE");
+                Lesson savedLesson = lessonRepo.save(lesson);
+                log.info("Created lesson {} '{}' for chapter {}", savedLesson.getId(), lessonDto.getTitle(), savedChapter.getId());
 
-            if (dto.getFiles() != null && !dto.getFiles().isEmpty()) {
-                int fileOrder = 1;
-                for (ChapterPublishRequest.FileDto fd : dto.getFiles()) {
+                // Save single file per lesson (if provided)
+                if (lessonDto.getFileUrl() != null && !lessonDto.getFileUrl().trim().isEmpty()) {
                     Lesson_file lf = new Lesson_file();
                     lf.setLesson(savedLesson);
-                    lf.setFileName(fd.getFileName().trim());
-                    lf.setFileUrl(fd.getFileUrl().trim());
-                    lf.setFileType(fd.getFileType().trim());
-                    lf.setOrderNumber(fileOrder++);
+                    lf.setFileName(lessonDto.getFileName() != null ? lessonDto.getFileName().trim() : "file");
+                    lf.setFileUrl(lessonDto.getFileUrl().trim());
+                    lf.setFileType(lessonDto.getFileType() != null ? lessonDto.getFileType().trim() : "application/octet-stream");
+                    lf.setOrderNumber(1);
                     lessonFileRepo.save(lf);
-                    log.info("Saved file {} for lesson {}", fd.getFileName(), savedLesson.getId());
+                    log.info("Saved file '{}' for lesson {}", lessonDto.getFileName(), savedLesson.getId());
                 }
+
+                lessonOrder++;
             }
 
-            log.info("Successfully published chapter {} with {} files", savedChapter.getId(), 
-                    dto.getFiles() != null ? dto.getFiles().size() : 0);
+            log.info("Successfully published chapter {} with {} lessons", savedChapter.getId(), dto.getLessons().size());
             return savedChapter;
         } catch (IllegalArgumentException e) {
             log.warn("Validation error: {}", e.getMessage());

@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 @Getter
@@ -14,20 +15,22 @@ public class ChapterPublishRequest {
     
     @NotBlank(message = "Tiêu đề chương không được để trống")
     private String title;
-    
-    private String content;
-    private List<FileDto> files;
+
+    @NotEmpty(message = "Chương phải có ít nhất 1 bài học")
+    private List<LessonDto> lessons;
 
     @Getter
     @Setter
-    public static class FileDto {
-        @NotBlank(message = "Tên tệp không được để trống")
+    public static class LessonDto {
+        @NotBlank(message = "Tiêu đề bài học không được để trống")
+        private String title;
+        
+        private String content;
+        private Boolean isFree;
+        
+        // 1 file per lesson (optional)
         private String fileName;
-        
-        @NotBlank(message = "URL tệp không được để trống")
         private String fileUrl;
-        
-        @NotBlank(message = "Loại tệp không được để trống")
         private String fileType;
     }
 }

@@ -1,0 +1,270 @@
+﻿{
+    "newestCourses":  [
+                          {
+                              "id":  30,
+                              "name":  "Yoga \u0026 Thien dinh cho nguoi ban ron",
+                              "description":  "Hoc yoga va thien dinh phu hop voi lich trinh ban ron: cac bai tap 15-30 phut, ky thuat tho, mindfulness.",
+                              "price":  0.0,
+                              "image":  "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400\u0026h=300\u0026fit=crop",
+                              "imageUrl":  null,
+                              "category":  "Phong the",
+                              "instructorId":  "instructer",
+                              "type":  "FREE",
+                              "status":  "PUBLISHED",
+                              "createdAt":  "2026-05-31T14:31:54",
+                              "updatedAt":  "2026-05-31T14:31:54",
+                              "studentsCount":  0,
+                              "revenue":  0.0
+                          },
+                          {
+                              "id":  29,
+                              "name":  "Lap trinh Java Spring Boot",
+                              "description":  "Xay dung ung dung enterprise voi Spring Boot: REST API, Spring Security, JPA/Hibernate, microservices va Docker.",
+                              "price":  899000.0,
+                              "image":  "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400\u0026h=300\u0026fit=crop",
+                              "imageUrl":  null,
+                              "category":  "Lap trinh - Web",
+                              "instructorId":  "instructer",
+                              "type":  "PAID",
+                              "status":  "PUBLISHED",
+                              "createdAt":  "2026-05-31T14:31:54",
+                              "updatedAt":  "2026-05-31T14:31:54",
+                              "studentsCount":  0,
+                              "revenue":  0.0
+                          },
+                          {
+                              "id":  28,
+                              "name":  "Email Marketing tu dong hoa",
+                              "description":  "Xay dung he thong email marketing tu dong: list building, segmentation, automation workflow, A/B testing.",
+                              "price":  549000.0,
+                              "image":  "https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=400\u0026h=300\u0026fit=crop",
+                              "imageUrl":  null,
+                              "category":  "Kinh doanh - Marketing",
+                              "instructorId":  "instructer",
+                              "type":  "PAID",
+                              "status":  "PUBLISHED",
+                              "createdAt":  "2026-05-31T14:31:54",
+                              "updatedAt":  "2026-05-31T14:31:54",
+                              "studentsCount":  0,
+                              "revenue":  0.0
+                          },
+                          {
+                              "id":  27,
+                              "name":  "Thiet ke do hoa voi Photoshop",
+                              "description":  "Thanh thao Adobe Photoshop tu co ban den nang cao: chinh sua anh, thiet ke banner, poster, social media.",
+                              "price":  649000.0,
+                              "image":  "https://images.unsplash.com/photo-1572044162444-ad60f128bdea?w=400\u0026h=300\u0026fit=crop",
+                              "imageUrl":  null,
+                              "category":  "Do hoa - Thiet ke",
+                              "instructorId":  "instructer",
+                              "type":  "PAID",
+                              "status":  "PUBLISHED",
+                              "createdAt":  "2026-05-31T14:31:53",
+                              "updatedAt":  "2026-05-31T14:31:53",
+                              "studentsCount":  0,
+                              "revenue":  0.0
+                          },
+                          {
+                              "id":  26,
+                              "name":  "Crypto \u0026 Blockchain co ban",
+                              "description":  "Hieu ro ve Blockchain, Bitcoin, Ethereum va DeFi. Hoc cach dau tu crypto an toan, phan tich on-chain.",
+                              "price":  799000.0,
+                              "image":  "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400\u0026h=300\u0026fit=crop",
+                              "imageUrl":  null,
+                              "category":  "Crypto - Forex - Chung khoan",
+                              "instructorId":  "instructer",
+                              "type":  "PAID",
+                              "status":  "PUBLISHED",
+                              "createdAt":  "2026-05-31T14:31:53",
+                              "updatedAt":  "2026-05-31T14:31:53",
+                              "studentsCount":  0,
+                              "revenue":  0.0
+                          },
+                          {
+                              "id":  25,
+                              "name":  "Xay dung thuong hieu ca nhan",
+                              "description":  "Hoc cach xay dung personal brand manh me: dinh vi ban than, tao noi dung chuyen mon, networking.",
+                              "price":  0.0,
+                              "image":  "https://images.unsplash.com/photo-1493612276216-ee3925520721?w=400\u0026h=300\u0026fit=crop",
+                              "imageUrl":  null,
+                              "category":  "Kinh doanh - Marketing",
+                              "instructorId":  "instructer",
+                              "type":  "FREE",
+                              "status":  "PUBLISHED",
+                              "createdAt":  "2026-05-31T14:31:53",
+                              "updatedAt":  "2026-05-31T14:31:53",
+                              "studentsCount":  0,
+                              "revenue":  0.0
+                          }
+                      ],
+    "topCourses":  [
+                       {
+                           "id":  30,
+                           "name":  "Yoga \u0026 Thien dinh cho nguoi ban ron",
+                           "description":  "Hoc yoga va thien dinh phu hop voi lich trinh ban ron: cac bai tap 15-30 phut, ky thuat tho, mindfulness.",
+                           "price":  0.0,
+                           "image":  "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400\u0026h=300\u0026fit=crop",
+                           "imageUrl":  null,
+                           "category":  "Phong the",
+                           "instructorId":  "instructer",
+                           "type":  "FREE",
+                           "status":  "PUBLISHED",
+                           "createdAt":  "2026-05-31T14:31:54",
+                           "updatedAt":  "2026-05-31T14:31:54",
+                           "studentsCount":  0,
+                           "revenue":  0.0
+                       },
+                       {
+                           "id":  29,
+                           "name":  "Lap trinh Java Spring Boot",
+                           "description":  "Xay dung ung dung enterprise voi Spring Boot: REST API, Spring Security, JPA/Hibernate, microservices va Docker.",
+                           "price":  899000.0,
+                           "image":  "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400\u0026h=300\u0026fit=crop",
+                           "imageUrl":  null,
+                           "category":  "Lap trinh - Web",
+                           "instructorId":  "instructer",
+                           "type":  "PAID",
+                           "status":  "PUBLISHED",
+                           "createdAt":  "2026-05-31T14:31:54",
+                           "updatedAt":  "2026-05-31T14:31:54",
+                           "studentsCount":  0,
+                           "revenue":  0.0
+                       },
+                       {
+                           "id":  28,
+                           "name":  "Email Marketing tu dong hoa",
+                           "description":  "Xay dung he thong email marketing tu dong: list building, segmentation, automation workflow, A/B testing.",
+                           "price":  549000.0,
+                           "image":  "https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=400\u0026h=300\u0026fit=crop",
+                           "imageUrl":  null,
+                           "category":  "Kinh doanh - Marketing",
+                           "instructorId":  "instructer",
+                           "type":  "PAID",
+                           "status":  "PUBLISHED",
+                           "createdAt":  "2026-05-31T14:31:54",
+                           "updatedAt":  "2026-05-31T14:31:54",
+                           "studentsCount":  0,
+                           "revenue":  0.0
+                       },
+                       {
+                           "id":  27,
+                           "name":  "Thiet ke do hoa voi Photoshop",
+                           "description":  "Thanh thao Adobe Photoshop tu co ban den nang cao: chinh sua anh, thiet ke banner, poster, social media.",
+                           "price":  649000.0,
+                           "image":  "https://images.unsplash.com/photo-1572044162444-ad60f128bdea?w=400\u0026h=300\u0026fit=crop",
+                           "imageUrl":  null,
+                           "category":  "Do hoa - Thiet ke",
+                           "instructorId":  "instructer",
+                           "type":  "PAID",
+                           "status":  "PUBLISHED",
+                           "createdAt":  "2026-05-31T14:31:53",
+                           "updatedAt":  "2026-05-31T14:31:53",
+                           "studentsCount":  0,
+                           "revenue":  0.0
+                       },
+                       {
+                           "id":  26,
+                           "name":  "Crypto \u0026 Blockchain co ban",
+                           "description":  "Hieu ro ve Blockchain, Bitcoin, Ethereum va DeFi. Hoc cach dau tu crypto an toan, phan tich on-chain.",
+                           "price":  799000.0,
+                           "image":  "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400\u0026h=300\u0026fit=crop",
+                           "imageUrl":  null,
+                           "category":  "Crypto - Forex - Chung khoan",
+                           "instructorId":  "instructer",
+                           "type":  "PAID",
+                           "status":  "PUBLISHED",
+                           "createdAt":  "2026-05-31T14:31:53",
+                           "updatedAt":  "2026-05-31T14:31:53",
+                           "studentsCount":  0,
+                           "revenue":  0.0
+                       },
+                       {
+                           "id":  25,
+                           "name":  "Xay dung thuong hieu ca nhan",
+                           "description":  "Hoc cach xay dung personal brand manh me: dinh vi ban than, tao noi dung chuyen mon, networking.",
+                           "price":  0.0,
+                           "image":  "https://images.unsplash.com/photo-1493612276216-ee3925520721?w=400\u0026h=300\u0026fit=crop",
+                           "imageUrl":  null,
+                           "category":  "Kinh doanh - Marketing",
+                           "instructorId":  "instructer",
+                           "type":  "FREE",
+                           "status":  "PUBLISHED",
+                           "createdAt":  "2026-05-31T14:31:53",
+                           "updatedAt":  "2026-05-31T14:31:53",
+                           "studentsCount":  0,
+                           "revenue":  0.0
+                       }
+                   ],
+    "categories":  {
+                       "Phong the":  [
+                                         "@{id=30; name=Yoga \u0026 Thien dinh cho nguoi ban ron; description=Hoc yoga va thien dinh phu hop voi lich trinh ban ron: cac bai tap 15-30 phut, ky thuat tho, mindfulness.; price=0.0; image=https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Phong the; instructorId=instructer; type=FREE; status=PUBLISHED; createdAt=2026-05-31T14:31:54; updatedAt=2026-05-31T14:31:54; studentsCount=0; revenue=0.0}"
+                                     ],
+                       "Crypto - Forex - Chung khoan":  [
+                                                            "@{id=8; name=Dau tu chung khoan cho nguoi moi; description=Huong dan dau tu chung khoan tu dau: phan tich co ban, phan tich ky thuat, quan ly danh muc va tam ly dau tu.; price=899000.0; image=https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Crypto - Forex - Chung khoan; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:50; updatedAt=2026-05-31T14:31:50; studentsCount=0; revenue=0.0}",
+                                                            "@{id=26; name=Crypto \u0026 Blockchain co ban; description=Hieu ro ve Blockchain, Bitcoin, Ethereum va DeFi. Hoc cach dau tu crypto an toan, phan tich on-chain.; price=799000.0; image=https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Crypto - Forex - Chung khoan; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:53; updatedAt=2026-05-31T14:31:53; studentsCount=0; revenue=0.0}"
+                                                        ],
+                       "Lap trinh - Web":  [
+                                               "@{id=1; name=Lap trinh ReactJS tu Zero den Hero; description=Khoa hoc ReactJS toan dien nhat danh cho nguoi moi bat dau. Ban se hoc tu co ban den nang cao: JSX, Component, State, Props, Hooks, Redux, React Router va xay dung du an thuc te.; price=799000.0; image=https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Lap trinh - Web; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:49; updatedAt=2026-05-31T14:31:49; studentsCount=0; revenue=0.0}",
+                                               "@{id=11; name=Node.js \u0026 Express - Backend Development; description=Xay dung REST API chuyen nghiep voi Node.js va Express. Hoc authentication, database integration voi MongoDB.; price=799000.0; image=https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Lap trinh - Web; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:51; updatedAt=2026-05-31T14:31:51; studentsCount=0; revenue=0.0}",
+                                               "@{id=21; name=Vue.js 3 - Framework JavaScript hien dai; description=Hoc Vue.js 3 tu co ban den nang cao: Composition API, Vue Router, Pinia va xay dung ung dung SPA hoan chinh.; price=749000.0; image=https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Lap trinh - Web; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:52; updatedAt=2026-05-31T14:31:52; studentsCount=0; revenue=0.0}",
+                                               "@{id=29; name=Lap trinh Java Spring Boot; description=Xay dung ung dung enterprise voi Spring Boot: REST API, Spring Security, JPA/Hibernate, microservices va Docker.; price=899000.0; image=https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Lap trinh - Web; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:54; updatedAt=2026-05-31T14:31:54; studentsCount=0; revenue=0.0}"
+                                           ],
+                       "Do hoa - Thiet ke":  [
+                                                 "@{id=5; name=Thiet ke UI/UX voi Figma; description=Hoc thiet ke giao dien nguoi dung chuyen nghiep voi Figma. Tu wireframe, prototype den design system. Bao gom 5 du an thuc te.; price=649000.0; image=https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Do hoa - Thiet ke; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:49; updatedAt=2026-05-31T14:31:49; studentsCount=0; revenue=0.0}",
+                                                 "@{id=27; name=Thiet ke do hoa voi Photoshop; description=Thanh thao Adobe Photoshop tu co ban den nang cao: chinh sua anh, thiet ke banner, poster, social media.; price=649000.0; image=https://images.unsplash.com/photo-1572044162444-ad60f128bdea?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Do hoa - Thiet ke; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:53; updatedAt=2026-05-31T14:31:53; studentsCount=0; revenue=0.0}"
+                                             ],
+                       "Tiktok":  [
+                                      "@{id=12; name=TikTok Marketing - Viral Content Strategy; description=Chien luoc xay dung kenh TikTok tu 0 den 100K followers. Hoc cach tao noi dung viral, TikTok Ads va kiem tien.; price=449000.0; image=https://images.unsplash.com/photo-1611605698335-8441fbfd049b?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Tiktok; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:51; updatedAt=2026-05-31T14:31:51; studentsCount=0; revenue=0.0}"
+                                  ],
+                       "Bat dong san":  [
+                                            "@{id=14; name=Dau tu Bat dong san thuc chien; description=Huong dan dau tu bat dong san: phan tich thi truong, dinh gia tai san, phap ly, dam phan va quan ly danh muc BDS.; price=1299000.0; image=https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Bat dong san; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:51; updatedAt=2026-05-31T14:31:51; studentsCount=0; revenue=0.0}"
+                                        ],
+                       "Ads":  [
+                                   "@{id=7; name=Facebook Ads - Chay quang cao hieu qua; description=Hoc cach tao va toi uu chien dich quang cao Facebook tu co ban den nang cao.; price=749000.0; image=https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Ads; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:50; updatedAt=2026-05-31T14:31:50; studentsCount=0; revenue=0.0}",
+                                   "@{id=22; name=Google Ads - Tim kiem \u0026 Display; description=Tao va toi uu chien dich Google Ads hieu qua: Search Ads, Display Ads, Shopping Ads, YouTube Ads va remarketing.; price=849000.0; image=https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Ads; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:52; updatedAt=2026-05-31T14:31:52; studentsCount=0; revenue=0.0}"
+                               ],
+                       "Tieng Anh":  [
+                                         "@{id=6; name=Tieng Anh giao tiep cho nguoi di lam; description=Nang cao ky nang tieng Anh giao tiep trong moi truong cong so: email, hop hanh, thuyet trinh va dam phan.; price=0.0; image=https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Tieng Anh; instructorId=instructer; type=FREE; status=PUBLISHED; createdAt=2026-05-31T14:31:50; updatedAt=2026-05-31T14:31:50; studentsCount=0; revenue=0.0}"
+                                     ],
+                       "Tieng Trung - Nhat - Han":  [
+                                                        "@{id=18; name=Tieng Trung giao tiep co ban; description=Hoc tieng Trung tu dau voi phuong phap nghe - noi - doc - viet. Nam vung 1000 tu vung thong dung.; price=499000.0; image=https://images.unsplash.com/photo-1547981609-4b6bfe67ca0b?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Tieng Trung - Nhat - Han; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:52; updatedAt=2026-05-31T14:31:52; studentsCount=0; revenue=0.0}",
+                                                        "@{id=24; name=Tieng Nhat N5 - N4 cho nguoi moi; description=Hoc tieng Nhat tu dau den trinh do N4: Hiragana, Katakana, Kanji co ban, ngu phap va hoi thoai thuc te.; price=599000.0; image=https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Tieng Trung - Nhat - Han; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:53; updatedAt=2026-05-31T14:31:53; studentsCount=0; revenue=0.0}"
+                                                    ],
+                       "Phong Thuy":  [
+                                          "@{id=20; name=Phong thuy nha o va van phong; description=Ung dung phong thuy vao thiet ke nha o va van phong: bo cuc khong gian, mau sac, huong nha.; price=0.0; image=https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Phong Thuy; instructorId=instructer; type=FREE; status=PUBLISHED; createdAt=2026-05-31T14:31:52; updatedAt=2026-05-31T14:31:52; studentsCount=0; revenue=0.0}"
+                                      ],
+                       "Kinh doanh - Marketing":  [
+                                                      "@{id=19; name=Marketing tong the cho doanh nghiep; description=Xay dung chien luoc marketing toan dien: brand identity, content marketing, social media, email marketing.; price=999000.0; image=https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Kinh doanh - Marketing; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:52; updatedAt=2026-05-31T14:31:52; studentsCount=0; revenue=0.0}",
+                                                      "@{id=25; name=Xay dung thuong hieu ca nhan; description=Hoc cach xay dung personal brand manh me: dinh vi ban than, tao noi dung chuyen mon, networking.; price=0.0; image=https://images.unsplash.com/photo-1493612276216-ee3925520721?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Kinh doanh - Marketing; instructorId=instructer; type=FREE; status=PUBLISHED; createdAt=2026-05-31T14:31:53; updatedAt=2026-05-31T14:31:53; studentsCount=0; revenue=0.0}",
+                                                      "@{id=28; name=Email Marketing tu dong hoa; description=Xay dung he thong email marketing tu dong: list building, segmentation, automation workflow, A/B testing.; price=549000.0; image=https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Kinh doanh - Marketing; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:54; updatedAt=2026-05-31T14:31:54; studentsCount=0; revenue=0.0}"
+                                                  ],
+                       "Kiem tien online":  [
+                                                "@{id=16; name=Kiem tien online voi Affiliate Marketing; description=Xay dung he thong thu nhap thu dong voi Affiliate Marketing: chon niche, xay dung website, SEO, email marketing.; price=699000.0; image=https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Kiem tien online; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:51; updatedAt=2026-05-31T14:31:51; studentsCount=0; revenue=0.0}"
+                                            ],
+                       "Edit Video":  [
+                                          "@{id=17; name=Edit Video chuyen nghiep voi Premiere Pro; description=Hoc dung phim chuyen nghiep voi Adobe Premiere Pro: cat ghep, color grading, motion graphics, am thanh.; price=749000.0; image=https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Edit Video; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:52; updatedAt=2026-05-31T14:31:52; studentsCount=0; revenue=0.0}"
+                                      ],
+                       "Data Analysis":  [
+                                             "@{id=2; name=Khoa hoc Python cho Data Science; description=Hoc Python ung dung trong phan tich du lieu voi NumPy, Pandas, Matplotlib, Seaborn va Scikit-learn. Phu hop cho nguoi muon chuyen nganh sang Data Science.; price=699000.0; image=https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Data Analysis; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:49; updatedAt=2026-05-31T14:31:49; studentsCount=0; revenue=0.0}",
+                                             "@{id=23; name=Machine Learning voi Python; description=Hoc Machine Learning thuc te: regression, classification, clustering, neural networks va deep learning.; price=999000.0; image=https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Data Analysis; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:53; updatedAt=2026-05-31T14:31:53; studentsCount=0; revenue=0.0}"
+                                         ],
+                       "Shopee":  [
+                                      "@{id=9; name=Kinh doanh Shopee tu 0 dong; description=Xay dung gian hang Shopee tu dau: chon san pham, toi uu listing, chay Flash Sale, quan ly don hang va scale up doanh thu.; price=549000.0; image=https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Shopee; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:50; updatedAt=2026-05-31T14:31:50; studentsCount=0; revenue=0.0}"
+                                  ],
+                       "Copywriting":  [
+                                           "@{id=13; name=Copywriting - Viet content ban hang; description=Hoc nghe thuat viet content thuyet phuc: headline, storytelling, call-to-action va cac framework copywriting noi tieng.; price=599000.0; image=https://images.unsplash.com/photo-1455390582262-044cdead277a?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Copywriting; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:51; updatedAt=2026-05-31T14:31:51; studentsCount=0; revenue=0.0}"
+                                       ],
+                       "Tin hoc van phong":  [
+                                                 "@{id=15; name=Tin hoc van phong nang cao; description=Thanh thao Word, Excel, PowerPoint o muc chuyen nghiep. Hoc cac tinh nang nang cao, macro, VBA co ban.; price=0.0; image=https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Tin hoc van phong; instructorId=instructer; type=FREE; status=PUBLISHED; createdAt=2026-05-31T14:31:51; updatedAt=2026-05-31T14:31:51; studentsCount=0; revenue=0.0}"
+                                             ],
+                       "AI - ChatGPT":  [
+                                            "@{id=3; name=ChatGPT \u0026 AI cho nguoi di lam; description=Tan dung suc manh cua ChatGPT va cac cong cu AI de tang nang suat lam viec gap 3 lan. Hoc cach viet prompt hieu qua, tu dong hoa cong viec va ung dung AI vao thuc te.; price=499000.0; image=https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=AI - ChatGPT; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:49; updatedAt=2026-05-31T14:31:49; studentsCount=0; revenue=0.0}"
+                                        ],
+                       "SEO":  [
+                                   "@{id=4; name=SEO Tong the tu A den Z; description=Nam vung toan bo kien thuc SEO: nghien cuu tu khoa, toi uu On-page, xay dung backlink, SEO ky thuat va do luong hieu qua.; price=599000.0; image=https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=SEO; instructorId=instructer; type=PAID; status=PUBLISHED; createdAt=2026-05-31T14:31:49; updatedAt=2026-05-31T14:31:49; studentsCount=0; revenue=0.0}"
+                               ],
+                       "Tai Chinh - Ke Toan":  [
+                                                   "@{id=10; name=Ke toan thuc hanh tren Excel; description=Hoc ke toan thuc te voi Excel: lap bang can doi ke toan, bao cao ket qua kinh doanh, quan ly dong tien.; price=0.0; image=https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400\u0026h=300\u0026fit=crop; imageUrl=; category=Tai Chinh - Ke Toan; instructorId=instructer; type=FREE; status=PUBLISHED; createdAt=2026-05-31T14:31:50; updatedAt=2026-05-31T14:31:50; studentsCount=0; revenue=0.0}"
+                                               ]
+                   }
+}

@@ -19,21 +19,19 @@ export default function CourseForm() {
     image: "",
     category: "technology"
   });
-  
+
   const [imageFile, setImageFile] = useState(null);     // File object
   const [imagePreview, setImagePreview] = useState(""); // preview URL
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditMode);
   const [error, setError] = useState("");
 
-  // Chapter creation states
-  const [newChapters, setNewChapters] = useState([]);
-  const [currChapterTitle, setCurrChapterTitle] = useState("");
-  const [currChapterContent, setCurrChapterContent] = useState("");
-  const [currChapterFiles, setCurrChapterFiles] = useState([]);
-  const [uploadingChapterFile, setUploadingChapterFile] = useState(false);
-  const [dragActiveChapter, setDragActiveChapter] = useState(false);
-  const chapterFileInputRef = useRef(null);
+  // Chapter + Lesson creation states
+  // Structure: [{title, lessons: [{title, isFree, fileName, fileUrl, fileType, file, uploading, uploadProgress}]}]
+  const [newChapters, setNewChapters] = useState([
+    { title: "", lessons: [{ title: "", isFree: false, fileName: "", fileUrl: "", fileType: "", file: null, uploading: false, uploadProgress: 0 }] }
+  ]);
+  const emptyLesson = () => ({ title: "", isFree: false, fileName: "", fileUrl: "", fileType: "", file: null, uploading: false, uploadProgress: 0 });
 
   useEffect(() => {
     if (isEditMode) {
@@ -104,7 +102,78 @@ export default function CourseForm() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // -------- Chapter drag & drop/upload handlers --------
+  // -------- Chapter / Lesson helpers --------
+  const updateChapterTitle = (ci, val) => {
+    setNewChapters(prev => prev.map((ch, i) => i === ci ? { ...ch, title: val } : ch));
+  };
+
+  const addChapter = () => {
+    setNewChapters(prev => [...prev, { title: "", lessons: [emptyLesson()] }]);
+  };
+
+  const removeChapter = (ci) => {
+    if (newChapters.length <= 1) return;
+    setNewChapters(prev => prev.filter((_, i) => i !== ci));
+  };
+
+  const addLesson = (ci) => {
+    setNewChapters(prev => prev.map((ch, i) => i === ci ? { ...ch, lessons: [...ch.lessons, emptyLesson()] } : ch));
+  };
+
+  const removeLesson = (ci, li) => {
+    setNewChapters(prev => prev.map((ch, i) => {
+      if (i !== ci) return ch;
+      if (ch.lessons.length <= 1) return ch;
+      return { ...ch, lessons: ch.lessons.filter((_, j) => j !== li) };
+    }));
+  };
+
+  const updateLesson = (ci, li, field, val) => {
+    setNewChapters(prev => prev.map((ch, i) => {
+      if (i !== ci) return ch;
+      const lessons = ch.lessons.map((ls, j) => j === li ? { ...ls, [field]: val } : ls);
+      return { ...ch, lessons };
+    }));
+  };
+
+  const uploadLessonFile = async (ci, li, file) => {
+    if (!file) return;
+    if (file.size > 100 * 1024 * 1024) { alert(`File "${file.name}" vượt quá 100MB.`); return; }
+    const allowed = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'application/pdf'];
+    if (!allowed.includes(file.type) && !file.type.startsWith('video/')) {
+      alert(`File "${file.name}" không được hỗ trợ. Chỉ chấp nhận Video hoặc PDF.`); return;
+    }
+    updateLesson(ci, li, 'uploading', true);
+    updateLesson(ci, li, 'uploadProgress', 0);
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const fd = new FormData(); fd.append("file", file);
+      const res = await axios.post("/api/storage/upload", fd, {
+        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${user?.token}` },
+        onUploadProgress: (p) => updateLesson(ci, li, 'uploadProgress', Math.round(p.loaded * 100 / p.total))
+      });
+      setNewChapters(prev => prev.map((ch, i) => {
+        if (i !== ci) return ch;
+        const lessons = ch.lessons.map((ls, j) => j !== li ? ls : {
+          ...ls, fileName: file.name, fileUrl: res.data, fileType: file.type, file, uploading: false, uploadProgress: 100
+        });
+        return { ...ch, lessons };
+      }));
+    } catch (err) {
+      alert(`Không thể upload: ${file.name}`);
+      updateLesson(ci, li, 'uploading', false);
+    }
+  };
+
+  const removeLessonFile = (ci, li) => {
+    setNewChapters(prev => prev.map((ch, i) => {
+      if (i !== ci) return ch;
+      const lessons = ch.lessons.map((ls, j) => j !== li ? ls : { ...ls, fileName: '', fileUrl: '', fileType: '', file: null, uploadProgress: 0 });
+      return { ...ch, lessons };
+    }));
+  };
+
+  // -------- Chapter drag & drop/upload handlers (LEGACY - kept for compat) --------
   const handleChapterFileUpload = async (files) => {
     if (!files || files.length === 0) return;
     setUploadingChapterFile(true);
@@ -115,7 +184,7 @@ export default function CourseForm() {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (file.size > 100 * 1024 * 1024) {
-        alert(`File ${file.name} vượt quá giới hạn 100MB.`);
+        alert(`File ${file.name} vượt quá giới hạn 50MB.`);
         continue;
       }
       try {
@@ -223,32 +292,27 @@ export default function CourseForm() {
         newCourseId = res.data.id;
       }
 
-      // Publish newly added chapters if any
-      if (newChapters.length > 0 && newCourseId) {
-        for (const chap of newChapters) {
-          // Validate files before submitting
-          const hasInvalidFiles = chap.files.some(f => !f.url);
-          if (hasInvalidFiles) {
-            throw new Error(`Chương "${chap.title}" có tệp chưa được tải lên hoặc tải lên thất bại. Vui lòng kiểm tra lại.`);
-          }
-
+      // Publish chapters with lessons
+      const chaptersToPublish = newChapters.filter(ch => ch.title.trim());
+      if (chaptersToPublish.length > 0 && newCourseId) {
+        for (const chap of chaptersToPublish) {
+          const lessons = chap.lessons.filter(ls => ls.title.trim());
+          if (lessons.length === 0) continue;
           const chapPayload = {
             courseId: Number(newCourseId),
             title: chap.title,
-            content: chap.content,
-            files: chap.files.map(f => ({
-              fileName: f.name,
-              fileUrl: f.url,
-              fileType: f.type
+            lessons: lessons.map(ls => ({
+              title: ls.title,
+              content: "",
+              isFree: ls.isFree,
+              fileName: ls.fileName || null,
+              fileUrl: ls.fileUrl || null,
+              fileType: ls.fileType || null
             }))
           };
-          
           try {
             await axios.post("/api/chapters/publish", chapPayload, {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${user.token}`
-              }
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${user.token}` }
             });
           } catch (chapErr) {
             const errMsg = chapErr.response?.data?.error || chapErr.message || "Lỗi không xác định";
@@ -290,8 +354,8 @@ export default function CourseForm() {
             Điền các thông tin chi tiết bên dưới để thiết lập khóa học của bạn.
           </p>
         </div>
-        <button 
-          onClick={() => navigate('/instructor/courses')} 
+        <button
+          onClick={() => navigate('/instructor/courses')}
           className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-100 bg-white transition-all shadow-sm"
         >
           <X size={18} /> Hủy bỏ
@@ -313,32 +377,32 @@ export default function CourseForm() {
               <LayoutDashboard className="text-blue-500" size={24} />
               <h2 className="text-xl font-bold text-gray-800">Thông tin cơ bản</h2>
             </div>
-            
+
             <div className="space-y-6">
               {/* Title */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Tiêu đề khóa học <span className="text-red-500">*</span>
                 </label>
-                <input 
-                  name="name" 
-                  value={formData.name} 
-                  onChange={handleChange} 
-                  required 
-                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-medium text-gray-800" 
-                  placeholder="VD: Lập trình ReactJS Thực Chiến..." 
+                <input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-medium text-gray-800"
+                  placeholder="VD: Lập trình ReactJS Thực Chiến..."
                 />
               </div>
 
               {/* Description */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Mô tả chi tiết</label>
-                <textarea 
-                  name="description" 
-                  value={formData.description} 
-                  onChange={handleChange} 
-                  rows="6" 
-                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800" 
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows="6"
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800"
                   placeholder="Cung cấp thông tin chi tiết, lợi ích và lộ trình học của khóa học..."
                 ></textarea>
               </div>
@@ -352,12 +416,12 @@ export default function CourseForm() {
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Tag size={18} className="text-gray-400" />
                   </div>
-                  <input 
-                    name="category" 
-                    value={formData.category} 
-                    onChange={handleChange} 
-                    required 
-                    className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800" 
+                  <input
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800"
                     placeholder="VD: technology, business, design..."
                   />
                 </div>
@@ -365,134 +429,106 @@ export default function CourseForm() {
             </div>
           </div>
 
-          {/* ==================== CHAPTERS SECTION (MOVED TO LEFT) ==================== */}
+          {/* ==================== CHAPTERS SECTION ==================== */}
           {!isEditMode && (
             <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
-              <div className="flex items-center gap-2 mb-1 border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-4">
                 <BookOpen className="text-indigo-500" size={24} />
-                <div>
+                <div className="flex-1">
                   <h2 className="text-xl font-bold text-gray-800">Chương trình học</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Thêm các chương học ngay khi tạo khóa học. Hỗ trợ video (tối đa 100MB) và file PDF.</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Thêm chương & bài học. Mỗi bài học hỗ trợ 1 video (≤50MB) hoặc PDF.</p>
                 </div>
               </div>
 
-              {/* Already-added chapters list */}
-              {newChapters.length > 0 && (
-                <div className="mb-5 space-y-2">
-                  {newChapters.map((chap, idx) => (
-                    <div key={idx} className="flex items-start justify-between gap-3 p-3 bg-indigo-50/60 border border-indigo-100 rounded-xl">
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold">
-                          {idx + 1}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-semibold text-gray-800 text-sm truncate">{chap.title}</p>
-                          {chap.content && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{chap.content}</p>}
-                          {chap.files.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1.5">
-                              {chap.files.map((f, fi) => (
-                                <span key={fi} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-indigo-100 rounded-full text-[10px] text-indigo-700 font-medium">
-                                  {f.type.startsWith('video/') ? <Film size={10} /> : <FileText size={10} />}
-                                  <span className="truncate max-w-[120px]">{f.name}</span>
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <button type="button" onClick={() => removeAddedChapter(idx)} className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* New chapter form */}
-              <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50/50 space-y-4">
-                <p className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
-                  <Plus size={16} className="text-indigo-500" />
-                  Thêm chương {newChapters.length + 1}
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">Tên chương <span className="text-red-400">*</span></label>
-                    <input
-                      type="text"
-                      value={currChapterTitle}
-                      onChange={e => setCurrChapterTitle(e.target.value)}
-                      placeholder={`VD: Chương ${newChapters.length + 1}: Giới thiệu`}
-                      className="w-full px-3.5 py-2.5 bg-white rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all placeholder:text-gray-300"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">Tài nguyên đính kèm (Video / PDF)</label>
-                    <input
-                      ref={chapterFileInputRef}
-                      type="file"
-                      multiple
-                      accept="video/*,.pdf"
-                      className="hidden"
-                      onChange={e => handleChapterFileUpload(e.target.files)}
-                    />
-                    
-                    {/* DRAG & DROP ZONE FOR CHAPTER FILES */}
-                    <div
-                      onDragEnter={handleChapterDrag}
-                      onDragOver={handleChapterDrag}
-                      onDragLeave={handleChapterDrag}
-                      onDrop={handleChapterDrop}
-                      onClick={() => chapterFileInputRef.current?.click()}
-                      className={`w-full rounded-xl border-2 border-dashed flex flex-col items-center justify-center py-6 cursor-pointer transition-all select-none ${
-                        dragActiveChapter 
-                          ? "border-indigo-500 bg-indigo-50 scale-[1.01]" 
-                          : "border-gray-200 bg-white hover:border-indigo-400 hover:bg-indigo-50/30"
-                      }`}
-                    >
-                      {uploadingChapterFile ? (
-                        <>
-                          <Loader2 size={24} className="text-indigo-500 animate-spin mb-2" />
-                          <p className="text-xs font-semibold text-indigo-600">Đang tải lên...</p>
-                        </>
-                      ) : (
-                        <>
-                          <Upload size={20} className={dragActiveChapter ? "text-indigo-500" : "text-gray-400"} />
-                          <p className="text-xs font-semibold text-gray-600 mt-2 text-center px-2">
-                            {dragActiveChapter ? "Thả tệp vào đây" : "Kéo thả hoặc Click để chọn tệp"}
-                          </p>
-                        </>
+              <div className="space-y-4">
+                {newChapters.map((chap, ci) => (
+                  <div key={ci} className="border border-indigo-100 rounded-2xl bg-indigo-50/30 overflow-hidden">
+                    {/* Chapter Header */}
+                    <div className="flex items-center gap-3 px-4 py-3 bg-indigo-600">
+                      <span className="text-white font-bold text-sm">Chương {ci + 1}</span>
+                      <input
+                        type="text"
+                        value={chap.title}
+                        onChange={e => updateChapterTitle(ci, e.target.value)}
+                        placeholder={`VD: Chương ${ci + 1}: Giới thiệu`}
+                        className="flex-1 bg-white/20 text-white placeholder-white/60 rounded-lg px-3 py-1.5 text-sm font-medium outline-none focus:bg-white/30 transition-all"
+                      />
+                      {newChapters.length > 1 && (
+                        <button type="button" onClick={() => removeChapter(ci)} className="p-1.5 rounded-lg bg-white/20 hover:bg-red-500 text-white transition-colors">
+                          <Trash2 size={14} />
+                        </button>
                       )}
                     </div>
 
-                    {/* LIST OF FILES CURRENTLY UPLOADING/UPLOADED FOR THIS CHAPTER */}
-                    {currChapterFiles.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        {currChapterFiles.map((file, fi) => (
-                          <div key={fi} className="flex items-center justify-between gap-3 p-2 bg-white border border-gray-100 rounded-lg shadow-sm">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className={`p-1.5 rounded ${file.type.startsWith('video/') ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
-                                {file.type.startsWith('video/') ? <Film size={14} /> : <FileText size={14} />}
-                              </div>
-                              <span className="text-xs font-medium text-gray-700 truncate">{file.name}</span>
-                            </div>
-                            <button type="button" onClick={(e) => { e.stopPropagation(); setCurrChapterFiles(prev => prev.filter((_, i) => i !== fi)); }} className="p-1 text-gray-400 hover:text-red-500 transition-colors">
-                              <Trash2 size={14} />
-                            </button>
+                    {/* Lessons */}
+                    <div className="p-3 space-y-2">
+                      {chap.lessons.map((ls, li) => (
+                        <div key={li} className="bg-white border border-gray-100 rounded-xl p-3 space-y-2.5 shadow-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-indigo-400 w-6 text-center">{li + 1}</span>
+                            <input
+                              type="text"
+                              value={ls.title}
+                              onChange={e => updateLesson(ci, li, 'title', e.target.value)}
+                              placeholder={`Bài ${li + 1}: Tên bài học`}
+                              className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all"
+                            />
+                            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                              <input type="checkbox" checked={ls.isFree} onChange={e => updateLesson(ci, li, 'isFree', e.target.checked)} className="h-3.5 w-3.5 text-indigo-600 rounded" />
+                              <span className="text-xs font-medium text-gray-500 whitespace-nowrap">Miễn phí</span>
+                            </label>
+                            {chap.lessons.length > 1 && (
+                              <button type="button" onClick={() => removeLesson(ci, li)} className="p-1.5 text-gray-300 hover:text-red-500 transition-colors">
+                                <Trash2 size={14} />
+                              </button>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
 
-                <button
-                  type="button"
-                  onClick={handleAddChapter}
-                  disabled={!currChapterTitle.trim() || uploadingChapterFile}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-indigo-500 text-indigo-600 font-bold text-sm hover:bg-indigo-600 hover:text-white transition-all disabled:opacity-40"
-                >
-                  <Plus size={18} /> Lưu chương vào danh sách
+                          {/* File upload per lesson */}
+                          {ls.fileUrl ? (
+                            <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
+                              <span className={`p-1 rounded ${ls.fileType?.startsWith('video/') ? 'bg-amber-50 text-amber-500' : 'bg-rose-50 text-rose-500'}`}>
+                                {ls.fileType?.startsWith('video/') ? <Film size={14} /> : <FileText size={14} />}
+                              </span>
+                              <span className="text-xs font-medium text-gray-700 flex-1 truncate">{ls.fileName}</span>
+                              <button type="button" onClick={() => removeLessonFile(ci, li)} className="p-1 text-gray-300 hover:text-red-500 transition-colors">
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          ) : ls.uploading ? (
+                            <div className="px-2 py-2">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Loader2 size={14} className="animate-spin text-indigo-500" />
+                                <span className="text-xs text-indigo-600 font-medium">Đang upload... {ls.uploadProgress}%</span>
+                              </div>
+                              <div className="w-full bg-indigo-100 rounded-full h-1">
+                                <div className="bg-indigo-500 h-1 rounded-full transition-all" style={{ width: `${ls.uploadProgress}%` }} />
+                              </div>
+                            </div>
+                          ) : (
+                            <label className="block cursor-pointer">
+                              <input type="file" accept="video/*,application/pdf" className="hidden"
+                                onChange={e => { if (e.target.files?.[0]) uploadLessonFile(ci, li, e.target.files[0]); }} />
+                              <div className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50/30 transition-all">
+                                <Upload size={14} className="text-gray-300" />
+                                <span className="text-xs text-gray-400">Đính kèm video/PDF (≤100MB)</span>
+                              </div>
+                            </label>
+                          )}
+                        </div>
+                      ))}
+
+                      <button type="button" onClick={() => addLesson(ci)}
+                        className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-indigo-500 hover:text-indigo-700 border border-dashed border-indigo-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/30 transition-all">
+                        <Plus size={14} /> Thêm bài học
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                <button type="button" onClick={addChapter}
+                  className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-indigo-200 rounded-2xl text-sm font-bold text-indigo-500 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all">
+                  <Plus size={18} /> Thêm chương mới
                 </button>
               </div>
             </div>
@@ -504,14 +540,14 @@ export default function CourseForm() {
           {/* Settings Card */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h2 className="text-lg font-bold text-gray-800 mb-5 border-b border-gray-100 pb-3">Cài đặt phân phối</h2>
-            
+
             <div className="space-y-5">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Loại khóa học</label>
-                <select 
-                  name="type" 
-                  value={formData.type} 
-                  onChange={handleChange} 
+                <select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleChange}
                   className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none font-medium cursor-pointer"
                 >
                   <option value="FREE">Miễn phí (FREE)</option>
@@ -528,14 +564,14 @@ export default function CourseForm() {
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <DollarSign size={18} className="text-gray-400" />
                     </div>
-                    <input 
-                      type="number" 
-                      min="0" 
-                      name="price" 
-                      value={formData.price} 
-                      onChange={handleChange} 
-                      required 
-                      className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none font-bold text-blue-600" 
+                    <input
+                      type="number"
+                      min="0"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleChange}
+                      required
+                      className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none font-bold text-blue-600"
                     />
                   </div>
                 </div>
@@ -543,10 +579,10 @@ export default function CourseForm() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Trạng thái hiển thị</label>
-                <select 
-                  name="status" 
-                  value={formData.status} 
-                  onChange={handleChange} 
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
                   className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none font-medium cursor-pointer"
                 >
                   <option value="DRAFT">Bản nháp (DRAFT)</option>
@@ -560,7 +596,7 @@ export default function CourseForm() {
           {/* Media Card */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h2 className="text-lg font-bold text-gray-800 mb-5 border-b border-gray-100 pb-3">Hình ảnh đại diện</h2>
-            
+
             {/* Hidden file input */}
             <input
               ref={fileInputRef}
@@ -578,9 +614,9 @@ export default function CourseForm() {
                   src={imagePreview}
                   alt="Preview"
                   className="w-full h-48 object-cover rounded-xl border border-gray-200"
-                  onError={(e) => { 
+                  onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjODg4IiBkeT0iLjNlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+SW52YWxpZCBJbWFnZTwvdGV4dD48L3N2Zz4="; 
+                    e.target.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjODg4IiBkeT0iLjNlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+SW52YWxpZCBJbWFnZTwvdGV4dD48L3N2Zz4=";
                   }}
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-3">
@@ -610,11 +646,10 @@ export default function CourseForm() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`w-full h-48 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all select-none ${
-                  isDragging
-                    ? "border-blue-500 bg-blue-50 scale-[1.01]"
-                    : "border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/50"
-                }`}
+                className={`w-full h-48 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all select-none ${isDragging
+                  ? "border-blue-500 bg-blue-50 scale-[1.01]"
+                  : "border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/50"
+                  }`}
               >
                 <div className={`p-3 rounded-full mb-3 transition-colors ${isDragging ? "bg-blue-100" : "bg-gray-100"}`}>
                   <Upload size={24} className={isDragging ? "text-blue-500" : "text-gray-400"} />
@@ -623,15 +658,15 @@ export default function CourseForm() {
                   {isDragging ? "Thả ảnh vào đây" : "Kéo & thả ảnh vào đây"}
                 </p>
                 <p className="text-xs text-gray-400 mt-1">hoặc <span className="text-blue-500 font-semibold">nhấp để chọn file</span></p>
-                <p className="text-xs text-gray-400 mt-2">PNG, JPG, WEBP · Tối đa 10MB</p>
+                <p className="text-xs text-gray-400 mt-2">PNG, JPG, WEBP · Tối đa 100MB</p>
               </div>
             )}
           </div>
 
           {/* Submit Button */}
-          <button 
-            type="submit" 
-            disabled={loading} 
+          <button
+            type="submit"
+            disabled={loading}
             className="w-full py-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed hover:-translate-y-1"
           >
             {loading ? (

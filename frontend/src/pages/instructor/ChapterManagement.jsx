@@ -7,19 +7,33 @@ import {
   PlusCircle,
   FileText,
   Video,
-  File,
   UploadCloud,
   Trash2,
   CheckCircle,
   Loader2,
   Layers,
-  ChevronRight
+  GripVertical,
+  ChevronDown,
+  ChevronUp,
+  Film,
+  FileIcon
 } from "lucide-react";
+
+const EMPTY_LESSON = () => ({
+  title: "",
+  content: "",
+  isFree: false,
+  fileName: "",
+  fileUrl: "",
+  fileType: "",
+  file: null,
+  uploading: false,
+  uploadProgress: 0
+});
 
 export default function ChapterManagement() {
   const { id } = useParams(); // courseId
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
 
   const [course, setCourse] = useState(null);
   const [chapters, setChapters] = useState([]);
@@ -28,19 +42,17 @@ export default function ChapterManagement() {
 
   // Form State
   const [chapterTitle, setChapterTitle] = useState("");
-  const [chapterContent, setChapterContent] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState([]); // [{ name, url, type, size }]
-  const [uploading, setUploading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
+  const [lessons, setLessons] = useState([EMPTY_LESSON()]);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [expandedLessons, setExpandedLessons] = useState([0]); // First lesson expanded
 
   const fetchCourseData = useCallback(async () => {
     try {
       setLoading(true);
       const user = JSON.parse(localStorage.getItem("user"));
       const token = user?.token;
-      
+
       const [courseRes, chaptersRes] = await Promise.all([
         axios.get(`/api/courses/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -51,7 +63,6 @@ export default function ChapterManagement() {
       ]);
 
       setCourse(courseRes.data);
-      // Sort chapters by orderNumber
       const sortedChapters = (chaptersRes.data || []).sort(
         (a, b) => (a.orderNumber || 0) - (b.orderNumber || 0)
       );
@@ -68,108 +79,140 @@ export default function ChapterManagement() {
     fetchCourseData();
   }, [fetchCourseData]);
 
-  // -------- File Upload Handling --------
-  const uploadSingleFile = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
+  // -------- Lesson Management --------
+  const addLesson = () => {
+    setLessons(prev => [...prev, EMPTY_LESSON()]);
+    setExpandedLessons(prev => [...prev, lessons.length]);
+  };
 
-    const user = JSON.parse(localStorage.getItem("user"));
-    const token = user?.token;
+  const removeLesson = (index) => {
+    if (lessons.length <= 1) {
+      setErrorMessage("Chương phải có ít nhất 1 bài học.");
+      return;
+    }
+    setLessons(prev => prev.filter((_, i) => i !== index));
+    setExpandedLessons(prev => prev.filter(i => i !== index).map(i => i > index ? i - 1 : i));
+  };
 
-    const res = await axios.post("/api/storage/upload", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${token}`
-      }
+  const updateLesson = (index, field, value) => {
+    setLessons(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
     });
-    return res.data; // Returns public URL or local path
   };
 
-  const handleFiles = async (files) => {
-    if (files.length === 0) return;
-    setUploading(true);
+  const toggleLessonExpanded = (index) => {
+    setExpandedLessons(prev =>
+      prev.includes(index)
+        ? prev.filter(i => i !== index)
+        : [...prev, index]
+    );
+  };
+
+  // -------- File Upload per Lesson --------
+  const uploadFileForLesson = async (index, file) => {
+    if (!file) return;
+
+    // Validate size (100MB)
+    if (file.size > 100 * 1024 * 1024) {
+      setErrorMessage(`File "${file.name}" vượt quá giới hạn 100MB.`);
+      return;
+    }
+
+    // Validate type
+    const allowedTypes = [
+      'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime',
+      'application/pdf',
+      'application/zip', 'application/x-zip-compressed'
+    ];
+    if (!allowedTypes.includes(file.type) && !file.type.startsWith('video/')) {
+      setErrorMessage(`File "${file.name}" không được hỗ trợ. Chỉ chấp nhận Video (MP4, WebM) hoặc PDF.`);
+      return;
+    }
+
+    updateLesson(index, 'uploading', true);
+    updateLesson(index, 'uploadProgress', 0);
     setErrorMessage("");
-    const newUploaded = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      // Basic size validation (e.g. 50MB)
-      if (file.size > 50 * 1024 * 1024) {
-        setErrorMessage(`File ${file.name} vượt quá giới hạn 50MB.`);
-        continue;
-      }
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-      try {
-        const fileUrl = await uploadSingleFile(file);
-        newUploaded.push({
-          name: file.name,
-          url: fileUrl,
-          type: file.type,
-          size: file.size
-        });
-      } catch (err) {
-        console.error("File upload failed", err);
-        setErrorMessage(`Không thể upload file: ${file.name}`);
-      }
-    }
+      const user = JSON.parse(localStorage.getItem("user"));
+      const token = user?.token;
 
-    setUploadedFiles((prev) => [...prev, ...newUploaded]);
-    setUploading(false);
-  };
+      const res = await axios.post("/api/storage/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`
+        },
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          updateLesson(index, 'uploadProgress', percent);
+        }
+      });
 
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
+      updateLesson(index, 'fileName', file.name);
+      updateLesson(index, 'fileUrl', res.data);
+      updateLesson(index, 'fileType', file.type);
+      updateLesson(index, 'file', file);
+    } catch (err) {
+      console.error("File upload failed", err);
+      setErrorMessage(`Không thể upload file: ${file.name}`);
+    } finally {
+      updateLesson(index, 'uploading', false);
     }
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFiles(e.dataTransfer.files);
-    }
-  };
-
-  const handleFileInputChange = (e) => {
-    if (e.target.files) {
-      handleFiles(e.target.files);
-    }
-  };
-
-  const removeUploadedFile = (index) => {
-    setUploadedFiles((prev) => prev.filter((_, idx) => idx !== index));
+  const removeFileFromLesson = (index) => {
+    updateLesson(index, 'fileName', '');
+    updateLesson(index, 'fileUrl', '');
+    updateLesson(index, 'fileType', '');
+    updateLesson(index, 'file', null);
+    updateLesson(index, 'uploadProgress', 0);
   };
 
   // -------- Submit Chapter --------
   const handlePublishChapter = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+    setSuccessMessage("");
+
     if (!chapterTitle.trim()) {
       setErrorMessage("Vui lòng nhập tên chương học.");
       return;
     }
 
+    // Validate all lessons have titles
+    for (let i = 0; i < lessons.length; i++) {
+      if (!lessons[i].title.trim()) {
+        setErrorMessage(`Bài học ${i + 1} chưa có tiêu đề.`);
+        return;
+      }
+    }
+
+    // Check if any lesson is still uploading
+    if (lessons.some(l => l.uploading)) {
+      setErrorMessage("Vui lòng chờ upload file hoàn tất trước khi đăng tải.");
+      return;
+    }
+
     try {
       setPublishing(true);
-      setErrorMessage("");
-      setSuccessMessage("");
-
       const user = JSON.parse(localStorage.getItem("user"));
       const token = user?.token;
 
       const payload = {
         courseId: Number(id),
         title: chapterTitle,
-        content: chapterContent,
-        files: uploadedFiles.map((f) => ({
-          fileName: f.name,
-          fileUrl: f.url,
-          fileType: f.type
+        lessons: lessons.map((l, i) => ({
+          title: l.title,
+          content: l.content,
+          isFree: l.isFree,
+          fileName: l.fileName || null,
+          fileUrl: l.fileUrl || null,
+          fileType: l.fileType || null
         }))
       };
 
@@ -180,18 +223,18 @@ export default function ChapterManagement() {
         }
       });
 
-      setSuccessMessage(`Đăng tải chương ${chapters.length + 1} thành công!`);
-      // Reset form fields
+      setSuccessMessage(`Đăng tải chương "${chapterTitle}" với ${lessons.length} bài học thành công!`);
+      // Reset form
       setChapterTitle("");
-      setChapterContent("");
-      setUploadedFiles([]);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setLessons([EMPTY_LESSON()]);
+      setExpandedLessons([0]);
 
       // Refresh list
       await fetchCourseData();
     } catch (err) {
       console.error("Failed to publish chapter", err);
-      setErrorMessage("Đăng tải chương học thất bại. Vui lòng thử lại.");
+      const serverMsg = err?.response?.data?.error;
+      setErrorMessage(serverMsg || "Đăng tải chương học thất bại. Vui lòng thử lại.");
     } finally {
       setPublishing(false);
     }
@@ -206,6 +249,18 @@ export default function ChapterManagement() {
   }
 
   const nextChapterNumber = chapters.length + 1;
+
+  const getFileIcon = (type) => {
+    if (!type) return <FileIcon size={16} />;
+    if (type.startsWith('video/')) return <Film size={16} />;
+    if (type === 'application/pdf') return <FileText size={16} />;
+    return <FileIcon size={16} />;
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  };
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -253,13 +308,36 @@ export default function ChapterManagement() {
                     className="p-4 bg-slate-50 hover:bg-indigo-50/50 rounded-xl border border-slate-100 transition-all duration-300"
                   >
                     <div className="flex items-start justify-between">
-                      <div>
+                      <div className="flex-1">
                         <span className="text-xs font-bold text-indigo-600 uppercase tracking-wide">
                           Chương {chap.orderNumber || idx + 1}
                         </span>
                         <h3 className="font-bold text-slate-800 mt-0.5 leading-snug">
                           {chap.title}
                         </h3>
+                        {/* Show lesson count */}
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-100">
+                            <BookOpen size={12} />
+                            {chap.lessons?.length || 0} bài học
+                          </span>
+                        </div>
+                        {/* Show lesson names */}
+                        {chap.lessons && chap.lessons.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {chap.lessons
+                              .sort((a, b) => (a.orderNumber || 0) - (b.orderNumber || 0))
+                              .map((lesson, li) => (
+                                <div key={lesson.id} className="flex items-center gap-2 text-xs text-slate-500 pl-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-300 flex-shrink-0"></span>
+                                  <span className="truncate">{lesson.title}</span>
+                                  {lesson.isFree && (
+                                    <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">FREE</span>
+                                  )}
+                                </div>
+                              ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -277,7 +355,7 @@ export default function ChapterManagement() {
           >
             <div className="border-b border-slate-100 pb-3">
               <span className="text-xs font-bold text-indigo-600 uppercase tracking-wide bg-indigo-50 px-2.5 py-1 rounded-full">
-                Publishing Step
+                Đăng tải nội dung
               </span>
               <h2 className="text-xl font-extrabold text-slate-850 mt-2.5 flex items-center gap-2">
                 <span>Đăng tải chương {nextChapterNumber}</span>
@@ -298,7 +376,7 @@ export default function ChapterManagement() {
             )}
 
             <div className="space-y-4">
-              {/* Title input */}
+              {/* Chapter Title */}
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Tên chương học *</label>
                 <input
@@ -311,100 +389,209 @@ export default function ChapterManagement() {
                 />
               </div>
 
-              {/* Description/Content Textarea */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Nội dung chi tiết (Mô tả, nội dung học tập...)</label>
-                <textarea
-                  rows={5}
-                  placeholder="Nhập nội dung học tập bằng văn bản hoặc hướng dẫn nhanh cho học viên..."
-                  value={chapterContent}
-                  onChange={(e) => setChapterContent(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
-                />
-              </div>
-
-              {/* Drag and drop file upload */}
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Tài nguyên đính kèm (Video bài giảng, File PDF...)</label>
-                
-                <div
-                  onDragEnter={handleDrag}
-                  onDragOver={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 ${
-                    dragActive
-                      ? "border-indigo-500 bg-indigo-50/50"
-                      : "border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300"
-                  }`}
-                >
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    multiple
-                    className="hidden"
-                    onChange={handleFileInputChange}
-                  />
-                  <UploadCloud className="mx-auto h-10 w-10 text-indigo-500 mb-2.5" />
-                  <p className="text-sm font-bold text-slate-700">Kéo & thả tài liệu vào đây</p>
-                  <p className="text-xs text-slate-400 mt-1">Hoặc click để chọn file (Hỗ trợ MP4, PDF, Zip... tối đa 50MB)</p>
+              {/* Lessons Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <BookOpen size={16} className="text-indigo-500" />
+                    Danh sách bài học ({lessons.length})
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addLesson}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    <PlusCircle size={14} />
+                    Thêm bài học
+                  </button>
                 </div>
-              </div>
 
-              {/* Uploaded Files list */}
-              {uploadedFiles.length > 0 && (
-                <div className="space-y-2">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Danh sách tài nguyên ({uploadedFiles.length})
-                  </span>
-                  <div className="grid gap-2">
-                    {uploadedFiles.map((file, index) => {
-                      const isVideo = file.type.startsWith("video/");
-                      return (
+                {/* Lesson Cards */}
+                <div className="space-y-3">
+                  {lessons.map((lesson, index) => {
+                    const isExpanded = expandedLessons.includes(index);
+                    const hasFile = !!lesson.fileUrl;
+                    const isVideo = lesson.fileType?.startsWith('video/');
+                    const isPdf = lesson.fileType === 'application/pdf';
+
+                    return (
+                      <div
+                        key={index}
+                        className={`rounded-xl border transition-all duration-200 ${isExpanded
+                            ? 'border-indigo-200 bg-indigo-50/30 shadow-sm'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                          }`}
+                      >
+                        {/* Lesson Header (always visible) */}
                         <div
-                          key={index}
-                          className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-white shadow-sm"
+                          className="flex items-center gap-3 px-4 py-3 cursor-pointer"
+                          onClick={() => toggleLessonExpanded(index)}
                         >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className={`p-2 rounded-lg ${isVideo ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-650'}`}>
-                              {isVideo ? <Video size={18} /> : <FileText size={18} />}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-xs font-semibold text-slate-800 truncate pr-4">
-                                {file.name}
-                              </p>
-                              <p className="text-[10px] text-slate-450 mt-0.5">
-                                {(file.size / (1024 * 1024)).toFixed(2)} MB
-                              </p>
+                          <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-indigo-100 text-indigo-600 text-xs font-bold flex-shrink-0">
+                            {index + 1}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-slate-800 truncate">
+                              {lesson.title || `Bài học ${index + 1} (chưa đặt tên)`}
+                            </p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {hasFile && (
+                                <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded ${isVideo ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'
+                                  }`}>
+                                  {isVideo ? <Film size={10} /> : <FileText size={10} />}
+                                  {lesson.fileName}
+                                </span>
+                              )}
+                              {lesson.isFree && (
+                                <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">FREE</span>
+                              )}
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => removeUploadedFile(index)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
-              {uploading && (
-                <div className="flex items-center justify-center gap-2 p-3 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-semibold border border-indigo-100">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Đang tải tệp lên hệ thống lưu trữ S3...</span>
+                          <div className="flex items-center gap-1">
+                            {lessons.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); removeLesson(index); }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                title="Xóa bài học"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                            {isExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                          </div>
+                        </div>
+
+                        {/* Lesson Body (expandable) */}
+                        {isExpanded && (
+                          <div className="px-4 pb-4 space-y-3 border-t border-slate-100">
+                            {/* Lesson Title */}
+                            <div className="space-y-1 pt-3">
+                              <label className="text-xs font-semibold text-slate-600">Tiêu đề bài học *</label>
+                              <input
+                                type="text"
+                                placeholder={`VD: Bài ${index + 1}: Tổng quan về khóa học`}
+                                value={lesson.title}
+                                onChange={(e) => updateLesson(index, 'title', e.target.value)}
+                                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
+                              />
+                            </div>
+
+                            {/* Lesson Content */}
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-slate-600">Nội dung / Mô tả</label>
+                              <textarea
+                                rows={3}
+                                placeholder="Mô tả nội dung bài học hoặc hướng dẫn cho học viên..."
+                                value={lesson.content}
+                                onChange={(e) => updateLesson(index, 'content', e.target.value)}
+                                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
+                              />
+                            </div>
+
+                            {/* isFree Toggle */}
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                id={`free-${index}`}
+                                checked={lesson.isFree}
+                                onChange={(e) => updateLesson(index, 'isFree', e.target.checked)}
+                                className="h-4 w-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                              />
+                              <label htmlFor={`free-${index}`} className="text-xs font-medium text-slate-600">
+                                Bài học miễn phí (cho học thử)
+                              </label>
+                            </div>
+
+                            {/* File Upload */}
+                            <div className="space-y-2">
+                              <label className="text-xs font-semibold text-slate-600">
+                                Tài liệu đính kèm (Video hoặc PDF — tối đa 100MB)
+                              </label>
+
+                              {hasFile ? (
+                                <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white">
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className={`p-2 rounded-lg ${isVideo ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'}`}>
+                                      {isVideo ? <Video size={18} /> : <FileText size={18} />}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-semibold text-slate-800 truncate pr-4">
+                                        {lesson.fileName}
+                                      </p>
+                                      <p className="text-[10px] text-slate-400 mt-0.5">
+                                        {lesson.file ? formatFileSize(lesson.file.size) : 'Đã upload'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeFileFromLesson(index)}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              ) : lesson.uploading ? (
+                                <div className="p-3 rounded-lg border border-indigo-200 bg-indigo-50">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                                    <span className="text-xs font-semibold text-indigo-700">
+                                      Đang upload... {lesson.uploadProgress}%
+                                    </span>
+                                  </div>
+                                  <div className="w-full bg-indigo-100 rounded-full h-1.5">
+                                    <div
+                                      className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300"
+                                      style={{ width: `${lesson.uploadProgress}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              ) : (
+                                <label className="block cursor-pointer">
+                                  <input
+                                    type="file"
+                                    accept="video/*,application/pdf"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      if (e.target.files?.[0]) {
+                                        uploadFileForLesson(index, e.target.files[0]);
+                                      }
+                                    }}
+                                  />
+                                  <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center hover:border-indigo-400 hover:bg-indigo-50/30 transition-all">
+                                    <UploadCloud className="mx-auto h-8 w-8 text-slate-400 mb-1.5" />
+                                    <p className="text-xs font-semibold text-slate-600">Click để chọn file</p>
+                                    <p className="text-[10px] text-slate-400 mt-0.5">MP4, WebM, PDF — Tối đa 100MB</p>
+                                  </div>
+                                </label>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
+
+                {/* Add Lesson Button (bottom) */}
+                <button
+                  type="button"
+                  onClick={addLesson}
+                  className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-slate-200 rounded-xl text-sm font-semibold text-slate-500 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all"
+                >
+                  <PlusCircle size={18} />
+                  Thêm bài học mới
+                </button>
+              </div>
             </div>
 
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={publishing || uploading}
+                disabled={publishing || lessons.some(l => l.uploading)}
                 className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-3.5 px-6 rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-indigo-100 active:scale-[0.98] transition-all"
               >
                 {publishing ? (
@@ -415,7 +602,7 @@ export default function ChapterManagement() {
                 ) : (
                   <>
                     <PlusCircle size={20} />
-                    <span>Đăng tải chương {nextChapterNumber}</span>
+                    <span>Đăng tải chương {nextChapterNumber} ({lessons.length} bài học)</span>
                   </>
                 )}
               </button>

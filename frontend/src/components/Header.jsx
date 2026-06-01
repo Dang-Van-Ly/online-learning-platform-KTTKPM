@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, UserCircle, LayoutDashboard } from 'lucide-react';
+import { Search, ShoppingCart, UserCircle, LayoutDashboard, Bot } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import Logo from './Logo';
 
@@ -9,6 +9,12 @@ const KHOKHOAHOCHeader = () => {
 
   const { user, cartItems } = useContext(AuthContext);
   const [searchQuery, setSearchQuery] = useState('');
+          <li
+            className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap"
+            onClick={()=>navigate('/agent')}
+          >
+            Trợ lý AI
+          </li>
 
   const userName =
     user?.fullName ||
@@ -100,6 +106,14 @@ const KHOKHOAHOCHeader = () => {
           )}
 
           <button
+            title="Trợ lý AI"
+            className="relative bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white border-none w-[36px] h-[36px] rounded-full flex items-center justify-center cursor-pointer shadow-md transition-all duration-200 hover:-translate-y-[1px] hover:shadow-lg"
+            onClick={() => navigate('/agent')}
+          >
+            <Bot size={18} />
+          </button>
+
+          <button
             className="relative bg-white hover:bg-gray-50 hover:text-blue-600 hover:border-blue-400 border border-gray-300 px-4 h-[36px] rounded-lg text-[13px] font-semibold flex items-center gap-2 cursor-pointer text-gray-700 whitespace-nowrap shadow-sm transition-all duration-200"
             onClick={() => navigate('/gio-hang')}
           >
@@ -116,6 +130,13 @@ const KHOKHOAHOCHeader = () => {
 
       <nav className="bg-blue-500 py-2.5 px-[5%]">
         <ul className="list-none m-0 p-0 flex justify-center gap-5 flex-wrap">
+          <li
+            className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap"
+            onClick={()=>navigate('/filtered-courses?all=1')}
+          >
+            Tất cả khóa học
+          </li>
+
           <li
             className="text-white text-[13px] font-medium cursor-pointer flex items-center gap-1 whitespace-nowrap"
             onClick={()=>navigate('/filtered-courses')}
