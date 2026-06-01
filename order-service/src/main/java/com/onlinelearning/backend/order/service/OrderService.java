@@ -1,14 +1,14 @@
 package com.onlinelearning.backend.order.service;
 
-import com.onlinelearning.backend.messaging.EventPublisher;
-import com.onlinelearning.backend.messaging.OrderCreatedEvent;
-import com.onlinelearning.backend.order.dto.OrderItemRequest;
 import com.onlinelearning.backend.order.dto.OrderRequest;
 import com.onlinelearning.backend.order.entity.Order;
 import com.onlinelearning.backend.order.entity.Order_item;
 import com.onlinelearning.backend.order.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,17 +20,9 @@ public class OrderService {
     @Autowired
     private OrderRepository orderRepository;
 
-    @Autowired
-    private EventPublisher eventPublisher;
-
-    // Lấy tất cả đơn hàng
+    // Lấy tất cả đơn hàng (không phân trang - dùng cho các logic cũ nếu có)
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
-    }
-
-    // Lấy tất cả đơn hàng cho Admin (theo thời gian tạo giảm dần)
-    public List<Order> getAllOrdersForAdmin() {
-        return orderRepository.findAllByOrderByCreatedAtDesc();
     }
 
     // Lấy đơn hàng theo id
@@ -38,60 +30,37 @@ public class OrderService {
         return orderRepository.findById(id);
     }
 
-    // Tạo đơn hàng mới
-    public Order createOrder(OrderRequest request) {
-        Order order = new Order();
-        order.setUserId(request.getUserId());
-        order.setTotalPrice(request.getTotalPrice());
-        order.setStatus(request.getStatus());
-        order.setPaymentMethod(request.getPaymentMethod());
-
-        List<Order_item> items = new ArrayList<>();
-        if (request.getOrderItems() != null) {
-            for (OrderItemRequest itemRequest : request.getOrderItems()) {
-                Order_item orderItem = new Order_item();
-                orderItem.setCourseId(itemRequest.getCourseId());
-                orderItem.setPrice(itemRequest.getPrice());
-                orderItem.setOrder(order);
-                items.add(orderItem);
-            }
-        }
-        order.setOrderItems(items);
-
-        Order saved = orderRepository.save(order);
-
-        // Publish event to RabbitMQ
-        List<String> courseNames = items.stream()
-                .map(i -> "Khóa học #" + i.getCourseId())
-                .toList();
-        OrderCreatedEvent event = OrderCreatedEvent.builder()
-                .orderId(saved.getId())
-                .userId(saved.getUserId())
-                .userEmail(request.getUserEmail() != null ? request.getUserEmail() : "")
-                .userName(request.getUserName() != null ? request.getUserName() : "Học viên")
-                .totalPrice(saved.getTotalPrice())
-                .paymentMethod(saved.getPaymentMethod())
-                .courseNames(courseNames)
-                .status(saved.getStatus())
-                .build();
-        eventPublisher.publishOrderCreated(event);
-
-        return saved;
-    }
-
-    // Cập nhật đơn hàng
-    public Order updateOrder(Order order) {
+    // Tạo đơn hàng mới từ entity trực tiếp
+    public Order createOrder(Order order) {
         return orderRepository.save(order);
     }
 
-    // Cập nhật trạng thái đơn hàng (Admin)
-    public void updateOrderStatus(Long id, String status) {
-        Optional<Order> opt = orderRepository.findById(id);
-        if (opt.isPresent()) {
-            Order order = opt.get();
-            order.setStatus(status);
-            orderRepository.save(order);
+    // Tạo đơn hàng mới từ DTO OrderRequest
+    @Transactional
+    public Order createOrder(OrderRequest orderRequest) {
+        Order order = new Order();
+        order.setUserId(orderRequest.getUserId());
+        order.setTotalPrice(orderRequest.getTotalPrice());
+        order.setStatus(orderRequest.getStatus() != null ? orderRequest.getStatus() : "PENDING");
+        order.setPaymentMethod(orderRequest.getPaymentMethod());
+
+        if (orderRequest.getOrderItems() != null) {
+            List<Order_item> items = new ArrayList<>();
+            for (var itemReq : orderRequest.getOrderItems()) {
+                Order_item item = new Order_item();
+                item.setCourseId(itemReq.getCourseId());
+                item.setPrice(itemReq.getPrice());
+                item.setOrder(order);
+                items.add(item);
+            }
+            order.setOrderItems(items);
         }
+
+        return orderRepository.save(order);
+    }
+
+    public Order updateOrder(Order order) {
+        return orderRepository.save(order);
     }
 
     // Xóa đơn hàng
@@ -99,8 +68,22 @@ public class OrderService {
         orderRepository.deleteById(id);
     }
 
+    // Lấy tất cả đơn hàng cho Admin (CÓ PHÂN TRANG)
+    public Page<Order> getAllOrdersForAdmin(Pageable pageable) {
+        return orderRepository.findAllByOrderByCreatedAtDesc(pageable);
+    }
+
     // Lấy đơn hàng theo userId
     public List<Order> getOrdersByUserId(Long userId) {
         return orderRepository.findByUserId(userId);
+    }
+
+    // Duyệt trạng thái đơn hàng bảo mật bằng Transaction
+    @Transactional
+    public void updateOrderStatus(Long id, String status) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với ID: " + id));
+        order.setStatus(status.toUpperCase());
+        orderRepository.save(order);
     }
 }

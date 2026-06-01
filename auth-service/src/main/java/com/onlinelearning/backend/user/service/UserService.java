@@ -28,7 +28,19 @@ public class UserService {
         this.repo = repo;
         this.passwordEncoder = passwordEncoder;
     }
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        User user = repo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
 
+        // Kiểm tra mật khẩu cũ
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("Mật khẩu cũ không chính xác!");
+        }
+
+        // Mã hóa và lưu mật khẩu mới
+        user.setPassword(passwordEncoder.encode(newPassword));
+        repo.save(user);
+    }
     // ================= REGISTER =================
     @CacheEvict(value = {"users", "user", "admin_page_users"}, allEntries = true)
     @Transactional
@@ -48,14 +60,17 @@ public class UserService {
     }
 
     // ================= ADMIN: GET BY ROLE =================
-    @Cacheable(value = "admin_page_users", key = "#role.name() + '_' + #page")
-    public Page<UserDTO> getUsersByRole(Role role, int page, Pageable pageable) {
-        return repo.findByRole(role, pageable)
-                .map(this::mapToDTO);
+    @Transactional(readOnly = true)
+    public Page<UserDTO> getUsersByRole(Role role, Pageable pageable) {
+        return repo.findByRole(role, pageable).map(this::mapToDTO);
+    }
+    @Cacheable(value = "admin_users_list", key = "#role.name() + '_' + #pageable.pageNumber")
+    public List<UserDTO> getListUsersForCache(Role role, Pageable pageable) {
+        return repo.findByRole(role, pageable).stream().map(this::mapToDTO).toList();
     }
 
     // ================= ADMIN: TOGGLE STATUS =================
-    @CacheEvict(value = {"users", "user", "admin_page_users"}, allEntries = true)
+    @CacheEvict(value = "admin_page_users", allEntries = true)
     @Transactional
     public void toggleUserStatus(Long id) {
         User user = repo.findById(id)
@@ -147,6 +162,7 @@ public class UserService {
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
+                user.getPhone(),
                 user.getRole() != null ? user.getRole().name() : "USER",
                 (user.getStatus() != null && user.getStatus()) ? "Active" : "Locked"
         );

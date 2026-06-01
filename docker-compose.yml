@@ -130,6 +130,7 @@ services:
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
       OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY}"
     env_file:
       - .env
 

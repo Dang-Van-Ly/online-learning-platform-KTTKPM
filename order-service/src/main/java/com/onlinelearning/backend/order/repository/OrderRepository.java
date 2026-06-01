@@ -1,17 +1,22 @@
 package com.onlinelearning.backend.order.repository;
 
 import com.onlinelearning.backend.order.entity.Order;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import java.util.List;
 
 import java.util.List;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    // Query custom nếu cần, ví dụ tìm tất cả orders của 1 user
+
+    // Find all orders belonging to a specific user
     List<Order> findByUserId(Long userId);
 
-    // Lấy tất cả đơn hàng theo thời gian tạo giảm dần
+    // Paginated retrieval of orders sorted by creation date descending
+    Page<Order> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    // Non‑paginated retrieval of orders sorted by creation date descending
     List<Order> findAllByOrderByCreatedAtDesc();
 }
