@@ -20,7 +20,7 @@ public class RateLimitFilter implements Filter {
     private final Map<String, List<Long>> requestMap = new ConcurrentHashMap<>();
 
     private static final long TIME_WINDOW = 60_000; // 1 phút
-    private static final int MAX_REQUESTS = 100;
+    private static final int MAX_REQUESTS = 500;
 
     @Override
     public void doFilter(ServletRequest request,

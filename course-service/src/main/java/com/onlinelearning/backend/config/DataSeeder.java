@@ -2,25 +2,30 @@ package com.onlinelearning.backend.config;
 
 import com.onlinelearning.backend.course.entity.*;
 import com.onlinelearning.backend.course.repository.*;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DataSeeder implements CommandLineRunner {
+public class DataSeeder {
 
     private final CourseRepository courseRepository;
     private final ChapterRepository chapterRepository;
     private final LessonRepository lessonRepository;
     private final Lesson_fileRepository lessonFileRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     public DataSeeder(CourseRepository courseRepository,
                       ChapterRepository chapterRepository,
                       LessonRepository lessonRepository,
-                      Lesson_fileRepository lessonFileRepository) {
+                      Lesson_fileRepository lessonFileRepository,
+                      JdbcTemplate jdbcTemplate) {
         this.courseRepository = courseRepository;
         this.chapterRepository = chapterRepository;
         this.lessonRepository = lessonRepository;
         this.lessonFileRepository = lessonFileRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     private static final Object[][] COURSES = {
@@ -95,14 +100,40 @@ public class DataSeeder implements CommandLineRunner {
          {"Thiet ke trang Landing Page","Thiet ke trang Blog va Portfolio","Handoff cho developer voi Inspect"}}
     };
 
-    @Override
-    public void run(String... args) {
-        if (courseRepository.count() > 0) {
-            System.out.println("Data already exists, skipping seed.");
+    @EventListener(ApplicationReadyEvent.class)
+    public void run() {
+        // Kiểm tra bảng đã tồn tại chưa (dùng INFORMATION_SCHEMA thay vì SELECT data)
+        int maxRetries = 30;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'courses'",
+                    Integer.class
+                );
+                if (count != null && count > 0) break; // bảng đã tồn tại
+                throw new RuntimeException("Table not yet created");
+            } catch (Exception e) {
+                if (attempt == maxRetries) {
+                    System.err.println("DataSeeder: Table 'courses' not ready after " + maxRetries + "s, skipping seed.");
+                    return;
+                }
+                System.out.println("DataSeeder: Waiting for tables to be created... attempt " + attempt);
+                try { Thread.sleep(1000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); return; }
+            }
+        }
+
+        try {
+            if (courseRepository.count() > 0) {
+                System.out.println("Data already exists, skipping seed.");
+                return;
+            }
+        } catch (Exception e) {
+            System.out.println("DataSeeder: Could not check course count: " + e.getMessage());
             return;
         }
 
-        System.out.println("Start seeding 30 courses with lessons and files...");
+        try {
+            System.out.println("Start seeding 30 courses with lessons and files...");
 
         String[][][] chapterData = {
             {{"Gioi thieu & Cai dat moi truong","JavaScript ES6+ can biet","React Co ban: JSX & Component","State, Props & Event Handling","React Hooks chuyen sau","Redux & State Management","Du an thuc te: Xay dung E-commerce"}},
@@ -230,5 +261,9 @@ public class DataSeeder implements CommandLineRunner {
         }
 
         System.out.println("SEED 30 COURSES WITH LESSONS & FILES DONE!");
+        } catch (Exception e) {
+            System.err.println("DataSeeder failed: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

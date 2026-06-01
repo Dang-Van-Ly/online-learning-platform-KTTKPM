@@ -75,7 +75,7 @@
 			<artifactId>mysql-connector-j</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-		</dependency>
+
 
 		<!-- Lombok -->
 		<dependency>

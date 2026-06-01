@@ -4,40 +4,19 @@ import { AuthContext } from "../../context/AuthContext";
 
 export default function AdminLayout() {
     const navigate = useNavigate();
-    const { logoutUser } = useContext(AuthContext);
+    const { user, logoutUser } = useContext(AuthContext);
 
-    // =========================================================================
-    // TẠM THỜI ẨN ĐOẠN CHECK ROLE ĐỂ KHÔNG BỊ ĐÁ RA NGOÀI KHI ĐANG LÀM ĐỒ ÁN NA NGA
-    // =========================================================================
-    // useEffect(() => {
-    //     const savedUserStr = localStorage.getItem('user');
-    //     console.log("1. Dữ liệu thô trong máy:", savedUserStr);
-    //
-    //     if (!savedUserStr) {
-    //         console.error("LỖI: Không tìm thấy user trong localStorage -> Đá về login");
-    //         navigate('/login');
-    //         return;
-    //     }
-    //
-    //     try {
-    //         const savedUser = JSON.parse(savedUserStr);
-    //         console.log("2. Role hiện tại là:", savedUser.role);
-    //
-    //         // Kiểm tra không phân biệt hoa thường và xóa khoảng trắng dư thừa
-    //         const currentRole = savedUser.role?.toString().trim().toUpperCase();
-    //
-    //         if (currentRole !== 'ADMIN' && currentRole !== 'ROLE_ADMIN') {
-    //             alert(`BẠN BỊ ĐÁ VÌ: Role của bạn là [${currentRole}] chứ không phải [ADMIN]`);
-    //             navigate('/');
-    //         } else {
-    //             console.log("3. CHÚC MỪNG: Role khớp, cho phép vào Admin!");
-    //         }
-    //     } catch (e) {
-    //         console.error("LỖI: Dữ liệu JSON bị hỏng", e);
-    //         navigate('/login');
-    //     }
-    // }, [navigate]);
-    // =========================================================================
+    useEffect(() => {
+        const checkAuth = () => {
+            const role = user?.role || JSON.parse(localStorage.getItem('user'))?.role;
+            const currentRole = role?.toString().trim().toUpperCase();
+            if (!currentRole || (currentRole !== 'ADMIN' && currentRole !== 'ROLE_ADMIN')) {
+                alert("Bạn không có quyền truy cập trang quản trị!");
+                navigate('/');
+            }
+        };
+        checkAuth();
+    }, [navigate, user]);
 
     const getNavLinkStyle = ({ isActive }) => ({
         color: "white", textDecoration: "none", fontSize: "16px", display: "block",
@@ -71,7 +50,7 @@ export default function AdminLayout() {
             {/* MAIN CONTENT AREA */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
                 <div style={{ height: '70px', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 40px' }}>
-                    <button onClick={() => { localStorage.clear(); navigate("/login"); }} style={{ padding: '6px 15px', backgroundColor: '#e74c3c', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Đăng xuất</button>
+                    <button onClick={() => { logoutUser(); navigate("/login"); }} style={{ padding: '6px 15px', backgroundColor: '#e74c3c', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Đăng xuất</button>
                 </div>
                 <div style={{ padding: "35px" }}><Outlet /></div>
             </div>

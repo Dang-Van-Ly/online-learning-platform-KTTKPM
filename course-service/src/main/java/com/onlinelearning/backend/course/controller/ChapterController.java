@@ -2,12 +2,20 @@ package com.onlinelearning.backend.course.controller;
 
 import com.onlinelearning.backend.course.entity.Chapter;
 import com.onlinelearning.backend.course.service.ChapterService;
+import com.onlinelearning.backend.course.dto.ChapterPublishRequest;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/chapters")
 public class ChapterController {
@@ -23,6 +31,26 @@ public class ChapterController {
     @PostMapping
     public Chapter addChapter(@RequestBody Chapter chapter) {
         return service.create(chapter);
+    }
+
+    // PUBLISH CHAPTER WITH LESSON AND FILES
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PostMapping("/publish")
+    public ResponseEntity<?> publishChapter(@Valid @RequestBody ChapterPublishRequest dto) {
+        try {
+            Chapter chapter = service.publishChapter(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(chapter);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception e) {
+            e.printStackTrace(); // Log lỗi chi tiết ra console của server để kiểm tra
+            Map<String, String> error = new HashMap<>();
+            String message = (e.getMessage() != null) ? e.getMessage() : e.toString();
+            error.put("error", "Lỗi hệ thống khi xuất bản chương: " + message);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
 
     // READ ONE - Lấy thông tin 1 chương theo ID
@@ -51,5 +79,15 @@ public class ChapterController {
     public String deleteChapter(@PathVariable Long id) {
         service.delete(id);
         return "Chương học đã được xóa thành công";
+    }
+
+    // Global exception handler cho validation errors
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleValidationException(MethodArgumentNotValidException e) {
+        Map<String, String> errors = new HashMap<>();
+        e.getBindingResult().getFieldErrors().forEach(error ->
+                errors.put(error.getField(), error.getDefaultMessage())
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
 }

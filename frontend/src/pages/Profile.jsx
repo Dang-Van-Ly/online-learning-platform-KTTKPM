@@ -8,9 +8,10 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 export default function Profile() {
-    const { user, logoutUser, purchasedCourseIds, membershipInfo, membershipHistory, removeStalePurchasedIds } = useContext(AuthContext);
+    const { user, logoutUser, purchasedCourseIds = [], favoriteCourseIds = [], removeFavoriteCourse, membershipInfo, membershipHistory } = useContext(AuthContext);
     const [recentPurchasedCourses, setRecentPurchasedCourses] = useState([]);
     const [allPurchasedCourses, setAllPurchasedCourses] = useState([]);
+    const [favoriteCourses, setFavoriteCourses] = useState([]);
     const [membershipUnlockedCourses, setMembershipUnlockedCourses] = useState([]);
     const [orders, setOrders] = useState([]);
     const [ordersLoading, setOrdersLoading] = useState(false);
@@ -95,28 +96,44 @@ export default function Profile() {
 
     useEffect(() => {
         if (!purchasedCourseIds?.length) {
+            setAllPurchasedCourses([]);
+            setRecentPurchasedCourses([]);
             return;
         }
 
         const fetchPurchased = async () => {
-            // Fetch tất cả khóa học đã mua
             const allItems = await Promise.all(
                 purchasedCourseIds.map(async (courseId) => {
                     const course = await getCourseById(courseId);
-                    return course ? { id: courseId, name: course.name } : { id: courseId, notFound: true };
+                    return course ? { id: courseId, name: course.name } : null;
                 })
             );
-            // Tách id không tồn tại và xóa khỏi localStorage
-            const staleIds = allItems.filter(i => i.notFound).map(i => i.id);
-            if (staleIds.length > 0) removeStalePurchasedIds(staleIds);
-
-            const validItems = allItems.filter(i => !i.notFound);
+            const validItems = allItems.filter(Boolean);
             setAllPurchasedCourses(validItems);
             setRecentPurchasedCourses(validItems.slice(-4));
         };
 
         fetchPurchased();
     }, [purchasedCourseIds]);
+
+    useEffect(() => {
+        if (!favoriteCourseIds?.length) {
+            setFavoriteCourses([]);
+            return;
+        }
+
+        const fetchFavorites = async () => {
+            const allItems = await Promise.all(
+                favoriteCourseIds.map(async (courseId) => {
+                    const course = await getCourseById(courseId);
+                    return course ? { id: courseId, name: course.name } : null;
+                })
+            );
+            setFavoriteCourses(allItems.filter(Boolean));
+        };
+
+        fetchFavorites();
+    }, [favoriteCourseIds]);
 
     useEffect(() => {
         if (!membershipInfo?.usedCourseIds?.length || membershipInfo.status !== "active") {
@@ -238,7 +255,7 @@ export default function Profile() {
 
     const menuItems = [
         { id: 1, title: "Khóa Học Hội Viên", icon: "👤" },
-        { id: 2, title: `Khóa Học Đã Mua (${allPurchasedCourses?.length || 0})`, icon: "📚" },
+        { id: 2, title: `Khóa Học Đã Mua (${purchasedCourseIds?.length || 0})`, icon: "📚" },
         { id: 3, title: "Khóa Học Yêu Thích", icon: "❤️" },
         { id: 4, title: "Đơn Hàng", icon: "📋" },
         { id: 5, title: "Gói Hội Viên", icon: "🎁" },
@@ -508,6 +525,50 @@ export default function Profile() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {selectedMenu === 3 && (
+                        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm mb-6">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+                                <div>
+                                    <h2 className="text-2xl font-semibold text-slate-900">Khóa Học Yêu Thích</h2>
+                                    <p className="text-sm text-slate-600">Xem lại và quản lý danh sách khóa học bạn đã đánh dấu yêu thích.</p>
+                                </div>
+                                <div className="text-sm text-slate-500">Tổng: {favoriteCourses.length}</div>
+                            </div>
+
+                            {favoriteCourses.length === 0 ? (
+                                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
+                                    Bạn chưa có khóa học nào trong danh sách yêu thích.
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {favoriteCourses.map((course) => (
+                                        <div key={course.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                                <div>
+                                                    <p className="text-base font-medium text-slate-900">{course.name}</p>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleViewCourse(course.id)}
+                                                        className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                                                    >
+                                                        Xem khóa học
+                                                    </button>
+                                                    <button
+                                                        onClick={() => removeFavoriteCourse(course.id)}
+                                                        className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition"
+                                                    >
+                                                        Bỏ yêu thích
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 

@@ -1,0 +1,126 @@
+#!/bin/sh
+# ----------------------------------------------------------------------------
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+# ----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
+# Apache Maven Wrapper startup batch script, version 3.3.4
+#
+# Optional ENV vars
+# -----------------
+#   JAVA_HOME - location of a JDK home dir, required when download maven via java source
+#   MVNW_REPOURL - repo url base for downloading maven distribution
+#   MVNW_USERNAME/MVNW_PASSWORD - user and password for downloading maven
+#   MVNW_VERBOSE - true: enable verbose log; debug: trace the mvnw script; others: silence
+# ----------------------------------------------------------------------------
+
+set -euf
+[ "${MVNW_VERBOSE-}" != debug ] || set -x
+
+# ----------------------------------------------------------------------------
+# OS specific support.
+native_path() { printf %s\\n "$1"; }
+case "$(uname)" in
+CYGWIN* | MINGW*)
+  [ -z "${JAVA_HOME-}" ] || JAVA_HOME="$(cygpath --unix "$JAVA_HOME")"
+  native_path() { cygpath --path --windows "$1"; }
+  ;;
+*)
+  ;;
+esac
+
+if [ ! -x "${JAVA_HOME:-${JAVA_HOME:-}}/bin/java" ] && [ -n "${JAVA_HOME:-}" ]; then
+  echo "ERROR: JAVA_HOME is set to an invalid directory: ${JAVA_HOME}" 1>&2
+  exit 1
+fi
+
+# This will only use compiled artifact shipped with the wrapper.
+MAVEN_PROJECTBASEDIR="$PWD"
+
+if [ -z "${MAVEN_PROJECTBASEDIR:-}" ]; then
+  echo "ERROR: Cannot determine current working directory" 1>&2
+  exit 1
+fi
+
+if [ -z "${MVNW_REPOURL:-}" ]; then
+  MVNW_REPOURL=""
+fi
+
+WRAPPER_DIR="${MAVEN_PROJECTBASEDIR}/.mvn/wrapper"
+PROPERTIES_FILE="${WRAPPER_DIR}/maven-wrapper.properties"
+
+if [ ! -r "$PROPERTIES_FILE" ]; then
+  echo "ERROR: Maven wrapper properties not found: $PROPERTIES_FILE" 1>&2
+  exit 1
+fi
+
+# shellcheck disable=SC1090
+. "$PROPERTIES_FILE"
+
+if [ -z "${distributionUrl:-}" ]; then
+  echo "ERROR: distributionUrl not specified in $PROPERTIES_FILE" 1>&2
+  exit 1
+fi
+
+if [ -n "${MVNW_REPOURL}" ]; then
+  distributionUrl="${MVNW_REPOURL}${distributionUrl#*org/apache/maven/apache-maven/}"
+fi
+
+distributionUrlName="${distributionUrl##*/}"
+
+distributionUrlNameMain="${distributionUrlName%.zip}"
+
+if [ -z "${MAVEN_USER_HOME:-}" ]; then
+  MAVEN_USER_HOME="$HOME/.m2"
+fi
+
+if [ ! -d "$MAVEN_USER_HOME/wrapper/dists" ]; then
+  mkdir -p "$MAVEN_USER_HOME/wrapper/dists"
+fi
+
+MAVEN_HOME_PARENT="$MAVEN_USER_HOME/wrapper/dists/$distributionUrlNameMain"
+MAVEN_HOME_NAME="$(printf '%s' "$distributionUrl" | sha256sum | cut -d' ' -f1)"
+MAVEN_HOME="$MAVEN_HOME_PARENT/$MAVEN_HOME_NAME"
+
+if [ -d "$MAVEN_HOME" ]; then
+  exec "$MAVEN_HOME/bin/mvn" "$@"
+fi
+
+TMP_DOWNLOAD_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DOWNLOAD_DIR"' EXIT
+
+curl -fsSL -o "$TMP_DOWNLOAD_DIR/$distributionUrlName" "$distributionUrl"
+
+if [ -n "${distributionSha256Sum:-}" ]; then
+  if [ "$distributionSha256Sum" != "$(sha256sum "$TMP_DOWNLOAD_DIR/$distributionUrlName" | cut -d' ' -f1)" ]; then
+    echo "ERROR: Maven distribution checksum mismatch" 1>&2
+    exit 1
+  fi
+fi
+
+mkdir -p "$TMP_DOWNLOAD_DIR/extract"
+unzip -q "$TMP_DOWNLOAD_DIR/$distributionUrlName" -d "$TMP_DOWNLOAD_DIR/extract"
+
+actualDistributionDir="$(find "$TMP_DOWNLOAD_DIR/extract" -maxdepth 1 -type d -printf '%f\n' | head -n 1)"
+if [ -z "$actualDistributionDir" ]; then
+  echo "ERROR: Could not find extracted Maven distribution directory" 1>&2
+  exit 1
+fi
+
+mv "$TMP_DOWNLOAD_DIR/extract/$actualDistributionDir" "$MAVEN_HOME"
+exec "$MAVEN_HOME/bin/mvn" "$@"

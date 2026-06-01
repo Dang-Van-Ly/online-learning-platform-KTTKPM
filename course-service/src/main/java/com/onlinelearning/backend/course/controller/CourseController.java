@@ -20,9 +20,11 @@ import java.util.LinkedHashMap;
 import com.onlinelearning.backend.course.entity.CourseHistory;
 import com.onlinelearning.backend.course.repository.CourseHistoryRepository;
 
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/courses")
 public class CourseController {
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(CourseController.class);
 
     private final CourseService service;
     private final CourseHistoryRepository historyRepo;

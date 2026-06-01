@@ -104,8 +104,8 @@ export default function PromotionManagement() {
             discountValue: parseFloat(discountValue),
             minOrderValue: parseFloat(minOrderValue),
             maxDiscountAmount: discountType === 'PERCENTAGE' && maxDiscountAmount ? parseFloat(maxDiscountAmount) : null,
-            startDate: startDate.includes('T') ? startDate : `${startDate}T00:00:00`,
-            endDate: endDate.includes('T') ? endDate : `${endDate}T23:59:59`,
+            startDate: startDate && !startDate.includes('T') ? `${startDate}T00:00:00` : startDate,
+            endDate: endDate && !endDate.includes('T') ? `${endDate}T23:59:59` : endDate,
         };
 
         try {

@@ -15,6 +15,8 @@ import CourseDetail from "./pages/CourseDetail";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Guide from "./pages/Guide";
+import CourseExchange from "./pages/CourseExchange";
+import ChatAgent from "./pages/ChatAgent";
 
 // Instructor routes
 import InstructorLayout from "./layouts/InstructorLayout";
@@ -22,6 +24,7 @@ import InstructorDashboard from "./pages/instructor/InstructorDashboard";
 import CourseList from "./components/instructor/CourseList";
 import CourseForm from "./components/instructor/CourseForm";
 import EarningsPage from "./pages/instructor/EarningsPage";
+import ChapterManagement from "./pages/instructor/ChapterManagement";
 import AdminLayout from "./pages/admin/AdminLayout.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import UserManagement from "./pages/admin/UserManagement.jsx";
@@ -46,12 +49,15 @@ function App() {
                 <Route path="/gio-hang" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-success" element={<OrderSuccess />} />
+                <Route path="/agent" element={<ChatAgent />} />
                 <Route path="/huong-dan" element={<Guide />} />
+                <Route path="/trao-doi" element={<CourseExchange />} />
 
                 {/* --- KHU VỰC GIẢNG VIÊN --- */}
                 <Route path="/instructor" element={<InstructorLayout />}>
                     <Route index element={<InstructorDashboard />} />
                     <Route path="courses" element={<CourseList />} />
+                    <Route path="courses/:id/chapters" element={<ChapterManagement />} />
                     <Route path="create" element={<CourseForm />} />
                     <Route path="edit/:id" element={<CourseForm />} />
                     <Route path="earnings" element={<EarningsPage />} />

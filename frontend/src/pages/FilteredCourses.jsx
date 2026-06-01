@@ -90,9 +90,10 @@ export default function FilteredCourses() {
   // Khởi tạo danh mục từ tham số URL nếu có
   const searchParams = new URLSearchParams(location.search);
   const initialCategory = searchParams.get("category");
+  const initialAll = searchParams.get("all") === "1" || searchParams.get("all") === "true";
 
   const [selectedPriceFilters, setSelectedPriceFilters] = useState(
-    initialCategory ? [] : ["free"]
+    initialCategory ? [] : initialAll ? [] : ["free"]
   );
   const [selectedCategories, setSelectedCategories] = useState(
     initialCategory ? [initialCategory] : []
@@ -213,6 +214,12 @@ export default function FilteredCourses() {
   const currentSortLabel =
     SORT_OPTIONS.find((o) => o.value === sortBy)?.label || "Sắp xếp";
 
+  const pageTitle = initialAll
+    ? "Tất cả khóa học"
+    : initialCategory
+    ? `Khóa học ${initialCategory}`
+    : "Khóa Học Khuyến Mãi";
+
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#f8fafc" }}>
       <Header />
@@ -220,7 +227,7 @@ export default function FilteredCourses() {
       <main style={styles.main}>
         {/* TIÊU ĐỀ */}
         <div style={styles.pageHeader}>
-          <h1 style={styles.pageTitle}>Khóa Học Khuyến Mãi</h1>
+          <h1 style={styles.pageTitle}>{pageTitle}</h1>
           {/* SẮP XẾP */}
           <div style={styles.sortContainer}>
             <button

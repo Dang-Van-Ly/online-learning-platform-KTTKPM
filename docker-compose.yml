@@ -22,6 +22,23 @@ services:
     ports:
       - "6379:6379"
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
   # ==================== MICROSERVICES ====================
 
   auth-service:
@@ -34,18 +51,13 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+
     environment:
       SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/online_learning
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8081/ || exit 0"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
     env_file:
       - .env
 
@@ -59,18 +71,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      rabbitmq:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/online_learning
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || curl -f http://localhost:8082/ || exit 0"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
     env_file:
       - .env
 
@@ -90,12 +98,38 @@ services:
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8083/ || exit 0"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+    env_file:
+      - .env
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+    env_file:
+      - .env
+
+  chat-service:
+    build: ./chat-service
+    container_name: chat-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      ORDER_SERVICE_HOST: order-service:8083
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
     env_file:
       - .env
 
@@ -107,12 +141,18 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      auth-service:
-        condition: service_healthy
-      course-service:
-        condition: service_healthy
-      order-service:
-        condition: service_healthy
+      - auth-service
+      - course-service
+      - order-service
+      - notification-service
+      - chat-service
+    environment:
+      AUTH_SERVICE_HOST: auth-service:8081
+      COURSE_SERVICE_HOST: course-service:8082
+      ORDER_SERVICE_HOST: order-service:8083
+      CHAT_SERVICE_HOST: chat-service:8085
+      NOTIFICATION_SERVICE_HOST: notification-service:8084
+      FRONTEND_ORIGIN: http://localhost:3000
 
   # ==================== FRONTEND ====================
 
@@ -123,3 +163,6 @@ services:
       - "3000:80"
     depends_on:
       - api-gateway
+
+volumes:
+  rabbitmq_data:

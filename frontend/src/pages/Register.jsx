@@ -6,6 +6,7 @@ export default function Register() {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [phone, setPhone] = useState("");
     const [otp, setOtp] = useState(""); // Lưu mã OTP người dùng nhập
     const [isOtpSent, setIsOtpSent] = useState(false); // Trạng thái đã gửi OTP hay chưa
@@ -15,6 +16,10 @@ export default function Register() {
     // Bước 1: Gửi thông tin để nhận mã OTP
     const handleRegister = async (e) => {
         e.preventDefault();
+        if (password !== confirmPassword) {
+            alert("Mật khẩu xác nhận không khớp!");
+            return;
+        }
         try {
             await register({ username, email, password, phone });
             setIsOtpSent(true); // Chuyển sang bước nhập OTP
@@ -72,6 +77,15 @@ export default function Register() {
                                 className="border p-2 rounded focus:outline-blue-500"
                                 type="password"
                                 onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-600">Confirm Password</label>
+                            <input
+                                className="border p-2 rounded focus:outline-blue-500"
+                                type="password"
+                                onChange={(e) => setConfirmPassword(e.target.value)}
                                 required
                             />
                         </div>

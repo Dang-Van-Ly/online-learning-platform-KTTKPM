@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 
 export default function RecentEnrollments({ enrollments }) {
   if (!enrollments || enrollments.length === 0) {
