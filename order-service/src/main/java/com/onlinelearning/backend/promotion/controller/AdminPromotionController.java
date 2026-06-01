@@ -5,7 +5,9 @@ import com.onlinelearning.backend.promotion.service.PromotionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:3000")
@@ -18,8 +20,8 @@ public class AdminPromotionController {
 
     // 1. Lấy danh sách
     @GetMapping
-    public ResponseEntity<List<Promotion>> getAllPromotions() {
-        return ResponseEntity.ok(promotionService.getAll());
+    public ResponseEntity<Page<Promotion>> getAllPromotions(@PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(promotionService.getAll(pageable));
     }
 
     // 2. Tạo mới mã

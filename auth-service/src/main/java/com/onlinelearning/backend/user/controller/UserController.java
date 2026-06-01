@@ -4,10 +4,16 @@ import com.onlinelearning.backend.user.dto.UserDTO;
 import com.onlinelearning.backend.user.entity.User;
 import com.onlinelearning.backend.user.service.UserService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import java.util.Map;
 
+<<<<<<<< HEAD:auth-service/src/main/java/com/onlinelearning/backend/user/controller/UserController.java
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:3000") // Cấp quyền cho React truy cập
+========
+@CrossOrigin(origins = "http://localhost:3000")
+>>>>>>>> origin/nga:backend/src/main/java/com/onlinelearning/backend/user/controller/UserController.java
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -18,7 +24,6 @@ public class UserController {
         this.service = service;
     }
 
-    // ================= DÀNH CHO USER / GUEST =================
     @PostMapping("/register")
     public User register(@RequestBody User user) {
         return service.register(user);
@@ -32,5 +37,17 @@ public class UserController {
     @PutMapping("/{id}")
     public User updateUser(@PathVariable Long id, @RequestBody User user) {
         return service.updateUser(id, user);
+    }
+
+    @PutMapping("/{id}/change-password")
+    public ResponseEntity<?> changePassword(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        try {
+            String oldPass = request.get("oldPassword");
+            String newPass = request.get("newPassword");
+            service.changePassword(id, oldPass, newPass);
+            return ResponseEntity.ok("Đổi mật khẩu thành công!");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

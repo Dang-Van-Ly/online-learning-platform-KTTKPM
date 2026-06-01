@@ -1,225 +1,223 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/axios';
+import Pagination from '../../components/Pagination';
 
 export default function UserManagement() {
-    const [activeTab, setActiveTab] = useState('STUDENT');
+    const [activeTab, setActiveTab] = useState('STUDENT'); // STUDENT hoặc INSTRUCTOR
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // --- PHÂN TRANG ---
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
-    const [pageSize] = useState(10);
-
-    const [showForm, setShowForm] = useState(false);
-    const [username, setUsername] = useState('');
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
-    const [password, setPassword] = useState('');
-    const [createRole, setCreateRole] = useState('STUDENT');
+    const pageSize = 10;
 
     const loadUsers = async (role, pageNum = 0) => {
         setLoading(true);
+        setUsers([]);
         try {
             const endpoint = role === 'STUDENT' ? '/admin/users/students' : '/admin/users/instructors';
+            // Gọi API với phân trang
             const response = await api.get(`${endpoint}?page=${pageNum}&size=${pageSize}`);
 
-            if (response.data) {
-                if (Array.isArray(response.data.content)) {
-                    setUsers(response.data.content);
-                    setTotalPages(response.data.totalPages);
-                    setCurrentPage(response.data.number);
-                } else if (Array.isArray(response.data)) {
-                    setUsers(response.data);
-                    setTotalPages(1);
-                    setCurrentPage(0);
-                }
+            if (response.data && response.data.content) {
+                setUsers(response.data.content);
+                setTotalPages(response.data.totalPages);
+                setCurrentPage(response.data.number);
             }
         } catch (error) {
-            console.error("Lỗi tải danh sách người dùng:", error);
+            console.error("Lỗi tải người dùng:", error);
+            setUsers([]);
         } finally {
             setLoading(false);
         }
     };
 
+    // Tự động load khi đổi Tab hoặc Trang
     useEffect(() => {
         loadUsers(activeTab, currentPage);
     }, [activeTab, currentPage]);
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
-        setCurrentPage(0);
-    };
-
-    const handleCreateAccount = async (e) => {
-        e.preventDefault();
-        if (!username || !email || !password) {
-            return alert("Vui lòng nhập đầy đủ các trường thông tin bắt buộc!");
-        }
-
-        try {
-            const payload = { username, email, phone, password };
-            await api.post(`/admin/users/create?roleType=${createRole}`, payload);
-            alert("Tạo tài khoản người dùng mới thành công.");
-            setUsername(''); setEmail(''); setPhone(''); setPassword('');
-            setShowForm(false);
-            handleTabChange(createRole);
-        } catch (error) {
-            alert(`Lỗi hệ thống: ${error.response?.data?.message || "Tên tài khoản hoặc Email đã tồn tại trong hệ thống."}`);
-        }
+        setCurrentPage(0); // Chuyển tab thì về trang đầu
     };
 
     const handleToggleBlock = async (userId, currentStatus) => {
-        const isCurrentlyActive = currentStatus === 'Active';
-        const actionText = isCurrentlyActive ? "KHÓA" : "MỞ KHÓA";
-
-        if (window.confirm(`Xác nhận thay đổi trạng thái thành [${actionText}] đối với tài khoản này?`)) {
+        const actionText = currentStatus === 'Active' ? "KHÓA" : "MỞ KHÓA";
+        if (window.confirm(`Xác nhận ${actionText} tài khoản này?`)) {
             try {
                 await api.put(`/admin/users/${userId}/toggle-status`);
-                alert("Cập nhật trạng thái tài khoản thành công.");
+                alert("Cập nhật trạng thái thành công!");
                 loadUsers(activeTab, currentPage);
             } catch (error) {
-                console.error("Lỗi cập nhật trạng thái:", error);
-                alert("Thao tác thất bại. Vui lòng kiểm tra lại kết nối hệ thống.");
+                alert("Thao tác thất bại!");
             }
         }
     };
 
+    if (loading && users.length === 0) return <div style={{ textAlign: 'center', padding: '50px' }}>Đang tải dữ liệu...</div>;
+
     return (
-        <div style={{ padding: '20px', backgroundColor: '#fff', borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ color: '#333', fontWeight: 'bold', margin: 0 }}>👤 Quản Lý Người Dùng Hệ Thống</h2>
-                <button onClick={() => setShowForm(!showForm)} style={btnToggleFormStyle}>
-                    {showForm ? '✖ Đóng Form Khởi Tạo' : '➕ Tạo Tài Khoản Mới'}
-                </button>
+        <div style={containerStyle}>
+            {/* Tiêu đề & Tab */}
+            <div style={headerStyle}>
+                <h2 style={{ color: '#333', fontWeight: 'bold', margin: 0 }}>👤 Quản Lý Người Dùng</h2>
+                <div style={tabGroupStyle}>
+                    <button
+                        onClick={() => handleTabChange('STUDENT')}
+                        style={tabStyle(activeTab === 'STUDENT')}
+                    >
+                        👨‍🎓 Học viên
+                    </button>
+                    <button
+                        onClick={() => handleTabChange('INSTRUCTOR')}
+                        style={tabStyle(activeTab === 'INSTRUCTOR')}
+                    >
+                        👨‍🏫 Giảng viên
+                    </button>
+                </div>
             </div>
 
-            {showForm && (
-                <form onSubmit={handleCreateAccount} style={formStyle}>
-                    <h3 style={{ margin: '0 0 15px 0', fontSize: '15px', color: '#4e73df' }}>⚙ Nhập Thông Tin Tài Khoản</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', alignItems: 'flex-end' }}>
-                        <div>
-                            <label style={labelStyle}>Tên Đăng Nhập *</label>
-                            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Nhập username..." style={inputStyle} />
-                        </div>
-                        <div>
-                            <label style={labelStyle}>Mật Khẩu *</label>
-                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="******" style={inputStyle} />
-                        </div>
-                        <div>
-                            <label style={labelStyle}>Địa Chỉ Email *</label>
-                            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@gmail.com" style={inputStyle} />
-                        </div>
-                        <div>
-                            <label style={labelStyle}>Số Điện Thoại</label>
-                            <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="09xxxxxxxx" style={inputStyle} />
-                        </div>
-                        <div>
-                            <label style={labelStyle}>Vai Trò Hệ Thống</label>
-                            <select value={createRole} onChange={(e) => setCreateRole(e.target.value)} style={inputStyle}>
-                                <option value="STUDENT">Học Viên (Student)</option>
-                                <option value="INSTRUCTOR">Giáo Viên (Instructor)</option>
-                            </select>
-                        </div>
-                        <button type="submit" style={btnSubmitStyle}>Xác Nhận Tạo</button>
-                    </div>
-                </form>
-            )}
-
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', borderBottom: '2px solid #eaecf1', paddingBottom: '10px' }}>
-                <button onClick={() => handleTabChange('STUDENT')} style={activeTab === 'STUDENT' ? tabActiveStyle : tabInactiveStyle}>
-                    👨‍🎓 Danh Sách Học Viên
-                </button>
-                <button onClick={() => handleTabChange('INSTRUCTOR')} style={activeTab === 'INSTRUCTOR' ? tabActiveStyle : tabInactiveStyle}>
-                    👨‍🏫 Danh Sách Giáo Viên
-                </button>
-            </div>
-
-            {loading ? (
-                <div style={{ padding: '20px', color: '#858796' }}>Đang tải dữ liệu từ máy chủ...</div>
-            ) : (
-                <>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                        <thead>
-                        <tr style={{ backgroundColor: '#f8f9fc', borderBottom: '2px solid #eaecf1' }}>
-                            <th style={thStyle}>ID</th>
-                            <th style={thStyle}>Tên Đăng Nhập</th>
-                            <th style={thStyle}>Email</th>
-                            <th style={thStyle}>Số Điện Thoại</th>
-                            <th style={thStyle}>Trạng Thái</th>
-                            <th style={{ ...thStyle, textAlign: 'center' }}>Thao Tác</th>
+            {/* Bảng danh sách */}
+            <table style={tableStyle}>
+                <thead>
+                <tr style={{ backgroundColor: '#f4f7fe', borderBottom: '2px solid #e2e8f0' }}>
+                    <th style={thStyle}>ID</th>
+                    <th style={thStyle}>Thông tin tài khoản</th>
+                    <th style={thStyle}>Liên hệ</th>
+                    <th style={thStyle}>Vai trò</th>
+                    <th style={thStyle}>Trạng thái</th>
+                    <th style={{ ...thStyle, textAlign: 'center' }}>Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                {users.length === 0 ? (
+                    <tr>
+                        <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#999' }}>Không có người dùng nào.</td>
+                    </tr>
+                ) : (
+                    users.map((user) => (
+                        <tr key={user.id} style={trStyle}>
+                            <td style={tdStyle}>#{user.id}</td>
+                            <td style={tdStyle}>
+                                <div style={{ fontWeight: 'bold', color: '#333' }}>{user.username}</div>
+                                <div style={{ fontSize: '12px', color: '#888' }}>ID hệ thống: {user.id}</div>
+                            </td>
+                            <td style={tdStyle}>
+                                <div style={{ fontSize: '13px' }}>✉️ {user.email}</div>
+                                <div style={{ fontSize: '13px', color: '#4e73df' }}>📞 {user.phone || 'Chưa cập nhật'}</div>
+                            </td>
+                            <td style={tdStyle}>
+                                <span style={roleBadgeStyle}>{user.role}</span>
+                            </td>
+                            <td style={tdStyle}>
+                                <span style={statusBadgeStyle(user.status)}>
+                                    {user.status === 'Active' ? '● Đang hoạt động' : '● Đã khóa'}
+                                </span>
+                            </td>
+                            <td style={{ ...tdStyle, textAlign: 'center' }}>
+                                <button
+                                    onClick={() => handleToggleBlock(user.id, user.status)}
+                                    style={btnActionStyle(user.status === 'Active')}
+                                >
+                                    {user.status === 'Active' ? 'Khóa tài khoản' : 'Mở khóa'}
+                                </button>
+                            </td>
                         </tr>
-                        </thead>
-                        <tbody>
-                        {users.length === 0 ? (
-                            <tr>
-                                <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#858796' }}>Không có dữ liệu người dùng hiển thị.</td>
-                            </tr>
-                        ) : (
-                            users.map((user) => (
-                                <tr key={user.id} style={{ borderBottom: '1px solid #eaecf1' }}>
-                                    <td style={tdStyle}>{user.id}</td>
-                                    <td style={{ ...tdStyle, fontWeight: 'bold' }}>{user.username}</td>
-                                    <td style={tdStyle}>{user.email || 'Chưa cập nhật'}</td>
-                                    <td style={tdStyle}>{user.phone || 'Chưa cập nhật'}</td>
-                                    <td style={tdStyle}>
-                                        <span style={user.status === 'Active' ? statusActive : statusBlocked}>
-                                            {user.status === 'Active' ? '● Đang hoạt động' : '● Đã khóa'}
-                                        </span>
-                                    </td>
-                                    <td style={{ ...tdStyle, textAlign: 'center' }}>
-                                        <button
-                                            onClick={() => handleToggleBlock(user.id, user.status)}
-                                            style={{ ...btnAction, backgroundColor: user.status === 'Active' ? '#e74c3c' : '#2ecc71' }}
-                                        >
-                                            {user.status === 'Active' ? 'Khóa' : 'Mở khóa'}
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                        </tbody>
-                    </table>
+                    ))
+                )}
+                </tbody>
+            </table>
 
-                    {totalPages > 1 && (
-                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginTop: '20px' }}>
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                                disabled={currentPage === 0}
-                                style={currentPage === 0 ? btnPageDisabled : btnPageStyle}
-                            >
-                                ◀ Trước
-                            </button>
-
-                            <span style={{ fontSize: '14px', color: '#4e73df', fontWeight: 'bold' }}>
-                                Trang {currentPage + 1} / {totalPages}
-                            </span>
-
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-                                disabled={currentPage === totalPages - 1}
-                                style={currentPage === totalPages - 1 ? btnPageDisabled : btnPageStyle}
-                            >
-                                Sau ▶
-                            </button>
-                        </div>
-                    )}
-                </>
-            )}
+            {/* Phân trang đồng bộ */}
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => setCurrentPage(page)}
+            />
         </div>
     );
 }
 
-const thStyle = { padding: '15px', color: '#4e73df', fontWeight: 'bold', fontSize: '14px' };
-const tdStyle = { padding: '15px', fontSize: '13px', color: '#5a5c69', verticalAlign: 'middle' };
-const labelStyle = { display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '12px', color: '#333' };
-const inputStyle = { width: '100%', padding: '8px 12px', border: '1px solid #d1d3e2', borderRadius: '5px', fontSize: '13px', boxSizing: 'border-box', height: '38px' };
-const btnAction = { padding: '6px 12px', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px', minWidth: '80px' };
-const statusActive = { color: '#1cc88a', fontWeight: 'bold', fontSize: '12px' };
-const statusBlocked = { color: '#e74c3c', fontWeight: 'bold', fontSize: '12px' };
-const tabActiveStyle = { padding: '10px 20px', backgroundColor: '#4e73df', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' };
-const tabInactiveStyle = { padding: '10px 20px', backgroundColor: '#f8f9fc', color: '#4e73df', border: '1px solid #d1d3e2', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' };
-const btnToggleFormStyle = { padding: '8px 15px', backgroundColor: '#1cc88a', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' };
-const btnSubmitStyle = { padding: '0 15px', backgroundColor: '#4e73df', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', height: '38px', width: '100%', whiteSpace: 'nowrap' };
-const formStyle = { marginBottom: '25px', backgroundColor: '#f8f9fc', padding: '20px', borderRadius: '10px', border: '1px solid #eaecf1' };
-const btnPageStyle = { padding: '6px 15px', backgroundColor: '#4e73df', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' };
-const btnPageDisabled = { padding: '6px 15px', backgroundColor: '#eaecf1', color: '#b7b9cc', border: 'none', borderRadius: '5px', cursor: 'not-allowed', fontWeight: 'bold', fontSize: '12px' };
+// --- HỆ THỐNG STYLES ĐỒNG BỘ ---
+const containerStyle = {
+    padding: '30px',
+    backgroundColor: '#fff',
+    borderRadius: '15px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+};
+
+const headerStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '30px'
+};
+
+const tabGroupStyle = { display: 'flex', gap: '10px' };
+
+const tabStyle = (active) => ({
+    padding: '10px 20px',
+    borderRadius: '8px',
+    border: 'none',
+    backgroundColor: active ? '#4e73df' : '#f1f5f9',
+    color: active ? '#fff' : '#4e73df',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    transition: 'all 0.2s'
+});
+
+const tableStyle = { width: '100%', borderCollapse: 'collapse' };
+
+const thStyle = {
+    textAlign: 'left',
+    padding: '15px',
+    color: '#4e73df',
+    fontSize: '13px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+};
+
+const tdStyle = {
+    padding: '15px',
+    borderBottom: '1px solid #f1f5f9',
+    color: '#5a5c69',
+    fontSize: '14px',
+    verticalAlign: 'middle'
+};
+
+const trStyle = { transition: 'background-color 0.2s' };
+
+const roleBadgeStyle = {
+    padding: '4px 8px',
+    backgroundColor: '#f8f9fc',
+    border: '1px solid #d1d3e2',
+    borderRadius: '5px',
+    fontSize: '11px',
+    fontWeight: 'bold',
+    color: '#4e73df'
+};
+
+const statusBadgeStyle = (status) => ({
+    padding: '5px 12px',
+    borderRadius: '20px',
+    fontSize: '11px',
+    fontWeight: 'bold',
+    backgroundColor: status === 'Active' ? '#def7ec' : '#fde2e1',
+    color: status === 'Active' ? '#03543f' : '#9b1c1c',
+    display: 'inline-block'
+});
+
+const btnActionStyle = (isActive) => ({
+    backgroundColor: isActive ? '#e74c3c' : '#1cc88a',
+    color: 'white',
+    border: 'none',
+    padding: '8px 15px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    fontSize: '12px',
+    minWidth: '120px',
+    transition: 'opacity 0.2s'
+});
