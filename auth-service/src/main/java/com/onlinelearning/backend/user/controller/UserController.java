@@ -3,17 +3,12 @@ package com.onlinelearning.backend.user.controller;
 import com.onlinelearning.backend.user.dto.UserDTO;
 import com.onlinelearning.backend.user.entity.User;
 import com.onlinelearning.backend.user.service.UserService;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.Map;
 
-<<<<<<<< HEAD:auth-service/src/main/java/com/onlinelearning/backend/user/controller/UserController.java
-import java.util.List;
-
-@CrossOrigin(origins = "http://localhost:3000") // Cấp quyền cho React truy cập
-========
-@CrossOrigin(origins = "http://localhost:3000")
->>>>>>>> origin/nga:backend/src/main/java/com/onlinelearning/backend/user/controller/UserController.java
+@CrossOrigin(origins = "http://localhost:3000") // Allow React front‑end
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -40,7 +35,8 @@ public class UserController {
     }
 
     @PutMapping("/{id}/change-password")
-    public ResponseEntity<?> changePassword(@PathVariable Long id, @RequestBody Map<String, String> request) {
+    public ResponseEntity<?> changePassword(@PathVariable Long id,
+                                            @RequestBody Map<String, String> request) {
         try {
             String oldPass = request.get("oldPassword");
             String newPass = request.get("newPassword");
