@@ -121,7 +121,7 @@ public class UserService {
     @Retryable(
             value = Exception.class,
             maxAttempts = 3,
-            backoff = @Backoff(delay = 2000)
+            backoff = @Backoff(delay = 3000)
     )
     public String notifyUserUpdate(Long userId) {
         User user = repo.findById(userId)

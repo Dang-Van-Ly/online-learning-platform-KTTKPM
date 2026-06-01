@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/chats")
+@RequestMapping("/api/chat")
 public class ChatController {
 
     private final ChatService chatService;

@@ -2,13 +2,16 @@ package com.onlinelearning.notification.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.MailException;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import jakarta.mail.internet.MimeMessage;
-import java.text.NumberFormat;
-import java.util.Locale;
 
 @Slf4j
 @Service
@@ -17,6 +20,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
+    @Retryable(value = MailException.class, maxAttempts = 3, backoff = @Backoff(delay = 3000))
     public void sendOrderConfirmation(String to, String userName, Long orderId,
                                       String totalPrice, String courseList, String paymentMethod) {
         try {
@@ -27,11 +31,14 @@ public class EmailService {
             helper.setText(buildOrderEmail(userName, orderId, totalPrice, courseList, paymentMethod), true);
             mailSender.send(message);
             log.info("Order confirmation email sent to {}", to);
+        } catch (MailException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Failed to send order email to {}: {}", to, e.getMessage());
+            throw new MailSendException("Failed to send order confirmation email", e);
         }
     }
 
+    @Retryable(value = MailException.class, maxAttempts = 3, backoff = @Backoff(delay = 3000))
     public void sendMembershipConfirmation(String to, String userName, String membershipName,
                                            String price, String startDate, String endDate, int durationDays) {
         try {
@@ -42,11 +49,14 @@ public class EmailService {
             helper.setText(buildMembershipEmail(userName, membershipName, price, startDate, endDate, durationDays), true);
             mailSender.send(message);
             log.info("Membership confirmation email sent to {}", to);
+        } catch (MailException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Failed to send membership email to {}: {}", to, e.getMessage());
+            throw new MailSendException("Failed to send membership confirmation email", e);
         }
     }
 
+    @Retryable(value = MailException.class, maxAttempts = 3, backoff = @Backoff(delay = 3000))
     public void sendEnrollmentConfirmation(String to, String userName, String courseName, String instructorName) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -56,9 +66,29 @@ public class EmailService {
             helper.setText(buildEnrollmentEmail(userName, courseName, instructorName), true);
             mailSender.send(message);
             log.info("Enrollment confirmation email sent to {}", to);
+        } catch (MailException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Failed to send enrollment email to {}: {}", to, e.getMessage());
+            throw new MailSendException("Failed to send enrollment confirmation email", e);
         }
+    }
+
+    @Recover
+    public void recoverSendOrderConfirmation(MailException ex, String to, String userName, Long orderId,
+                                             String totalPrice, String courseList, String paymentMethod) {
+        log.error("Failed to send order email to {} after retries: {}", to, ex.getMessage());
+    }
+
+    @Recover
+    public void recoverSendMembershipConfirmation(MailException ex, String to, String userName, String membershipName,
+                                                  String price, String startDate, String endDate, int durationDays) {
+        log.error("Failed to send membership email to {} after retries: {}", to, ex.getMessage());
+    }
+
+    @Recover
+    public void recoverSendEnrollmentConfirmation(MailException ex, String to, String userName,
+                                                  String courseName, String instructorName) {
+        log.error("Failed to send enrollment email to {} after retries: {}", to, ex.getMessage());
     }
 
     private String buildOrderEmail(String userName, Long orderId, String totalPrice,

@@ -136,6 +136,16 @@ export default function Checkout() {
       }
 
       if (totalPrice === 0) {
+        // Gọi API enrollment cho các khóa học miễn phí để tăng studentsCount
+        if (!packageId) {
+          await Promise.all(checkoutItems.map(item => 
+            api.post("/enrollments", {
+              userId: user.userId || user.id,
+              courseId: item.id,
+              pricePaid: 0,
+            })
+          ));
+        }
         checkoutItems.forEach((item) => addPurchasedCourse(item.id));
         if (!courseId) clearCart();
         navigate(`/order-success?amount=0`);
@@ -154,6 +164,16 @@ export default function Checkout() {
     try {
       // If payload is an object with orderId, it means QR component created the order and it's been paid
       if (payload && typeof payload === 'object' && payload.orderId) {
+        // Tạo bản ghi enrollment để tăng studentsCount khi thanh toán QR thành công
+        if (!packageId) {
+          await Promise.all(checkoutItems.map(item => 
+            api.post("/enrollments", {
+              userId: user.userId || user.id,
+              courseId: item.id,
+              pricePaid: item.price,
+            })
+          ));
+        }
         // finalize local state
         checkoutItems.forEach((item) => addPurchasedCourse(item.id));
         if (!courseId) clearCart();
@@ -194,6 +214,17 @@ export default function Checkout() {
       });
 
       if (!orderRes.data) throw new Error("Lỗi tạo đơn hàng");
+
+      // Tạo bản ghi enrollment cho các phương thức thanh toán khác (ngoài QR)
+      if (!packageId) {
+        await Promise.all(checkoutItems.map(item => 
+          api.post("/enrollments", {
+            userId: user.userId || user.id,
+            courseId: item.id,
+            pricePaid: item.price,
+          })
+        ));
+      }
 
       checkoutItems.forEach((item) => addPurchasedCourse(item.id));
       if (!courseId) clearCart();

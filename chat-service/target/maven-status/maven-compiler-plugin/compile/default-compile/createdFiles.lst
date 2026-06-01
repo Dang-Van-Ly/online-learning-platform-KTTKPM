@@ -1,6 +1,7 @@
 com\onlinelearning\chatservice\service\ChatAgentService.class
-com\onlinelearning\chatservice\controller\ChatAgentController.class
+com\onlinelearning\chatservice\service\GroqClient.class
 com\onlinelearning\chatservice\dto\AgentRequest.class
 com\onlinelearning\chatservice\dto\AgentResponse.class
-com\onlinelearning\chatservice\service\GeminiClient.class
+com\onlinelearning\chatservice\controller\ChatController.class
 com\onlinelearning\chatservice\ChatServiceApplication.class
+com\onlinelearning\chatservice\service\OrderServiceClient.class

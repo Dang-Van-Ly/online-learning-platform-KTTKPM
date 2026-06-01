@@ -1,0 +1,9 @@
+- [x] Khảo sát cấu hình Maven và application.properties các service
+- [x] Xác định cấu trúc source code thực tế của từng service
+- [x] Tìm được các call/service call hợp lý để retry
+- [x] Đọc các service outbound chính để xác nhận phạm vi retry
+- [x] Bật cơ chế retry đúng ở entrypoint chat-service
+- [x] Bật retry support cho notification-service
+- [ ] Implement retry cho email, HTTP call, RabbitMQ publish
+- [ ] Kiểm tra timeout / backoff / không retry sai chỗ
+- [ ] Build/test để xác nhận không lỗi

@@ -129,7 +129,8 @@ services:
       ORDER_SERVICE_HOST: order-service:8083
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
-      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: llama-3.1-8b-instant
     env_file:
       - .env
 

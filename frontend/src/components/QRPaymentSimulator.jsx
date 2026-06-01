@@ -121,30 +121,15 @@ const QRPaymentSimulator = ({
     };
   };
 
-  const handleManualComplete = async () => {
-    if (!orderId) {
-      setPaymentError('Chưa tạo đơn hàng VNPay. Vui lòng thử lại.');
-      return;
-    }
-
-    try {
-      const host = window.location.hostname;
-      const orderServicePort = 8083;
-      const url = `http://${host}:${orderServicePort}/api/orders/public/${orderId}`;
-      const response = await fetch(url, { method: 'GET' });
-      if (!response.ok) {
-        throw new Error(`status ${response.status}`);
-      }
-      const statusText = await response.text();
-      if (statusText === 'PAID' || statusText === 'COMPLETED') {
-        setPaymentStep(4);
-        if (onPaymentComplete) onPaymentComplete({ orderId, status: statusText, selectedMethod });
-      } else {
-        setPaymentError('Thanh toán chưa hoàn tất. Vui lòng kiểm tra lại ứng dụng VNPay và thử lại sau.');
-      }
-    } catch (error) {
-      console.error('Error confirming VNPay payment', error);
-      setPaymentError('Không thể kiểm tra trạng thái thanh toán. Vui lòng thử lại.');
+  const handleManualComplete = () => {
+    // Xác nhận thành công ngay lập tức theo yêu cầu (Simulated Success)
+    setPaymentStep(4);
+    if (onPaymentComplete) {
+      onPaymentComplete({ 
+        orderId: orderId || `SIM-${Date.now()}`, 
+        status: 'COMPLETED', 
+        selectedMethod 
+      });
     }
   };
 
@@ -412,7 +397,6 @@ const QRPaymentSimulator = ({
           <>
             <button
               onClick={handleManualComplete}
-              disabled={!orderId || isProcessing}
               className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Tôi đã quét mã và thanh toán

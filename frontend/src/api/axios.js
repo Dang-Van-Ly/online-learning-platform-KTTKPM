@@ -1,7 +1,17 @@
 import axios from "axios";
 
+// Kiểm tra xem đang chạy ở môi trường phát triển (development) hay không
+const isDevelopment = import.meta.env.MODE === 'development';
+
+// Nếu chạy local, trỏ thẳng về Gateway (8080). 
+// Nếu bạn muốn test trực tiếp Chat Service mà không qua Gateway, hãy đổi thành 8085
+const localBaseURL = "http://localhost:8080/api"; 
+
+// Lấy từ file .env, nếu không có thì dùng localBaseURL
+const baseURL = import.meta.env.VITE_API_BASE_URL || localBaseURL;
+
 const api = axios.create({
-    baseURL: "/api",
+    baseURL: baseURL.startsWith('http') ? baseURL : `${window.location.protocol}//${window.location.hostname}:8080${baseURL}`,
     headers: {
         'Content-Type': 'application/json',
     },

@@ -46,7 +46,7 @@ public class SecurityConfig {
                                 "/api/carts/**",
                                 "/api/cart-items/**",
                                 "/api/order-items/**",
-                                "/api/chats/**",
+                                "/api/chat/**",
                                 "/api/chat-rooms/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
